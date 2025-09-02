@@ -1,0 +1,10 @@
+<div class="wrapper">
+  @if (!initialTestSelected) {
+    <app-test-type-list />
+  }
+  
+  @if (initialTestSelected) {
+    <app-sample-selection-panel />
+    <app-entry-form-area />
+  }
+</div>

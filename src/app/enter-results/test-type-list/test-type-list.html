@@ -1,0 +1,9 @@
+<div class="wrapper">
+    <mat-list class="selection-list">
+        @for (option of testTypeOptions; track option.code) {
+        <mat-list-item (click)="setSelectedTestType(option.code)">
+            {{ option.label }}
+        </mat-list-item>
+        }
+    </mat-list>
+</div>
