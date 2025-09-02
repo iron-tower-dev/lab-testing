@@ -1,0 +1,30 @@
+.test-type-panel {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 320px;
+    background: #fafafa;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.08);
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0.5rem;
+    z-index: 100;
+}
+
+.sample-list {
+    margin-top: 2rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.mat-list-item {
+    min-height: 28px;
+    padding: 2px 0;
+}
+
+.empty {
+    color: #888;
+    font-size: 0.95em;
+    margin-top: 1rem;
+}

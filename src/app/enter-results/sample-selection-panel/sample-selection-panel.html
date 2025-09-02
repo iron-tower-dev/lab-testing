@@ -1,1 +1,18 @@
-<p>sample-selection-panel works!</p>
+<div class="test-type-panel mat-elevation-z4">
+  <app-test-type-selection />
+  <div class="sample-list">
+    @if (selectedTestCode()) {
+      <mat-label>Samples for {{ selectedTestCode() }}:</mat-label>
+    }
+    @if (sampleNumbers().length) {
+      <mat-list>
+        @for (sample of sampleNumbers(); track sample) {
+          <mat-list-item>{{ sample }}</mat-list-item>
+        }
+      </mat-list>
+    }
+    @if (selectedTestCode() && !sampleNumbers().length) {
+      <div class="empty">No samples found.</div>
+    }
+  </div>
+</div>
