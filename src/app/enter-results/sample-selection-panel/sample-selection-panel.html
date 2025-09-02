@@ -1,5 +1,12 @@
 <div class="test-type-panel mat-elevation-z4">
-  <app-test-type-selection />
+  <mat-form-field>
+    <mat-label>Select Test</mat-label>
+  <mat-select [value]="selectedTestCode()" (selectionChange)="setSelectedTestCode($event.value)">
+      @for (test of testTypeOptions; track test.code) {
+        <mat-option [value]="test.code">{{ test.label }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
   <div class="sample-list">
     @if (selectedTestCode()) {
       <mat-label>Samples for {{ selectedTestCode() }}:</mat-label>
