@@ -1,10 +1,13 @@
-<div class="wrapper">
-  @if (!initialTestSelected) {
-    <app-test-type-list />
-  }
-  
+<div class="enter-results-layout">
   @if (initialTestSelected) {
-    <app-sample-selection-panel />
-    <app-entry-form-area />
+    <div class="side-panel">
+      <app-sample-selection-panel [selectedTestCode]="selectedTestCode" />
+    </div>
+    <div class="main-area">
+      <app-entry-form-area />
+    </div>
+  }
+  @if (!initialTestSelected) {
+    <app-test-type-list (selectedTestTypeChange)="onTestTypeSelected($event)" />
   }
 </div>
