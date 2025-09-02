@@ -2,11 +2,12 @@ import { Component } from '@angular/core';
 import { SampleSelectionPanel } from './sample-selection-panel/sample-selection-panel';
 import { EntryFormArea } from './entry-form-area/entry-form-area';
 import { TestTypeList } from "./test-type-list/test-type-list";
+import { TestTypeSelection } from './test-type-selection/test-type-selection';
 import { TestCode } from './enter-results.types';
 
 @Component({
   selector: 'app-enter-results',
-  imports: [SampleSelectionPanel, EntryFormArea, TestTypeList],
+  imports: [SampleSelectionPanel, EntryFormArea, TestTypeList, TestTypeSelection],
   templateUrl: './enter-results.html',
   styleUrl: './enter-results.scss',
 })
