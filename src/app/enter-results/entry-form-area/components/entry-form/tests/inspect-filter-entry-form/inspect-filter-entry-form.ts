@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
+  standalone: true,
   selector: 'app-inspect-filter-entry-form',
   imports: [],
   templateUrl: './inspect-filter-entry-form.html',
-  styleUrl: './inspect-filter-entry-form.scss'
+  styleUrls: ['./inspect-filter-entry-form.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InspectFilterEntryForm {}
