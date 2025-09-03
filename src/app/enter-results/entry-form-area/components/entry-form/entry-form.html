@@ -1,1 +1,73 @@
-<p>entry-form works!</p>
+@if (!testCode()) {
+  <div class="placeholder">Select a sample to begin entering results.</div>
+}
+
+@if (testCode() === 'TAN') {
+  <app-tan-entry-form />
+}
+@if (testCode() === 'KF') {
+  <app-kf-entry-form />
+}
+@if (testCode() === 'SpecStd' || testCode() === 'SpecLrg') {
+  <app-spectroscopy-entry-form />
+}
+@if (testCode() === 'Vis40') {
+  <app-vis40-entry-form />
+}
+@if (testCode() === 'Vis100') {
+  <app-vis100-entry-form />
+}
+@if (testCode() === 'FTIR') {
+  <app-ftir-entry-form />
+}
+@if (testCode() === 'FlashPt') {
+  <app-flash-pt-entry-form />
+}
+@if (testCode() === 'TBN') {
+  <app-tbn-entry-form />
+}
+@if (testCode() === 'InspectFilter') {
+  <app-inspect-filter-entry-form />
+}
+@if (testCode() === 'GrPen60') {
+  <app-gr-pen60-entry-form />
+}
+@if (testCode() === 'GrDropPt') {
+  <app-gr-drop-pt-entry-form />
+}
+@if (testCode() === 'Pcnt') {
+  <app-pcnt-entry-form />
+}
+@if (testCode() === 'RBOT') {
+  <app-rbot-entry-form />
+}
+@if (testCode() === 'FltrRes') {
+  <app-fltr-res-entry-form />
+}
+@if (testCode() === 'Ferrography') {
+  <app-ferrography-entry-form />
+}
+@if (testCode() === 'Rust') {
+  <app-rust-entry-form />
+}
+@if (testCode() === 'TFOUT') {
+  <app-tfout-entry-form />
+}
+@if (testCode() === 'DebrisID') {
+  <app-debris-id-entry-form />
+}
+@if (testCode() === 'Deleterious') {
+  <app-deleterious-entry-form />
+}
+@if (testCode() === 'Rheometry') {
+  <app-rheometry-entry-form />
+}
+@if (testCode() === 'DInch') {
+  <app-d-inch-entry-form />
+}
+@if (testCode() === 'OilContent') {
+  <app-oil-content-entry-form />
+}
+@if (testCode() === 'VPR') {
+  <app-vpr-entry-form />
+}
