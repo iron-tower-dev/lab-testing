@@ -1,10 +1,12 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 
 @Component({
+  standalone: true,
   selector: 'app-vis40-entry-form',
   imports: [],
   templateUrl: './vis40-entry-form.html',
-  styleUrl: './vis40-entry-form.scss'
+  styleUrls: ['./vis40-entry-form.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Vis40EntryForm {}
 
