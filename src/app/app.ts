@@ -1,4 +1,4 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { SharedModule } from './shared-module';
 
@@ -9,5 +9,4 @@ import { SharedModule } from './shared-module';
   styleUrl: './app.scss'
 })
 export class App {
-  protected readonly title = signal('lab-testing');
 }

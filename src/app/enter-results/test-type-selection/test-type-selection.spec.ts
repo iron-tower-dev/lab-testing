@@ -1,5 +1,4 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
 import { TestTypeSelection } from './test-type-selection';
 
 describe('TestTypeSelection', () => {
@@ -19,5 +18,24 @@ describe('TestTypeSelection', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+
+  it('should have selectedTestType as null initially', () => {
+    expect(component.selectedTestType()).toBeNull();
+  });
+
+  it('should set selectedTestType when setSelectedTestType is called', () => {
+    component.setSelectedTestType('TAN');
+    expect(component.selectedTestType()).toBe('TAN');
+  });
+
+  it('should emit selectedTestTypeChange when setSelectedTestType is called', () => {
+    spyOn(component.selectedTestTypeChange, 'emit');
+    component.setSelectedTestType('KF');
+    expect(component.selectedTestTypeChange.emit).toHaveBeenCalledWith('KF');
+  });
+
+  it('should have all test type options available', () => {
+    expect(component.testTypeOptions.length).toBe(24); // Update 24 to the expected count if needed
   });
 });

@@ -8,7 +8,8 @@
 .mat-mdc-list-item {
     border-bottom: 1px solid #eee;
     &:hover {
-        background-color: darken(#f5f5f5, 5%);
+        color.scale($color, $lightness: -5.2040816327%)
+        color.adjust($color, $lightness: -5%)
         cursor: pointer;
     }
 }
