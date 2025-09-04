@@ -12,11 +12,13 @@
       <mat-label>Samples for {{ selectedTestCode() }}:</mat-label>
     }
     @if (sampleNumbers().length) {
-      <mat-list>
+      <mat-action-list>
         @for (sample of sampleNumbers(); track sample) {
-          <mat-list-item (click)="onSampleClick(sample)">{{ sample }}</mat-list-item>
+          <button mat-list-item type="button" (click)="onSampleClick(sample)">
+            {{ sample }}
+          </button>
         }
-      </mat-list>
+      </mat-action-list>
     }
     @if (selectedTestCode() && !sampleNumbers().length) {
       <div class="empty">No samples found.</div>
