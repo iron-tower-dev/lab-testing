@@ -1,8 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, signal, computed } from '@angular/core';
 import { SampleSelectionPanel } from './sample-selection-panel/sample-selection-panel';
 import { EntryFormArea } from './entry-form-area/entry-form-area';
 import { TestTypeList } from './test-type-list/test-type-list';
-import { TestCode } from './enter-results.types';
+import { TestReference } from './enter-results.types';
 
 @Component({
   selector: 'app-enter-results',
@@ -11,20 +11,22 @@ import { TestCode } from './enter-results.types';
   styleUrl: './enter-results.scss',
 })
 export class EnterResults {
-  initialTestSelected = false;
-  selectedTestCode: TestCode | null = null;
-  selectedSample: { testCode: TestCode; sampleId: string } | null = null;
+  // Signals for reactive state management
+  readonly selectedTestReference = signal<TestReference | null>(null);
+  readonly selectedSample = signal<{ testReference: TestReference; sampleId: string } | null>(null);
 
-  onTestTypeSelected(testCode: TestCode | null) {
-    if (testCode) {
-      this.selectedTestCode = testCode;
-      this.initialTestSelected = true;
+  // Computed properties
+  readonly initialTestSelected = computed(() => this.selectedTestReference() !== null);
+
+  onTestTypeSelected(testReference: TestReference | null) {
+    if (testReference) {
+      this.selectedTestReference.set(testReference);
       // Reset any previously selected sample when test type changes
-      this.selectedSample = null;
+      this.selectedSample.set(null);
     }
   }
 
-  onSampleSelected(event: { testCode: TestCode; sampleId: string }) {
-    this.selectedSample = event;
+  onSampleSelected(event: { testReference: TestReference; sampleId: string }) {
+    this.selectedSample.set(event);
   }
 }

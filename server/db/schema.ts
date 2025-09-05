@@ -1,0 +1,124 @@
+import { int, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+
+export const usersTable = sqliteTable('users_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  name: text().notNull(),
+  age: int().notNull(),
+  email: text().notNull().unique(),
+});
+
+export const particleSubTypeTable = sqliteTable('particle_sub_type_table', {
+  sampleId: int().notNull(),
+  testId: int().notNull(),
+  particleTypeDefinitionId: int().notNull(),
+  particleSubTypeCategory: int().notNull(),
+  value: int(),
+});
+
+export const particleSubTypeCategoryDefinitionTable = sqliteTable(
+  'particle_sub_type_category_definition_table',
+  {
+    id: int().primaryKey({ autoIncrement: true }),
+    description: text().notNull(),
+    active: text(),
+    sortOrder: int().notNull(),
+  },
+);
+
+export const particleSubTypeDefinitionTable = sqliteTable('particle_sub_type_definition_table', {
+  particleSubTypeCategoryId: int().notNull(),
+  value: int().notNull(),
+  description: text().notNull(),
+  active: text(),
+  sortOrder: int(),
+});
+
+export const particleTypeTable = sqliteTable('particle_type_table', {
+  sampleId: int().notNull(),
+  testId: int().notNull(),
+  particleTypeDefinitionId: int().notNull(),
+  status: text(),
+  comments: text(),
+});
+
+export const particleTypeDefinitionTable = sqliteTable('particle_type_definition_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  type: text().notNull(),
+  description: text().notNull(),
+  image1: text().notNull(),
+  image2: text().notNull(),
+  active: text(),
+  sortOrder: int(),
+});
+
+export const testTable = sqliteTable('test_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  name: text(),
+  testStandId: int(),
+  sampleVolumeRequired: int(),
+  exclude: text(),
+  abbrev: text(),
+  displayedGroupId: int(),
+  groupName: text(),
+  lab: int({ mode: 'boolean' }),
+  schedule: int({ mode: 'boolean' }),
+  shortAbbrev: text(),
+});
+
+export const testListTable = sqliteTable('test_list_table', {
+  status: int(),
+  description: text(),
+});
+
+export const testReadingsTable = sqliteTable('test_readings_table', {
+  sampleId: int(),
+  testId: int(),
+  trialNumber: int(),
+  value1: real(),
+  value2: real(),
+  value3: real(),
+  trialCalc: real(),
+  id1: text(),
+  id2: text(),
+  id3: text(),
+  trialComplete: int({ mode: 'boolean' }),
+  status: text(),
+  schedType: text(),
+  entryId: text(),
+  validateId: text(),
+  entryDate: int({ mode: 'timestamp' }),
+  valiDate: int({ mode: 'timestamp' }),
+  mainComments: text(),
+});
+
+export const testScheduleTable = sqliteTable('test_schedule_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  tag: text(),
+  componentCode: text(),
+  locationCode: text(),
+  material: text(),
+});
+
+export const testScheduleRuleTable = sqliteTable('test_schedule_rule_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  groupId: int().notNull(),
+  testId: int().notNull(),
+  ruleTestId: int().notNull(),
+  upperRule: int().notNull(),
+  ruleAction: text(),
+});
+
+export const testScheduleTestTable = sqliteTable('test_schedule_test_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  testScheduleId: int().notNull(),
+  testId: int().notNull(),
+  testInterval: int(),
+  minimumInterval: int(),
+  duringMonth: int(),
+  details: text(),
+});
+
+export const testStandTable = sqliteTable('test_stand_table', {
+  id: int().notNull(),
+  name: text(),
+});

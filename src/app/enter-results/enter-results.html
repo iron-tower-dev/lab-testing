@@ -1,17 +1,17 @@
 <div class="enter-results-layout">
-  @if (initialTestSelected) {
+  @if (initialTestSelected()) {
     <div class="side-panel">
       <app-sample-selection-panel
-        [selectedTestCode]="selectedTestCode"
-        (selectedTestCodeChange)="onTestTypeSelected($event)"
+        [selectedTestReference]="selectedTestReference()"
+        (selectedTestReferenceChange)="onTestTypeSelected($event)"
         (sampleSelected)="onSampleSelected($event)"
       />
     </div>
     <div class="main-area">
-      <app-entry-form-area [selectedSample]="selectedSample" />
+      <app-entry-form-area [selectedSample]="selectedSample()" />
     </div>
   }
-  @if (!initialTestSelected) {
-    <app-test-type-list (selectedTestTypeChange)="onTestTypeSelected($event)" />
+  @if (!initialTestSelected()) {
+    <app-test-type-list (selectedTestReferenceChange)="onTestTypeSelected($event)" />
   }
 </div>
