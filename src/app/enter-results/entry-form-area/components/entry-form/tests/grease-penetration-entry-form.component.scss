@@ -52,8 +52,7 @@
   // Section styling
   .setup-section,
   .equipment-section,
-  .observations-section,
-  .comments-section {
+  .observations-section {
     background-color: #fafafa;
     padding: 20px;
     border-radius: 8px;
@@ -147,14 +146,6 @@
     
     h3 {
       color: #455a64;
-    }
-  }
-
-  .comments-section {
-    border-left-color: #795548;
-    
-    h3 {
-      color: #5d4037;
     }
   }
 
@@ -338,7 +329,6 @@
     .readings-section,
     .equipment-section,
     .observations-section,
-    .comments-section,
     .calculation-display,
     .classification-section {
       margin: 16px 0;
@@ -351,7 +341,6 @@
     .readings-section,
     .equipment-section,
     .observations-section,
-    .comments-section,
     .calculation-display,
     .classification-section {
       margin: 12px 0;
@@ -481,5 +470,3 @@ mat-checkbox {
     }
   }
 }
-
-/* Grease Penetration 60°C Entry Form Styles */
