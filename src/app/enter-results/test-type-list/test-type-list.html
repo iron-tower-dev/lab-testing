@@ -1,7 +1,7 @@
 <div class="wrapper">
     <mat-list class="selection-list">
-        @for (option of testTypeOptions; track option.code) {
-        <mat-list-item (click)="setSelectedTestType(option.code)">
+        @for (option of testReferenceOptions; track option.reference.id) {
+        <mat-list-item (click)="setSelectedTestReference(option.reference)">
             {{ option.label }}
         </mat-list-item>
         }

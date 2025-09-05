@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestTypeSelection } from './test-type-selection';
+import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from '../enter-results.types';
 
 describe('TestTypeSelection', () => {
   let component: TestTypeSelection;
   let fixture: ComponentFixture<TestTypeSelection>;
+  let sampleTestReference: TestReference;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -13,6 +15,7 @@ describe('TestTypeSelection', () => {
 
     fixture = TestBed.createComponent(TestTypeSelection);
     component = fixture.componentInstance;
+    sampleTestReference = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
     fixture.detectChanges();
   });
 
@@ -20,22 +23,27 @@ describe('TestTypeSelection', () => {
     expect(component).toBeTruthy();
   });
 
-  it('should have selectedTestType as null initially', () => {
-    expect(component.selectedTestType()).toBeNull();
+  it('should have selectedTestReference as null initially', () => {
+    expect(component.selectedTestReference()).toBeNull();
   });
 
-  it('should set selectedTestType when setSelectedTestType is called', () => {
-    component.setSelectedTestType('TAN');
-    expect(component.selectedTestType()).toBe('TAN');
+  it('should set selectedTestReference when setSelectedTestReference is called', () => {
+    component.setSelectedTestReference(sampleTestReference);
+    expect(component.selectedTestReference()).toBe(sampleTestReference);
   });
 
-  it('should emit selectedTestTypeChange when setSelectedTestType is called', () => {
-    spyOn(component.selectedTestTypeChange, 'emit');
-    component.setSelectedTestType('KF');
-    expect(component.selectedTestTypeChange.emit).toHaveBeenCalledWith('KF');
+  it('should emit selectedTestReferenceChange when setSelectedTestReference is called', () => {
+    const kfTestReference = LEGACY_TEST_CODE_TO_REFERENCE.KF;
+    spyOn(component.selectedTestReferenceChange, 'emit');
+    component.setSelectedTestReference(kfTestReference);
+    expect(component.selectedTestReferenceChange.emit).toHaveBeenCalledWith(kfTestReference);
   });
 
-  it('should have all test type options available', () => {
-    expect(component.testTypeOptions.length).toBe(24); // Update 24 to the expected count if needed
+  it('should have all test reference options available', () => {
+    expect(component.testReferenceOptions.length).toBe(24);
+  });
+
+  it('should provide display names for test references', () => {
+    expect(component.getDisplayName(sampleTestReference)).toBe('TAN by Color Indication');
   });
 });

@@ -1,5 +1,5 @@
 import { Component, computed, input, output } from '@angular/core';
-import { TestCode, testCodeToType } from '../enter-results.types';
+import { TestReference, TestIdentifierUtils, MigrationUtils } from '../enter-results.types';
 import { SharedModule } from '../../shared-module';
 
 @Component({
@@ -9,27 +9,34 @@ import { SharedModule } from '../../shared-module';
   styleUrl: './sample-selection-panel.scss'
 })
 export class SampleSelectionPanel {
-  // Inputs/Outputs for selecting the test code
-  selectedTestCode = input<TestCode | null>(null);
-  selectedTestCodeChange = output<TestCode | null>({});
+  // Inputs/Outputs using new type system
+  selectedTestReference = input<TestReference | null>(null);
+  selectedTestReferenceChange = output<TestReference | null>({});
 
   // Emits when a sample is chosen under the selected test
-  sampleSelected = output<{ testCode: TestCode; sampleId: string }>({});
+  sampleSelected = output<{ testReference: TestReference; sampleId: string }>({});
 
-  testTypeOptions = Object.entries(testCodeToType).map(([code, label]) => ({ code: code as TestCode, label }));
+  readonly testReferenceOptions = MigrationUtils.getAllTestOptions();
 
-  setSelectedTestCode(code: TestCode | null) {
-    this.selectedTestCodeChange.emit(code);
+  setSelectedTestReference(testReference: TestReference | null) {
+    this.selectedTestReferenceChange.emit(testReference);
   }
 
   sampleNumbers = computed(() => {
-    if (!this.selectedTestCode()) return [];
-    // Replace with real logic to fetch sample numbers for the selected test code
-    return [101, 102, 103, 104].map((n) => `${this.selectedTestCode()}-${n}`);
+    const testRef = this.selectedTestReference();
+    if (!testRef) return [];
+    // Use migration utility to generate sample IDs for the selected test
+    return MigrationUtils.generateSampleIds(testRef);
   });
 
   onSampleClick(sampleId: string) {
-    if (!this.selectedTestCode()) return;
-    this.sampleSelected.emit({ testCode: this.selectedTestCode()!, sampleId });
+    const testRef = this.selectedTestReference();
+    if (!testRef) return;
+    this.sampleSelected.emit({ testReference: testRef, sampleId });
+  }
+
+  // Helper method to get display name
+  getDisplayName(testReference: TestReference): string {
+    return TestIdentifierUtils.getDisplayName(testReference);
   }
 }

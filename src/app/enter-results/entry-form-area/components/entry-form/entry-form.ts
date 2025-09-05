@@ -1,5 +1,5 @@
-import { Component, input } from '@angular/core';
-import { TestCode } from '../../../enter-results.types';
+import { Component, input, computed } from '@angular/core';
+import { TestReference, MigrationUtils } from '../../../enter-results.types';
 import { FerrographyEntryForm } from './tests/ferrography-entry-form/ferrography-entry-form';
 import { SpectroscopyEntryForm } from './tests/spectroscopy-entry-form/spectroscopy-entry-form';
 import { TanEntryForm } from './tests/tan-entry-form/tan-entry-form';
@@ -55,6 +55,13 @@ import { VprEntryForm } from './tests/vpr-entry-form/vpr-entry-form';
   styleUrl: './entry-form.scss'
 })
 export class EntryForm {
-  testCode = input<TestCode | null>(null);
+  testReference = input<TestReference | null>(null);
   sampleId = input<string | null>(null);
+
+  // Computed property to get legacy test code for backward compatibility
+  // This allows existing test form components to continue working during migration
+  testCode = computed(() => {
+    const testRef = this.testReference();
+    return testRef ? MigrationUtils.referenceToTestCode(testRef) : null;
+  });
 }

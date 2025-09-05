@@ -5,8 +5,14 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:server": "tsc -p tsconfig.server.json",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "seed": "tsx server/db/seeds/index.ts",
+    "api": "tsx server/api/server.ts",
+    "api:dev": "tsx watch server/api/server.ts",
+    "dev": "concurrently \"npm run start\" \"npm run api:dev\"",
+    "build:all": "npm run build && npm run build:server"
   },
   "prettier": {
     "printWidth": 100,
@@ -21,6 +27,9 @@
     ]
   },
   "private": true,
+  "overrides": {
+    "esbuild": "^0.25.0"
+  },
   "dependencies": {
     "@angular/cdk": "^20.2.1",
     "@angular/common": "^20.2.0",
@@ -30,9 +39,12 @@
     "@angular/material": "^20.2.1",
     "@angular/platform-browser": "^20.2.0",
     "@angular/router": "^20.2.0",
+    "@hono/node-server": "^1.19.1",
     "@libsql/client": "^0.15.14",
+    "cors": "^2.8.5",
     "dotenv": "^17.2.2",
     "drizzle-orm": "^0.44.5",
+    "hono": "^4.9.6",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"
@@ -41,7 +53,12 @@
     "@angular/build": "^20.2.0",
     "@angular/cli": "^20.2.0",
     "@angular/compiler-cli": "^20.2.0",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/cors": "^2.8.19",
     "@types/jasmine": "~5.1.0",
+    "@types/node": "^24.3.1",
+    "better-sqlite3": "^9.6.0",
+    "concurrently": "^9.2.1",
     "drizzle-kit": "^0.31.4",
     "jasmine-core": "~5.9.0",
     "karma": "~6.4.0",

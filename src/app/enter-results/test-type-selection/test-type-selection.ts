@@ -1,5 +1,5 @@
 import { Component, output, signal } from '@angular/core';
-import { TestCode, testCodeToType } from '../enter-results.types';
+import { TestReference, TestIdentifierUtils, MigrationUtils } from '../enter-results.types';
 import { SharedModule } from '../../shared-module';
 
 @Component({
@@ -9,12 +9,18 @@ import { SharedModule } from '../../shared-module';
   styleUrl: './test-type-selection.scss',
 })
 export class TestTypeSelection {
-  readonly selectedTestType = signal<TestCode | null>(null);
-  readonly selectedTestTypeChange = output<TestCode | null>({});
-  readonly testTypeOptions = Object.entries(testCodeToType).map(([code, label]) => ({ code: code as TestCode, label }));
+  // Signals using new type system
+  readonly selectedTestReference = signal<TestReference | null>(null);
+  readonly selectedTestReferenceChange = output<TestReference | null>({});
+  readonly testReferenceOptions = MigrationUtils.getAllTestOptions();
 
-  setSelectedTestType(value: TestCode | null) {
-    this.selectedTestType.set(value);
-    this.selectedTestTypeChange.emit(value);
+  setSelectedTestReference(testReference: TestReference | null) {
+    this.selectedTestReference.set(testReference);
+    this.selectedTestReferenceChange.emit(testReference);
+  }
+
+  // Helper method to get display name
+  getDisplayName(testReference: TestReference): string {
+    return TestIdentifierUtils.getDisplayName(testReference);
   }
 }
