@@ -1,1 +1,366 @@
-<p>Debris Identification entry form</p>
+<div class="debris-id-form-container">
+  <!-- Form Header -->
+  @if (sampleData()) {
+    <div class="form-header">
+      <h2>Debris Identification Analysis</h2>
+      <div class="sample-info">
+        <span><strong>Sample:</strong> {{ sampleData()?.sampleNumber }}</span>
+        <span><strong>Equipment:</strong> {{ sampleData()?.eqTagNum || 'N/A' }}</span>
+        <span><strong>Component:</strong> {{ sampleData()?.component || 'N/A' }}</span>
+        <span><strong>Location:</strong> {{ sampleData()?.location || 'N/A' }}</span>
+      </div>
+    </div>
+  }
+
+  <form [formGroup]="overallForm" class="debris-id-form-content">
+    <!-- Test Information Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Test Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="third-width">
+            <mat-label>Test Standard</mat-label>
+            <mat-select formControlName="testStandard">
+              @for (standard of testStandardOptions; track standard.value) {
+                <mat-option [value]="standard.value">{{ standard.label }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Standard test method</mat-hint>
+            @if (overallForm.get('testStandard')?.hasError('required')) {
+              <mat-error>Test standard is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Equipment Used</mat-label>
+            <input matInput formControlName="equipmentUsed" placeholder="Microscope, analyzer, etc.">
+            <mat-hint>Analysis equipment</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Magnification</mat-label>
+            <input matInput formControlName="magnification" placeholder="100x, 400x, etc.">
+            <mat-hint>Magnification used</mat-hint>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="quarter-width">
+            <mat-label>Analyst Initials</mat-label>
+            <input matInput formControlName="analystInitials" 
+                   maxlength="5" placeholder="ABC">
+            <mat-hint>Your initials (max 5 characters)</mat-hint>
+            @if (overallForm.get('analystInitials')?.hasError('required')) {
+              <mat-error>Analyst initials are required</mat-error>
+            }
+            @if (overallForm.get('analystInitials')?.hasError('maxlength')) {
+              <mat-error>Maximum 5 characters allowed</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="quarter-width">
+            <mat-label>Overall Severity</mat-label>
+            <mat-select formControlName="overallSeverity">
+              @for (severity of severityOptions; track severity) {
+                <mat-option [value]="severity">{{ severity }} - {{ 
+                  severity === 1 ? 'Normal' : 
+                  severity === 2 ? 'Minor' :
+                  severity === 3 ? 'Moderate' :
+                  severity === 4 ? 'Severe' : 'Critical' 
+                }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Overall debris severity assessment</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>View Mode</mat-label>
+            <mat-select formControlName="viewMode">
+              <mat-option value="All">All Particle Types</mat-option>
+              <mat-option value="Selected">Selected Only</mat-option>
+              <mat-option value="Review">Review Mode</mat-option>
+            </mat-select>
+            <mat-hint>Choose display mode for particle types</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Particle Type Selection Section -->
+    <mat-card class="form-section particle-types-section">
+      <mat-card-header>
+        <mat-card-title>
+          Particle Type Analysis
+          <span class="selected-count">({{ selectedParticleCount() }} selected)</span>
+        </mat-card-title>
+        <mat-card-subtitle>
+          Select and analyze applicable debris particle types
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- Particle Type Selection Actions -->
+        <div class="particle-type-actions">
+          <button mat-stroked-button type="button" (click)="onSelectAllParticleTypes()">
+            {{ selectedParticleCount() === debrisParticleTypes.length ? 'Deselect All' : 'Select All' }}
+          </button>
+          @if (selectedParticleCount() > 0) {
+            <button mat-stroked-button type="button" color="warn" (click)="onClearSelectedParticleTypes()">
+              Clear Selected ({{ selectedParticleCount() }})
+            </button>
+          }
+        </div>
+
+        <!-- Particle Types Grid -->
+        <div class="particle-types-grid">
+          @for (particleType of debrisParticleTypes; track particleType; let i = $index) {
+            @if (isParticleTypeVisible(particleType)) {
+              <mat-card class="particle-type-card" [class.selected]="getParticleTypeForm(i).get('isSelected')?.value">
+                <mat-card-header>
+                  <mat-card-title>
+                    <mat-checkbox [formControl]="$any(getParticleTypeForm(i).get('isSelected'))">
+                      {{ particleType }}
+                    </mat-checkbox>
+                  </mat-card-title>
+                </mat-card-header>
+                
+                @if (getParticleTypeForm(i).get('isSelected')?.value) {
+                  <mat-card-content [formGroup]="getParticleTypeForm(i)">
+                    <div class="particle-form-row">
+                      <mat-form-field class="half-width">
+                        <mat-label>Concentration</mat-label>
+                        <mat-select formControlName="concentration">
+                          @for (conc of concentrationOptions; track conc) {
+                            <mat-option [value]="conc">{{ conc }}</mat-option>
+                          }
+                        </mat-select>
+                        @if (getParticleTypeForm(i).get('concentration')?.hasError('required')) {
+                          <mat-error>Concentration is required</mat-error>
+                        }
+                      </mat-form-field>
+
+                      <mat-form-field class="half-width">
+                        <mat-label>Severity</mat-label>
+                        <mat-select formControlName="severity">
+                          @for (sev of severityOptions; track sev) {
+                            <mat-option [value]="sev">{{ sev }}</mat-option>
+                          }
+                        </mat-select>
+                        @if (getParticleTypeForm(i).get('severity')?.hasError('required')) {
+                          <mat-error>Severity rating is required</mat-error>
+                        }
+                      </mat-form-field>
+                    </div>
+
+                    <div class="particle-form-row">
+                      <mat-form-field class="third-width">
+                        <mat-label>Size Range</mat-label>
+                        <mat-select formControlName="sizeRange">
+                          @for (size of sizeOptions; track size) {
+                            <mat-option [value]="size">{{ size }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field class="third-width">
+                        <mat-label>Primary Shape</mat-label>
+                        <mat-select formControlName="primaryShape">
+                          @for (shape of shapeOptions; track shape) {
+                            <mat-option [value]="shape">{{ shape }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+
+                      <mat-form-field class="third-width">
+                        <mat-label>Composition</mat-label>
+                        <mat-select formControlName="composition">
+                          @for (comp of compositionOptions; track comp) {
+                            <mat-option [value]="comp">{{ comp }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+
+                    <div class="particle-form-row">
+                      <mat-form-field class="full-width">
+                        <mat-label>Observations</mat-label>
+                        <textarea matInput formControlName="observations" 
+                                  rows="3" maxlength="500"
+                                  placeholder="Detailed observations about this particle type...">
+                        </textarea>
+                        <mat-hint>{{ getParticleTypeForm(i).get('observations')?.value?.length || 0 }}/500 characters</mat-hint>
+                        @if (getParticleTypeForm(i).get('observations')?.hasError('maxlength')) {
+                          <mat-error>Observations cannot exceed 500 characters</mat-error>
+                        }
+                      </mat-form-field>
+                    </div>
+
+                    <div class="particle-form-row">
+                      <mat-form-field class="three-quarter-width">
+                        <mat-label>Recommended Action</mat-label>
+                        <input matInput formControlName="recommendedAction" 
+                               maxlength="200"
+                               placeholder="Recommended action for this finding...">
+                        <mat-hint>{{ getParticleTypeForm(i).get('recommendedAction')?.value?.length || 0 }}/200 characters</mat-hint>
+                      </mat-form-field>
+
+                      <div class="quarter-width checkbox-field">
+                        <mat-checkbox formControlName="includeInReport">
+                          Include in Report
+                        </mat-checkbox>
+                      </div>
+                    </div>
+                  </mat-card-content>
+                }
+              </mat-card>
+            }
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Overall Comments Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Overall Analysis</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="full-width">
+            <mat-label>Overall Comments</mat-label>
+            <textarea matInput formControlName="overallComments" 
+                      rows="4" maxlength="1000" 
+                      placeholder="General comments about the debris identification analysis...">
+            </textarea>
+            <mat-hint 
+              [class.warning]="commentLimitWarning()"
+              [class.error]="commentLimitExceeded()">
+              {{ commentCharacterCount() }}/1000 characters
+              @if (commentLimitWarning()) {
+                - Approaching limit
+              }
+              @if (commentLimitExceeded()) {
+                - Limit exceeded
+              }
+            </mat-hint>
+            @if (overallForm.get('overallComments')?.hasError('maxlength')) {
+              <mat-error>Comments cannot exceed 1000 characters</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        
+        <div class="form-row">
+          <mat-form-field class="full-width">
+            <mat-label>Recommended Actions</mat-label>
+            <textarea matInput formControlName="recommendedActions" 
+                      rows="3" maxlength="500" 
+                      placeholder="Overall recommended actions based on debris analysis...">
+            </textarea>
+            <mat-hint>{{ overallForm.get('recommendedActions')?.value?.length || 0 }}/500 characters</mat-hint>
+            @if (overallForm.get('recommendedActions')?.hasError('maxlength')) {
+              <mat-error>Recommended actions cannot exceed 500 characters</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Analysis Status Section -->
+    <mat-card class="form-section status-section">
+      <mat-card-content>
+        <div class="form-row status-row">
+          <div class="status-checkboxes">
+            <mat-checkbox formControlName="analysisComplete">
+              Analysis Complete
+            </mat-checkbox>
+          </div>
+
+          <div class="analysis-summary">
+            <span><strong>Selected Particle Types:</strong> {{ selectedParticleCount() }} / {{ debrisParticleTypes.length }}</span>
+            <span><strong>Form Status:</strong> {{ 
+              overallForm.get('analysisComplete')?.value ? 'Complete' : 'In Progress' 
+            }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button mat-raised-button type="button" color="primary" 
+              (click)="onSave()" [disabled]="!overallForm.valid || selectedParticleCount() === 0">
+        <mat-icon>save</mat-icon>
+        Save Analysis
+      </button>
+      
+      <button mat-raised-button type="button" color="accent" 
+              (click)="onPartialSave()" [disabled]="overallForm.pristine && particleTypeFormsArray.pristine">
+        <mat-icon>save_alt</mat-icon>
+        Partial Save
+      </button>
+      
+      <button mat-stroked-button type="button" (click)="onClear()">
+        <mat-icon>clear_all</mat-icon>
+        Clear Form
+      </button>
+    </div>
+
+    <!-- Validation Summary -->
+    @if (overallForm.invalid || particleTypeFormsArray.invalid) {
+      <mat-card class="validation-summary error">
+        <mat-card-content>
+          <h4><mat-icon>error</mat-icon> Form Validation Errors</h4>
+          <ul>
+            @if (overallForm.get('analystInitials')?.hasError('required')) {
+              <li>Analyst initials are required</li>
+            }
+            @if (overallForm.get('testStandard')?.hasError('required')) {
+              <li>Test standard is required</li>
+            }
+            @if (selectedParticleCount() === 0) {
+              <li>At least one particle type must be selected for analysis</li>
+            }
+            @for (particleType of debrisParticleTypes; track particleType; let i = $index) {
+              @if (getParticleTypeForm(i).get('isSelected')?.value) {
+                @if (getParticleTypeForm(i).get('concentration')?.hasError('required')) {
+                  <li>{{ particleType }}: Concentration is required</li>
+                }
+                @if (getParticleTypeForm(i).get('severity')?.hasError('required')) {
+                  <li>{{ particleType }}: Severity rating is required</li>
+                }
+                @if (getParticleTypeForm(i).get('observations')?.hasError('maxlength')) {
+                  <li>{{ particleType }}: Observations exceed maximum length</li>
+                }
+              }
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Loading State -->
+    @if (isLoadingParticleTypes()) {
+      <mat-card class="loading-card">
+        <mat-card-content>
+          <div class="loading-content">
+            <mat-spinner diameter="40"></mat-spinner>
+            <p>Loading particle type definitions...</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Error State -->
+    @if (particleTypesError()) {
+      <mat-card class="error-card">
+        <mat-card-content>
+          <div class="error-content">
+            <mat-icon color="warn">error</mat-icon>
+            <p>{{ particleTypesError() }}</p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+  </form>
+</div>

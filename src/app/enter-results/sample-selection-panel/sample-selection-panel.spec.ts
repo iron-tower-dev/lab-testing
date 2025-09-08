@@ -1,7 +1,12 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Component, signal } from '@angular/core';
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SampleSelectionPanel } from './sample-selection-panel';
 import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from '../enter-results.types';
+import { SampleService } from '../../shared/services/sample.service';
+import { TestsService } from '../../shared/services/tests.service';
+import { ApiService } from '../../shared/services/api.service';
 
 @Component({
   selector: 'host-sample-selection-panel-test',
@@ -16,16 +21,24 @@ class HostTestComponent {
 describe('SampleSelectionPanel', () => {
   let component: SampleSelectionPanel;
   let fixture: ComponentFixture<SampleSelectionPanel>;
+  let httpMock: HttpTestingController;
   let sampleTestReference: TestReference;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SampleSelectionPanel]
+      imports: [SampleSelectionPanel, HttpClientTestingModule, NoopAnimationsModule],
+      providers: [SampleService, TestsService, ApiService]
     }).compileComponents();
     fixture = TestBed.createComponent(SampleSelectionPanel);
     component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
     sampleTestReference = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
+    
     fixture.detectChanges();
+    
+    // Mock the HTTP request for test options and provide empty response to trigger fallback
+    const req = httpMock.expectOne('http://localhost:3001/api/tests');
+    req.flush({ success: false, error: 'Not found' });
   });
 
   it('should create', () => {
@@ -54,7 +67,8 @@ describe('SampleSelectionPanel', () => {
   });
 
   it('should have all test reference options available', () => {
-    expect(component.testReferenceOptions.length).toBe(24);
+    fixture.detectChanges();
+    expect(component.testReferenceOptions().length).toBe(24);
   });
 
   it('should emit sampleSelected with correct testReference when sample is clicked', () => {
@@ -73,12 +87,17 @@ describe('SampleSelectionPanel', () => {
     
     expect(testComponent.sampleSelected.emit).toHaveBeenCalledWith({
       testReference: testRef,
-      sampleId: 'TAN-101'
+      sampleId: 'TAN-101',
+      sampleDetails: undefined
     });
   });
 
   it('should return empty array for sampleNumbers when no test is selected', () => {
     // Component starts with null selectedTestReference
     expect(component.sampleNumbers()).toEqual([]);
+  });
+  
+  afterEach(() => {
+    httpMock.verify();
   });
 });

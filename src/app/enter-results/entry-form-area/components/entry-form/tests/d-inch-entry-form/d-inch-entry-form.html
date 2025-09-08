@@ -1,1 +1,309 @@
-<p>Diameter Inch entry form</p>
+<div class="d-inch-form-container">
+  <!-- Form Header -->
+  @if (sampleData()) {
+    <div class="form-header">
+      <h2>D-inch Test Entry</h2>
+      <div class="sample-info">
+        <span><strong>Sample:</strong> {{ sampleData()?.sampleNumber }}</span>
+        <span><strong>Equipment:</strong> {{ sampleData()?.eqTagNum || 'N/A' }}</span>
+        <span><strong>Component:</strong> {{ sampleData()?.component || 'N/A' }}</span>
+      </div>
+    </div>
+  }
+
+  <form [formGroup]="mainForm" class="d-inch-form-content">
+    <!-- Test Information Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Test Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="third-width">
+            <mat-label>Test Standard</mat-label>
+            <mat-select formControlName="testStandard">
+              @for (standard of testStandardOptions; track standard.value) {
+                <mat-option [value]="standard.value">{{ standard.label }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Standard test method</mat-hint>
+            @if (mainForm.get('testStandard')?.hasError('required')) {
+              <mat-error>Test standard is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Equipment ID</mat-label>
+            <input matInput formControlName="equipmentId" placeholder="Equipment identifier">
+            <mat-hint>Testing equipment used</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Temperature (°C)</mat-label>
+            <input matInput type="number" formControlName="temperature"
+                   step="0.1" min="15" max="35" placeholder="22.0">
+            <mat-hint>Test temperature (15-35°C)</mat-hint>
+            @if (mainForm.get('temperature')?.hasError('min') || mainForm.get('temperature')?.hasError('max')) {
+              <mat-error>Temperature must be between 15-35°C</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="quarter-width">
+            <mat-label>Analyst Initials</mat-label>
+            <input matInput formControlName="analystInitials" 
+                   maxlength="5" placeholder="ABC">
+            <mat-hint>Your initials (max 5 characters)</mat-hint>
+            @if (mainForm.get('analystInitials')?.hasError('required')) {
+              <mat-error>Analyst initials are required</mat-error>
+            }
+            @if (mainForm.get('analystInitials')?.hasError('maxlength')) {
+              <mat-error>Maximum 5 characters allowed</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Trials Section -->
+    <mat-card class="form-section trials-section">
+      <mat-card-header>
+        <mat-card-title>Trial Measurements</mat-card-title>
+        <mat-card-subtitle>
+          {{ validTrialCount() }} of {{ maxTrials }} trials completed
+          @if (averageResult()) {
+            | Average: {{ averageResult() }}
+          }
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- Trial Selection Actions -->
+        <div class="trial-actions">
+          <button mat-stroked-button type="button" (click)="onSelectAllTrials()">
+            {{ selectedTrialCount() === maxTrials ? 'Deselect All' : 'Select All' }}
+          </button>
+          @if (selectedTrialCount() > 0) {
+            <button mat-stroked-button type="button" color="warn" (click)="onClearSelectedTrials()">
+              Clear Selected ({{ selectedTrialCount() }})
+            </button>
+          }
+        </div>
+
+        <!-- Trials Table -->
+        <div class="trials-table">
+          <table mat-table [dataSource]="trialsFormArray.controls" class="full-width">
+            <!-- Selection Column -->
+            <ng-container matColumnDef="select">
+              <th mat-header-cell *matHeaderCellDef>Select</th>
+              <td mat-cell *matCellDef="let control; let i = index">
+                <mat-checkbox [formControl]="control.get('isSelected')!"></mat-checkbox>
+              </td>
+            </ng-container>
+
+            <!-- Trial Number Column -->
+            <ng-container matColumnDef="trial">
+              <th mat-header-cell *matHeaderCellDef>Trial</th>
+              <td mat-cell *matCellDef="let control; let i = index">
+                <strong>{{ i + 1 }}</strong>
+              </td>
+            </ng-container>
+
+            <!-- Measurement Column -->
+            <ng-container matColumnDef="measurement">
+              <th mat-header-cell *matHeaderCellDef>Measurement</th>
+              <td mat-cell *matCellDef="let control">
+                <mat-form-field class="table-field">
+                  <input matInput type="number" [formControl]="control.get('measurement')!"
+                         step="0.01" min="0" max="1000" placeholder="0.00">
+                  @if (control.get('measurement')?.hasError('min')) {
+                    <mat-error>Cannot be negative</mat-error>
+                  }
+                  @if (control.get('measurement')?.hasError('max')) {
+                    <mat-error>Exceeds maximum</mat-error>
+                  }
+                </mat-form-field>
+              </td>
+            </ng-container>
+
+            <!-- Result Column -->
+            <ng-container matColumnDef="result">
+              <th mat-header-cell *matHeaderCellDef>Result</th>
+              <td mat-cell *matCellDef="let control">
+                <div class="result-display">
+                  @if (control.get('result')?.value !== '' && control.get('result')?.value !== null) {
+                    {{ control.get('result')?.value | number:'1.2-2' }}
+                  } @else {
+                    <span class="no-result">—</span>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Notes Column -->
+            <ng-container matColumnDef="notes">
+              <th mat-header-cell *matHeaderCellDef>Notes</th>
+              <td mat-cell *matCellDef="let control">
+                <mat-form-field class="table-field notes-field">
+                  <input matInput [formControl]="control.get('notes')!" 
+                         maxlength="200" placeholder="Optional notes">
+                  @if (control.get('notes')?.hasError('maxlength')) {
+                    <mat-error>Maximum 200 characters</mat-error>
+                  }
+                </mat-form-field>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="['select', 'trial', 'measurement', 'result', 'notes']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['select', 'trial', 'measurement', 'result', 'notes']"
+                [class.selected]="row.get('isSelected')?.value"></tr>
+          </table>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Results Summary -->
+    @if (validTrialCount() > 0) {
+      <mat-card class="form-section results-section">
+        <mat-card-header>
+          <mat-card-title>Results Summary</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="results-display">
+            <div class="result-item">
+              <label>Valid Trials:</label>
+              <span class="value">{{ validTrialCount() }} of {{ maxTrials }}</span>
+            </div>
+            @if (averageResult()) {
+              <div class="result-item">
+                <label>Average Result:</label>
+                <span class="value">{{ averageResult() | number:'1.2-2' }}</span>
+              </div>
+            }
+            @if (validTrialCount() > 1) {
+              <div class="result-item">
+                <label>Variation:</label>
+                <span class="value" [class.warning]="!isVariationAcceptable()">
+                  {{ resultVariation() | number:'1.2-2' }}%
+                </span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Quality Control Checks -->
+    @if (showQualityControlChecks()) {
+      <mat-card class="form-section qc-section">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>warning</mat-icon>
+            Quality Control Checks
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="qc-messages">
+            @if (!isVariationAcceptable()) {
+              <div class="qc-warning">
+                <mat-icon>error</mat-icon>
+                <span>{{ getQualityControlMessage() }}</span>
+              </div>
+            }
+            @if (validTrialCount() < 2) {
+              <div class="qc-info">
+                <mat-icon>info</mat-icon>
+                <span>{{ getQualityControlMessage() }}</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Comments Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Comments</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="full-width">
+            <mat-label>Lab Comments</mat-label>
+            <textarea matInput formControlName="labComments" 
+                      rows="3" maxlength="1000" 
+                      placeholder="Enter lab-specific comments here...">
+            </textarea>
+            <mat-hint>{{ mainForm.get('labComments')?.value?.length || 0 }}/1000 characters</mat-hint>
+            @if (mainForm.get('labComments')?.hasError('maxlength')) {
+              <mat-error>Comments cannot exceed 1000 characters</mat-error>
+            }
+          </mat-form-field>
+        </div>
+        
+        <div class="form-row">
+          <mat-form-field class="full-width">
+            <mat-label>Overall Notes</mat-label>
+            <textarea matInput formControlName="overallNotes" 
+                      rows="2" maxlength="500" 
+                      placeholder="Additional notes or observations...">
+            </textarea>
+            <mat-hint>{{ mainForm.get('overallNotes')?.value?.length || 0 }}/500 characters</mat-hint>
+            @if (mainForm.get('overallNotes')?.hasError('maxlength')) {
+              <mat-error>Notes cannot exceed 500 characters</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button mat-raised-button type="button" color="primary" 
+              (click)="onSave()" [disabled]="!mainForm.valid || validTrialCount() === 0">
+        <mat-icon>save</mat-icon>
+        Save Results
+      </button>
+      
+      <button mat-raised-button type="button" color="accent" 
+              (click)="onPartialSave()" [disabled]="mainForm.pristine && trialsFormArray.pristine">
+        <mat-icon>save_alt</mat-icon>
+        Partial Save
+      </button>
+      
+      <button mat-stroked-button type="button" (click)="onClear()">
+        <mat-icon>clear_all</mat-icon>
+        Clear Form
+      </button>
+      
+      @if (selectedTrialCount() > 0) {
+        <button mat-stroked-button type="button" color="warn" (click)="onClearSelectedTrials()">
+          <mat-icon>delete</mat-icon>
+          Delete Selected
+        </button>
+      }
+    </div>
+
+    <!-- Validation Summary -->
+    @if (mainForm.invalid || trialsFormArray.invalid) {
+      <mat-card class="validation-summary error">
+        <mat-card-content>
+          <h4><mat-icon>error</mat-icon> Form Validation Errors</h4>
+          <ul>
+            @if (mainForm.get('analystInitials')?.hasError('required')) {
+              <li>Analyst initials are required</li>
+            }
+            @if (validTrialCount() === 0) {
+              <li>At least one trial measurement is required</li>
+            }
+            @for (control of trialsFormArray.controls; track $index; let i = $index) {
+              @if (control.get('measurement')?.errors) {
+                <li>Trial {{ i + 1 }}: Invalid measurement value</li>
+              }
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    }
+  </form>
+</div>
