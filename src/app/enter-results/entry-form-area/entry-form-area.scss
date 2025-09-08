@@ -1,0 +1,12 @@
+.entry-form-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 12px; // Compact spacing between header and form
+  
+  // Make sure the form takes up the remaining space
+  > *:last-child {
+    flex: 1;
+    overflow-y: auto;
+  }
+}

@@ -1,46 +1,55 @@
-// Ferrography Entry Form Styles
+// Ferrography Entry Form Styles - Optimized for Space Efficiency
 .ferrography-form-container {
   display: flex;
   flex-direction: column;
-  gap: 24px;
-  padding: 16px;
-  max-width: 1400px;
-  margin: 0 auto;
-  
+  gap: 16px; // Reduced from 24px
+  padding: 12px; // Reduced from 16px
+  max-width: 100%; // Use full available width
+  margin: 0;
+  height: calc(100vh - 120px); // Use viewport height efficiently
+  overflow-y: auto;
+
   &.read-only {
     pointer-events: none;
     opacity: 0.8;
   }
 }
 
-// Overall Record Section
+// Overall Record Section - Compact Layout
 .overall-record-section {
   .mat-card-content {
-    padding: 24px;
+    padding: 16px; // Reduced from 24px
   }
-  
+
   .overall-form {
-    display: flex;
-    flex-direction: column;
-    gap: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr; // Two-column layout for larger screens
+    gap: 16px; // Reduced from 32px
+    margin-top: 1rem; // Reduced from 2rem
   }
   
-  // Section Headers
+  // Make comments and actions span full width
+  .comments-section,
+  .form-actions {
+    grid-column: 1 / -1;
+  }
+
+  // Section Headers - Compact
   .section-header {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
-    padding-bottom: 8px;
-    border-bottom: 2px solid #e0e0e0;
-    
+    gap: 8px; // Reduced from 12px
+    margin-bottom: 12px; // Reduced from 20px
+    padding-bottom: 6px; // Reduced from 8px
+    border-bottom: 1px solid #e0e0e0; // Thinner border
+
     .section-icon {
       color: #2196f3;
       font-size: 24px;
       width: 24px;
       height: 24px;
     }
-    
+
     h3 {
       margin: 0;
       font-size: 1.25rem;
@@ -48,7 +57,7 @@
       color: #333;
       flex: 1;
     }
-    
+
     .comment-counter {
       display: flex;
       align-items: center;
@@ -59,17 +68,17 @@
       font-size: 0.875rem;
       font-weight: 500;
       color: #666;
-      
+
       &.warning {
         background-color: #fff3e0;
         color: #ff9800;
       }
-      
+
       &.error {
         background-color: #ffebee;
         color: #f44336;
       }
-      
+
       mat-icon {
         font-size: 16px;
         width: 16px;
@@ -77,7 +86,7 @@
       }
     }
   }
-  
+
   // Analysis Controls Section
   .analysis-controls-section {
     .control-row {
@@ -85,17 +94,17 @@
       grid-template-columns: 1fr 1fr;
       gap: 24px;
       align-items: start;
-      
+
       .mat-form-field {
         width: 100%;
       }
-      
+
       .view-mode-field {
         .mat-select-panel {
           max-width: 300px;
         }
       }
-      
+
       .severity-field {
         .mat-option {
           font-weight: 500;
@@ -103,48 +112,48 @@
       }
     }
   }
-  
-  // Dilution Section
+
+  // Dilution Section - Compact
   .dilution-section {
     background-color: #f8f9fa;
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 6px; // Smaller radius
+    padding: 12px; // Reduced from 20px
     border: 1px solid #e9ecef;
-    
+
     .dilution-controls {
       display: flex;
-      gap: 24px;
+      gap: 16px; // Reduced from 24px
       align-items: flex-start;
       flex-wrap: wrap;
-      
+
       .dilution-factor-field {
         flex: 1;
         min-width: 250px;
       }
-      
+
       .custom-dilution-field {
         flex: 1;
         min-width: 200px;
         max-width: 300px;
-        
+
         .mat-icon {
           color: #666;
         }
       }
     }
   }
-  
+
   // Comments Section
   .comments-section {
     .comments-field {
       width: 100%;
-      
+
       textarea {
-        min-height: 120px;
+        min-height: 80px; // Reduced from 120px
         resize: vertical;
       }
     }
-    
+
     .comments-info {
       display: flex;
       align-items: flex-start;
@@ -156,7 +165,7 @@
       border-left: 4px solid #2196f3;
       font-size: 0.875rem;
       line-height: 1.4;
-      
+
       mat-icon {
         font-size: 20px;
         width: 20px;
@@ -164,65 +173,67 @@
         margin-top: 2px;
         flex-shrink: 0;
       }
-      
+
       span {
         color: #555;
       }
     }
-    
+
     .mat-hint {
       &.warning {
         color: #ff9800;
         font-weight: 500;
       }
-      
+
       &.error {
         color: #f44336;
         font-weight: 500;
       }
     }
   }
-  
+
   // Form Actions
   .form-actions {
     .actions-header {
       margin-bottom: 16px;
     }
-    
+
     .action-buttons {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      
+      display: flex; // Change to flex for more compact horizontal layout
+      gap: 12px; // Reduced from 16px
+      flex-wrap: wrap;
+      justify-content: flex-start;
+
       .action-button {
         display: flex;
         align-items: center;
-        gap: 12px;
-        padding: 12px 20px;
+        gap: 8px; // Reduced from 12px
+        padding: 8px 16px; // Reduced from 12px 20px
         height: auto;
-        min-height: 64px;
-        border-radius: 8px;
+        min-height: 48px; // Reduced from 64px
+        border-radius: 6px; // Reduced from 8px
         transition: all 0.2s ease;
-        
+        flex: 0 0 auto; // Don't grow, maintain natural size
+
         mat-icon {
           font-size: 24px;
           width: 24px;
           height: 24px;
           flex-shrink: 0;
         }
-        
+
         .button-content {
           display: flex;
           flex-direction: column;
           align-items: flex-start;
           text-align: left;
-          
+
           .button-title {
             font-size: 0.975rem;
             font-weight: 500;
             line-height: 1.2;
           }
-          
+
           .button-subtitle {
             font-size: 0.8rem;
             opacity: 0.7;
@@ -230,34 +241,34 @@
             line-height: 1.2;
           }
         }
-        
+
         &.primary-action {
           box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
-          
+
           &:hover:not(:disabled) {
             box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
             transform: translateY(-1px);
           }
         }
-        
+
         &.clear-action {
           border: 2px solid #e0e0e0;
-          
+
           &:hover:not(:disabled) {
             border-color: #bdbdbd;
             background-color: #f5f5f5;
           }
-          
+
           .button-content .button-title {
             color: #666;
           }
         }
-        
+
         &:hover:not(:disabled) {
           transform: translateY(-2px);
           box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         &:disabled {
           opacity: 0.6;
           cursor: not-allowed;
@@ -273,7 +284,7 @@
     color: #666;
     font-style: italic;
   }
-  
+
   .loading-state {
     display: flex;
     flex-direction: column;
@@ -282,14 +293,14 @@
     padding: 48px 24px;
     text-align: center;
     gap: 16px;
-    
+
     p {
       margin: 0;
       color: #666;
       font-style: italic;
     }
   }
-  
+
   .error-state {
     display: flex;
     flex-direction: column;
@@ -301,23 +312,23 @@
     background-color: rgba(244, 67, 54, 0.05);
     border: 1px solid rgba(244, 67, 54, 0.2);
     border-radius: 8px;
-    
+
     mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
     }
-    
+
     p {
       margin: 0;
       color: #d32f2f;
     }
-    
+
     button {
       display: flex;
       align-items: center;
       gap: 8px;
-      
+
       mat-icon {
         font-size: 18px;
         width: 18px;
@@ -325,50 +336,55 @@
       }
     }
   }
-  
+
   .particle-types-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-    gap: 16px;
-    margin-top: 16px;
+    display: flex;
+    flex-direction: column; // Single column layout
+    gap: 12px; // Reduced from 16px
+    margin-top: 12px; // Reduced from 16px
+    
+    // Each card takes full width of container
+    > * {
+      width: 100%;
+    }
   }
-  
+
   .particle-type-card {
     border: 2px solid #e0e0e0;
     border-radius: 8px;
     padding: 16px;
     background-color: #fafafa;
     transition: all 0.3s ease;
-    
+
     &.selected {
       border-color: #2196f3;
       background-color: rgba(33, 150, 243, 0.05);
     }
-    
+
     &.visible {
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
-    
+
     .particle-type-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
-      
+
       h4 {
         margin: 0;
         font-size: 1.1rem;
         font-weight: 500;
         color: #333;
       }
-      
+
       .particle-type-controls {
         display: flex;
         align-items: center;
         gap: 8px;
       }
     }
-    
+
     .evaluated-severity {
       display: flex;
       align-items: center;
@@ -378,14 +394,14 @@
       background-color: rgba(76, 175, 80, 0.1);
       border-radius: 4px;
       font-weight: 500;
-      
+
       mat-icon {
         font-size: 18px;
         width: 18px;
         height: 18px;
       }
     }
-    
+
     .particle-type-entry-form {
       margin-top: 16px;
       padding-top: 16px;
@@ -393,11 +409,11 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
       gap: 12px;
-      
+
       .full-width {
         grid-column: 1 / -1;
       }
-      
+
       .comment-actions {
         grid-column: 1 / -1;
         display: flex;
@@ -405,12 +421,12 @@
         justify-content: space-between;
         gap: 12px;
         margin-top: 8px;
-        
+
         button {
           display: flex;
           align-items: center;
           gap: 6px;
-          
+
           mat-icon {
             font-size: 16px;
             width: 16px;
@@ -432,17 +448,17 @@
     padding: 48px 24px;
     text-align: center;
     color: #666;
-    
+
     mat-icon {
       font-size: 48px;
       width: 48px;
       height: 48px;
       margin-bottom: 16px;
     }
-    
+
     p {
       margin: 8px 0;
-      
+
       &.note {
         font-size: 0.875rem;
         color: #999;
@@ -456,28 +472,28 @@
 .validation-messages {
   .warning-card {
     border-left: 4px solid #ff9800;
-    
+
     .warning-content {
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      
+
       mat-icon {
         font-size: 24px;
         width: 24px;
         height: 24px;
         margin-top: 2px;
       }
-      
+
       h4 {
         margin: 0 0 8px 0;
         font-size: 1rem;
         font-weight: 500;
       }
-      
+
       p {
         margin: 4px 0;
-        
+
         &.error-text {
           color: #f44336;
           font-weight: 500;
@@ -498,31 +514,33 @@
 @media (max-width: 768px) {
   .ferrography-form-container {
     padding: 8px;
+    gap: 12px;
   }
-  
+
   .overall-record-section {
     .mat-card-content {
-      padding: 16px;
+      padding: 12px; // Even more compact on mobile
     }
-    
+
     .overall-form {
-      gap: 24px;
+      grid-template-columns: 1fr; // Single column on mobile
+      gap: 16px;
     }
-    
+
     .analysis-controls-section {
       .control-row {
         grid-template-columns: 1fr;
         gap: 16px;
       }
     }
-    
+
     .dilution-section {
       padding: 16px;
-      
+
       .dilution-controls {
         flex-direction: column;
         gap: 16px;
-        
+
         .dilution-factor-field,
         .custom-dilution-field {
           width: 100%;
@@ -531,15 +549,15 @@
         }
       }
     }
-    
+
     .form-actions {
       .action-buttons {
         grid-template-columns: 1fr;
-        
+
         .action-button {
           justify-content: center;
           text-align: center;
-          
+
           .button-content {
             align-items: center;
             text-align: center;
@@ -548,11 +566,9 @@
       }
     }
   }
-  
-  .particle-types-grid {
-    grid-template-columns: 1fr !important;
-  }
-  
+
+  // No need for particle-types-grid override - already single column
+
   .particle-type-entry-form {
     grid-template-columns: 1fr !important;
   }
@@ -564,32 +580,32 @@
       flex-direction: column;
       align-items: flex-start;
       gap: 8px;
-      
+
       h3 {
         font-size: 1.1rem;
       }
-      
+
       .comment-counter {
         align-self: flex-end;
       }
     }
-    
+
     .form-actions {
       .action-buttons {
         .action-button {
           min-height: 56px;
-          
+
           mat-icon {
             font-size: 20px;
             width: 20px;
             height: 20px;
           }
-          
+
           .button-content {
             .button-title {
               font-size: 0.9rem;
             }
-            
+
             .button-subtitle {
               font-size: 0.75rem;
             }
@@ -598,21 +614,21 @@
       }
     }
   }
-  
+
   .particle-type-header {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
-    
+
     .particle-type-controls {
       align-self: flex-end;
     }
   }
-  
+
   .comment-actions {
     flex-direction: column;
     align-items: stretch;
-    
+
     button {
       width: 100%;
       justify-content: center;
@@ -642,7 +658,7 @@
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
   }
-  
+
   &:focus-within {
     outline: 2px solid #2196f3;
     outline-offset: 2px;
@@ -656,7 +672,7 @@
     transition: none;
     animation: none;
   }
-  
+
   .particle-type-card:hover {
     transform: none;
   }
@@ -666,13 +682,13 @@
 @media (prefers-contrast: high) {
   .particle-type-card {
     border-width: 3px;
-    
+
     &.selected {
       border-color: #000;
       background-color: #fff;
     }
   }
-  
+
   .evaluated-severity {
     background-color: #000;
     color: #fff;

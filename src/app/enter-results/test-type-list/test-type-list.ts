@@ -1,6 +1,7 @@
-import { Component, output, signal } from '@angular/core';
+import { Component, output, signal, inject } from '@angular/core';
 import { TestReference, TestIdentifierUtils, MigrationUtils } from '../enter-results.types';
 import { SharedModule } from '../../shared-module';
+import { TestsService } from '../../shared/services/tests.service';
 
 @Component({
   selector: 'app-test-type-list',
@@ -9,10 +10,28 @@ import { SharedModule } from '../../shared-module';
   styleUrl: './test-type-list.scss'
 })
 export class TestTypeList {
+  private readonly testsService = inject(TestsService);
+  
   // Signals using new type system
   readonly selectedTestReference = signal<TestReference | null>(null);
-  readonly testReferenceOptions = MigrationUtils.getAllTestOptions();
+  readonly testReferenceOptions = signal<Array<{ reference: TestReference; label: string }>>([]);
   readonly selectedTestReferenceChange = output<TestReference | null>({});
+  
+  constructor() {
+    this.loadTestOptions();
+  }
+  
+  private loadTestOptions() {
+    this.testsService.getAllTestOptions().subscribe({
+      next: (options) => {
+        this.testReferenceOptions.set(options);
+      },
+      error: (error) => {
+        console.warn('Failed to load test options from API, using fallback:', error);
+        this.testReferenceOptions.set(MigrationUtils.getAllTestOptions());
+      }
+    });
+  }
 
   setSelectedTestReference(testReference: TestReference | null) {
     this.selectedTestReference.set(testReference);

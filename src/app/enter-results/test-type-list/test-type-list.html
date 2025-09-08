@@ -1,6 +1,6 @@
 <div class="wrapper">
     <mat-list class="selection-list">
-        @for (option of testReferenceOptions; track option.reference.id) {
+        @for (option of testReferenceOptions(); track option.reference.id) {
         <mat-list-item (click)="setSelectedTestReference(option.reference)">
             {{ option.label }}
         </mat-list-item>

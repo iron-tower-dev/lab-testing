@@ -180,6 +180,44 @@ export interface ResultsHeaderResponse {
 }
 
 /**
+ * Enhanced sample information with test context
+ * Used for displaying comprehensive sample details in the entry form header
+ */
+export interface SampleWithTestInfo {
+  sampleId: number;
+  sampleNumber: string;
+  testName: string;
+  eqTagNum: string | null;
+  component: string | null;
+  location: string | null;
+  lubeType: string | null;
+  techData: string | null;
+  qualityClass: string | null;
+  labComments: string[] | null;
+  testReference: TestReference;
+}
+
+/**
+ * Sample database response for test-specific samples
+ */
+export interface SampleTestResponse {
+  sampleId: number;
+  sampleNumber: string;
+  testId: number;
+  testName: string;
+  eqTagNum?: string;
+  component?: string;
+  location?: string;
+  lubeType?: string;
+  techData?: string;
+  qualityClass?: string;
+  labComments?: string[];
+  status: string;
+  priority: number;
+  assignedDate: Date;
+}
+
+/**
  * @deprecated Use TestReference, TestLookupKey, or TestDefinition instead.
  * This type is kept for backward compatibility during migration.
  */

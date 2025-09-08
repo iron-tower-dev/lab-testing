@@ -130,8 +130,9 @@ describe('ParticleTypeCardComponent', () => {
     const firstImage = imageContainers[0].querySelector('.particle-image');
     const secondImage = imageContainers[1].querySelector('.particle-image');
     
-    expect(firstImage.src).toContain(mockParticleTypeDefinition.image1);
-    expect(secondImage.src).toContain(mockParticleTypeDefinition.image2);
+    // Check for SVG version of images (JPG filenames are converted to SVG)
+    expect(firstImage.src).toContain('rwp1.svg');
+    expect(secondImage.src).toContain('rwp2.svg');
   });
 
   it('should display fallback header when no definition is provided', () => {

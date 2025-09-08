@@ -16,6 +16,9 @@
 
 .main-area {
 	flex: 1;
-	padding: 2rem;
+	padding: 1rem; // Reduced from 2rem
 	overflow-y: auto;
+	height: 100vh; // Use full viewport height
+	display: flex;
+	flex-direction: column;
 }
