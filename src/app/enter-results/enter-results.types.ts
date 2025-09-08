@@ -573,3 +573,48 @@ export namespace MigrationUtils {
     return [101, 102, 103, 104].map(n => `${abbrev}-${n}`);
   }
 }
+
+// ==========================================
+// Deleterious Test Types
+// ==========================================
+
+/**
+ * Individual trial data for deleterious analysis
+ */
+export interface DeleteriousTrial {
+  trialNumber: number;
+  testValue: number | null;
+  notes: string;
+  isSelected: boolean;
+}
+
+/**
+ * Complete deleterious test entry form data
+ */
+export interface DeleteriousFormData {
+  sampleId?: number;
+  analystInitials: string;
+  testStandard: string;
+  testConditions: {
+    temperature?: number;
+    humidity?: number;
+    equipment: string;
+  };
+  trials: DeleteriousTrial[];
+  labComments: string;
+  overallResult?: {
+    averageValue: number;
+    standardDeviation: number;
+    coefficientOfVariation: number;
+  };
+}
+
+/**
+ * Deleterious form validation state
+ */
+export interface DeleteriousFormValidation {
+  isValid: boolean;
+  overallErrors: string[];
+  trialErrors: Record<number, string[]>;
+  hasUnsavedChanges: boolean;
+}
