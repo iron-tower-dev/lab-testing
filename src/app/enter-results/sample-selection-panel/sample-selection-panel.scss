@@ -28,3 +28,35 @@
     font-size: 0.95em;
     margin-top: 1rem;
 }
+
+.loading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    color: var(--mat-text-secondary);
+    font-size: 14px;
+    
+    mat-spinner {
+        flex-shrink: 0;
+    }
+}
+
+.error {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: var(--mat-error-50, #ffebee);
+    color: var(--mat-error-700, #c62828);
+    border-radius: 4px;
+    margin: 8px 0;
+    font-size: 14px;
+    
+    mat-icon {
+        flex-shrink: 0;
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+    }
+}

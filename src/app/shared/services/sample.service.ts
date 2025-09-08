@@ -212,4 +212,18 @@ export class SampleService {
     const data = { newSampleNumber };
     return this.apiService.post<Sample>(`samples/${sampleId}/duplicate`, data);
   }
+
+  /**
+   * Get samples assigned to a specific test type
+   */
+  getSamplesByTest(testId: number): Observable<ApiResponse<any[]>> {
+    return this.apiService.get<any[]>(`samples/by-test/${testId}`);
+  }
+
+  /**
+   * Get detailed sample information for entry form header
+   */
+  getSampleDetails(sampleId: number): Observable<ApiResponse<any>> {
+    return this.apiService.get<any>(`samples/${sampleId}/details`);
+  }
 }

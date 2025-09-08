@@ -13,7 +13,7 @@ import { TestReference } from './enter-results.types';
 export class EnterResults {
   // Signals for reactive state management
   readonly selectedTestReference = signal<TestReference | null>(null);
-  readonly selectedSample = signal<{ testReference: TestReference; sampleId: string } | null>(null);
+  readonly selectedSample = signal<{ testReference: TestReference; sampleId: string; sampleDetails?: any } | null>(null);
 
   // Computed properties
   readonly initialTestSelected = computed(() => this.selectedTestReference() !== null);
@@ -26,7 +26,7 @@ export class EnterResults {
     }
   }
 
-  onSampleSelected(event: { testReference: TestReference; sampleId: string }) {
+  onSampleSelected(event: { testReference: TestReference; sampleId: string; sampleDetails?: any }) {
     this.selectedSample.set(event);
   }
 }

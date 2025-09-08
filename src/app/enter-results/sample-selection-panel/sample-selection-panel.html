@@ -2,7 +2,7 @@
   <mat-form-field>
     <mat-label>Select Test</mat-label>
     <mat-select [value]="selectedTestReference()" (selectionChange)="setSelectedTestReference($event.value)">
-      @for (testOption of testReferenceOptions; track testOption.reference.id) {
+      @for (testOption of testReferenceOptions(); track testOption.reference.id) {
         <mat-option [value]="testOption.reference">{{ testOption.label }}</mat-option>
       }
     </mat-select>
@@ -11,7 +11,19 @@
     @if (selectedTestReference()) {
       <mat-label>Samples for {{ getDisplayName(selectedTestReference()!) }}:</mat-label>
     }
-    @if (sampleNumbers().length) {
+    @if (isLoading()) {
+      <div class="loading">
+        <mat-spinner diameter="30"></mat-spinner>
+        <span>Loading samples...</span>
+      </div>
+    }
+    @if (getError()) {
+      <div class="error">
+        <mat-icon>error</mat-icon>
+        <span>{{ getError() }}</span>
+      </div>
+    }
+    @if (!isLoading() && !getError() && sampleNumbers().length) {
       <mat-action-list>
         @for (sample of sampleNumbers(); track sample) {
           <button mat-list-item type="button" (click)="onSampleClick(sample)">
@@ -20,7 +32,7 @@
         }
       </mat-action-list>
     }
-    @if (selectedTestReference() && !sampleNumbers().length) {
+    @if (!isLoading() && !getError() && selectedTestReference() && !sampleNumbers().length) {
       <div class="empty">No samples found.</div>
     }
   </div>
