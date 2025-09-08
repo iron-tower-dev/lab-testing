@@ -1,5 +1,5 @@
 import { Component, input, computed } from '@angular/core';
-import { TestReference, MigrationUtils } from '../../../enter-results.types';
+import { TestReference, MigrationUtils, SampleWithTestInfo } from '../../../enter-results.types';
 import { FerrographyEntryForm } from './tests/ferrography-entry-form/ferrography-entry-form';
 import { SpectroscopyEntryForm } from './tests/spectroscopy-entry-form/spectroscopy-entry-form';
 import { TanEntryForm } from './tests/tan-entry-form/tan-entry-form';
@@ -64,4 +64,25 @@ export class EntryForm {
     const testRef = this.testReference();
     return testRef ? MigrationUtils.referenceToTestCode(testRef) : null;
   });
+
+  // Create sample data for component inputs
+  createSampleWithTestInfo(): SampleWithTestInfo | null {
+    const testRef = this.testReference();
+    const sampleId = this.sampleId();
+    if (!testRef || !sampleId) return null;
+    
+    return {
+      sampleId: parseInt(sampleId) || 0,
+      sampleNumber: sampleId,
+      testName: testRef.name || 'Unknown Test',
+      testReference: testRef,
+      eqTagNum: 'EQ-1001',
+      component: 'Main Motor',
+      location: 'Plant A',
+      lubeType: 'ISO VG 46',
+      techData: 'Standard analysis procedure',
+      qualityClass: 'Premium',
+      labComments: ['Standard sample for debris analysis']
+    };
+  }
 }

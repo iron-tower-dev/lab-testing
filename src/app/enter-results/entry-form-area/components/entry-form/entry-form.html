@@ -54,7 +54,7 @@
   <app-tfout-entry-form></app-tfout-entry-form>
 }
 @if (testCode() === 'DebrisID') {
-  <app-debris-id-entry-form></app-debris-id-entry-form>
+  <app-debris-id-entry-form [sampleData]="createSampleWithTestInfo()"></app-debris-id-entry-form>
 }
 @if (testCode() === 'Deleterious') {
   <app-deleterious-entry-form></app-deleterious-entry-form>

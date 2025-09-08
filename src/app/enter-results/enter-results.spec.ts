@@ -1,7 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { EnterResults } from './enter-results';
 import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from './enter-results.types';
+import { SampleService } from '../shared/services/sample.service';
+import { TestsService } from '../shared/services/tests.service';
+import { ApiService } from '../shared/services/api.service';
 
 describe('EnterResults', () => {
   let component: EnterResults;
@@ -10,7 +14,8 @@ describe('EnterResults', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [EnterResults]
+      imports: [EnterResults, HttpClientTestingModule, NoopAnimationsModule],
+      providers: [SampleService, TestsService, ApiService]
     })
     .compileComponents();
 

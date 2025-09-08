@@ -490,30 +490,30 @@ export namespace TestIdentifierUtils {
  * This is temporary data for the migration - in production this should come from the database
  */
 export const LEGACY_TEST_CODE_TO_REFERENCE: Record<TestCode, TestReference> = {
-  TAN: { id: 1, name: 'TAN by Color Indication', abbrev: 'TAN', shortAbbrev: 'TAN', groupName: 'Chemical Analysis' },
-  KF: { id: 2, name: 'Water Content by Karl Fischer', abbrev: 'KF', shortAbbrev: 'KF', groupName: 'Chemical Analysis' },
-  SpecStd: { id: 3, name: 'Emission Spectroscopy - Standard', abbrev: 'SpecStd', shortAbbrev: 'SS', groupName: 'Spectroscopy' },
-  SpecLrg: { id: 4, name: 'Emission Spectroscopy - Large', abbrev: 'SpecLrg', shortAbbrev: 'SL', groupName: 'Spectroscopy' },
-  Vis40: { id: 5, name: 'Viscosity - 40°C', abbrev: 'Vis40', shortAbbrev: 'V40', groupName: 'Physical Properties' },
-  Vis100: { id: 6, name: 'Viscosity - 100°C', abbrev: 'Vis100', shortAbbrev: 'V100', groupName: 'Physical Properties' },
-  FTIR: { id: 7, name: 'FTIR', abbrev: 'FTIR', shortAbbrev: 'FTIR', groupName: 'Spectroscopy' },
-  FlashPt: { id: 8, name: 'Flash Point', abbrev: 'FlashPt', shortAbbrev: 'FP', groupName: 'Physical Properties' },
-  TBN: { id: 9, name: 'TBN by Auto Titration', abbrev: 'TBN', shortAbbrev: 'TBN', groupName: 'Chemical Analysis' },
-  InspectFilter: { id: 10, name: 'Inspect Filter', abbrev: 'InspectFilter', shortAbbrev: 'IF', groupName: 'Visual Inspection' },
-  GrPen60: { id: 11, name: 'Grease Penetration - 60°C', abbrev: 'GrPen60', shortAbbrev: 'GP60', groupName: 'Grease Testing' },
-  GrDropPt: { id: 12, name: 'Grease Drop Point', abbrev: 'GrDropPt', shortAbbrev: 'GDP', groupName: 'Grease Testing' },
-  Pcnt: { id: 13, name: 'Particle Count', abbrev: 'Pcnt', shortAbbrev: 'PC', groupName: 'Contamination' },
-  RBOT: { id: 14, name: 'Rheology - Brookfield', abbrev: 'RBOT', shortAbbrev: 'RB', groupName: 'Physical Properties' },
-  FltrRes: { id: 15, name: 'Filter Residue', abbrev: 'FltrRes', shortAbbrev: 'FR', groupName: 'Contamination' },
-  Ferrography: { id: 16, name: 'Ferrography', abbrev: 'Ferrography', shortAbbrev: 'FER', groupName: 'Wear Analysis' },
-  Rust: { id: 17, name: 'Rust', abbrev: 'Rust', shortAbbrev: 'RUST', groupName: 'Corrosion' },
-  TFOUT: { id: 18, name: 'TFOUT', abbrev: 'TFOUT', shortAbbrev: 'TFO', groupName: 'Thermal Stability' },
-  DebrisID: { id: 19, name: 'Debris Identification', abbrev: 'DebrisID', shortAbbrev: 'DID', groupName: 'Wear Analysis' },
-  Deleterious: { id: 20, name: 'Deleterious', abbrev: 'Deleterious', shortAbbrev: 'DEL', groupName: 'Contamination' },
-  Rheometry: { id: 21, name: 'Rheometry', abbrev: 'Rheometry', shortAbbrev: 'RHE', groupName: 'Physical Properties' },
-  DInch: { id: 22, name: 'Diameter Inch', abbrev: 'DInch', shortAbbrev: 'DI', groupName: 'Physical Properties' },
-  OilContent: { id: 23, name: 'Oil Content', abbrev: 'OilContent', shortAbbrev: 'OC', groupName: 'Chemical Analysis' },
-  VPR: { id: 24, name: 'Varnish Potential Rating', abbrev: 'VPR', shortAbbrev: 'VPR', groupName: 'Chemical Analysis' },
+  TAN: { id: 10, name: 'TAN by Color Indication', abbrev: 'TAN', shortAbbrev: 'TAN', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  KF: { id: 20, name: 'Water - KF', abbrev: 'K-F', shortAbbrev: 'K-F', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  SpecStd: { id: 30, name: 'Emission Spectroscopy - Standard', abbrev: 'Spec-Std', shortAbbrev: 'S Sp', groupName: 'ELEMENTS--STD' },
+  SpecLrg: { id: 40, name: 'Emission Spectroscopy - Large', abbrev: 'Spec-Lrg', shortAbbrev: 'L Sp', groupName: 'ELEMENTS--LARGE' },
+  Vis40: { id: 50, name: 'Viscosity @ 40', abbrev: 'Vis@40', shortAbbrev: 'V 40', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  Vis100: { id: 60, name: 'Viscosity @ 100', abbrev: 'Vis@100', shortAbbrev: 'V 100', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  FTIR: { id: 70, name: 'FT-IR', abbrev: 'FT-IR', shortAbbrev: 'FT-IR', groupName: 'INFRARED SPECTROSCOPY' },
+  FlashPt: { id: 80, name: 'Flash Point', abbrev: 'Flash Pt.', shortAbbrev: 'Fl Pt', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  TBN: { id: 110, name: 'TBN by Auto Titration', abbrev: 'TBN', shortAbbrev: 'TBN', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  InspectFilter: { id: 120, name: 'Inspect Filter', abbrev: 'InspectFilte', shortAbbrev: 'I F', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  GrPen60: { id: 130, name: 'Grease Penetration Worked', abbrev: 'Gr.Pen/60', shortAbbrev: 'GP 60', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  GrDropPt: { id: 140, name: 'Grease Dropping Point', abbrev: 'Gr.DropPt', shortAbbrev: 'GD Pt', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  Pcnt: { id: 160, name: 'Particle Count', abbrev: 'PCnt', shortAbbrev: 'PC', groupName: 'PARTICLE COUNT' },
+  RBOT: { id: 170, name: 'RBOT', abbrev: 'RBOT', shortAbbrev: 'R BOT', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  FltrRes: { id: 180, name: 'Filter Residue', abbrev: 'FltrRes', shortAbbrev: 'F Res', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  Ferrography: { id: 210, name: 'Ferrography', abbrev: 'Ferrography', shortAbbrev: 'Fer', groupName: 'WEAR PARTICLE ANALYSIS' },
+  Rust: { id: 220, name: 'Rust', abbrev: 'Rust', shortAbbrev: 'Rust', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  TFOUT: { id: 230, name: 'TFOUT', abbrev: 'TFOUT', shortAbbrev: 'TF OUT', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  DebrisID: { id: 240, name: 'Debris Identification', abbrev: 'DebrisID', shortAbbrev: 'Debr', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  Deleterious: { id: 250, name: 'Deleterious', abbrev: 'Deleterious', shortAbbrev: 'Del', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
+  Rheometry: { id: 270, name: 'Rheometer', abbrev: 'Rheometer', shortAbbrev: 'Rheo', groupName: 'RHEOMETER' },
+  DInch: { id: 284, name: 'D-inch', abbrev: 'D-inch', shortAbbrev: 'D-in', groupName: 'MISCELLANEOUS' },
+  OilContent: { id: 285, name: 'Oil Content', abbrev: 'Oil Content', shortAbbrev: 'Oil C', groupName: 'MISCELLANEOUS' },
+  VPR: { id: 286, name: 'Varnish Potential Rating', abbrev: 'VPR', shortAbbrev: 'VPR', groupName: 'MISCELLANEOUS' },
 };
 
 /**
@@ -535,7 +535,18 @@ export namespace MigrationUtils {
    */
   export function referenceToTestCode(reference: TestReference): TestCode | null {
     for (const [code, ref] of Object.entries(LEGACY_TEST_CODE_TO_REFERENCE)) {
-      if (ref.id === reference.id || ref.abbrev === reference.abbrev) {
+      // Match by ID first (most reliable)
+      if (ref.id === reference.id) {
+        return code as TestCode;
+      }
+      // Match by abbrev, handling whitespace
+      if (ref.abbrev && reference.abbrev && 
+          ref.abbrev.trim() === reference.abbrev.trim()) {
+        return code as TestCode;
+      }
+      // Match by shortAbbrev as fallback
+      if (ref.shortAbbrev && reference.shortAbbrev && 
+          ref.shortAbbrev.trim() === reference.shortAbbrev.trim()) {
         return code as TestCode;
       }
     }
