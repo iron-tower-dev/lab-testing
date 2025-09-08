@@ -1,0 +1,472 @@
+.grease-penetration-form-content {
+  .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+    align-items: flex-end;
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+    }
+  }
+
+  .half-width {
+    flex: 0 0 calc(50% - 8px);
+    
+    @media (max-width: 768px) {
+      flex: 1;
+    }
+  }
+
+  .third-width {
+    flex: 0 0 calc(33.333% - 11px);
+    
+    @media (max-width: 768px) {
+      flex: 1;
+    }
+  }
+
+  .quarter-width {
+    flex: 0 0 calc(25% - 12px);
+    
+    @media (max-width: 768px) {
+      flex: 1;
+    }
+  }
+
+  .full-width {
+    flex: 1;
+    width: 100%;
+  }
+
+  // Special styling for calculated fields
+  .calculated-field {
+    background-color: #e8f5e8;
+    color: #2e7d32;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  // Section styling
+  .setup-section,
+  .equipment-section,
+  .observations-section {
+    background-color: #fafafa;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+    border-left: 4px solid #2196f3;
+
+    h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #1976d2;
+    }
+  }
+
+  .readings-section {
+    background-color: #fff8e1;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+    border-left: 4px solid #ff9800;
+    
+    h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #f57c00;
+    }
+
+    .cone-readings {
+      .reading-validation {
+        margin-top: 20px;
+        padding: 16px;
+        background-color: #ffffff;
+        border-radius: 4px;
+        border: 1px solid #ddd;
+
+        .validation-item {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 8px;
+          padding: 8px;
+          border-radius: 4px;
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+
+          &.valid {
+            background-color: #e8f5e8;
+            color: #2e7d32;
+
+            mat-icon {
+              color: #4caf50;
+            }
+          }
+
+          &.invalid {
+            background-color: #ffebee;
+            color: #d32f2f;
+
+            mat-icon {
+              color: #f44336;
+            }
+          }
+
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+
+          span {
+            font-size: 14px;
+          }
+        }
+      }
+    }
+  }
+
+  .equipment-section {
+    border-left-color: #9c27b0;
+    
+    h3 {
+      color: #7b1fa2;
+    }
+  }
+
+  .observations-section {
+    border-left-color: #607d8b;
+    
+    h3 {
+      color: #455a64;
+    }
+  }
+
+  // Calculation display section
+  .calculation-display {
+    background-color: #e8f5e8;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+    border-left: 4px solid #4caf50;
+
+    h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #2e7d32;
+    }
+
+    .calc-formula {
+      background-color: #ffffff;
+      padding: 12px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-bottom: 16px;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .calc-steps {
+      .calc-step {
+        background-color: #f9f9f9;
+        padding: 12px;
+        border-radius: 4px;
+        margin-bottom: 12px;
+        border-left: 3px solid #4caf50;
+
+        &:last-child {
+          margin-bottom: 16px;
+        }
+
+        .calc-detail {
+          display: block;
+          font-family: 'Courier New', monospace;
+          font-size: 13px;
+          color: #555;
+          margin-top: 4px;
+        }
+      }
+    }
+
+    .calc-result {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2e7d32;
+      background-color: #ffffff;
+      padding: 16px;
+      border-radius: 4px;
+      border: 2px solid #4caf50;
+      text-align: center;
+    }
+  }
+
+  // Classification section
+  .classification-section {
+    background-color: #f3e5f5;
+    padding: 20px;
+    border-radius: 8px;
+    margin: 24px 0;
+    border-left: 4px solid #9c27b0;
+
+    h3 {
+      margin: 0 0 16px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #7b1fa2;
+    }
+
+    .classification-info {
+      display: grid;
+      gap: 12px;
+
+      .nlgi-grade,
+      .penetration-range,
+      .consistency-description {
+        background-color: #ffffff;
+        padding: 12px;
+        border-radius: 4px;
+        border: 1px solid #ce93d8;
+
+        strong {
+          color: #7b1fa2;
+        }
+      }
+
+      .nlgi-grade {
+        font-size: 18px;
+        text-align: center;
+        background-color: #f8bbd9;
+        border-color: #7b1fa2;
+        
+        strong {
+          color: #4a148c;
+        }
+      }
+    }
+  }
+
+  // Checkbox styling
+  .worked-sample-checkbox {
+    margin: 8px 0;
+    
+    .mdc-checkbox {
+      margin-right: 8px;
+    }
+  }
+
+  // Form field customizations
+  mat-form-field {
+    .mat-mdc-form-field-hint-wrapper {
+      .mat-mdc-form-field-hint {
+        font-size: 12px;
+        color: #666;
+      }
+    }
+
+    &.mat-focused {
+      .mat-mdc-form-field-outline-thick {
+        .mat-mdc-form-field-outline-start,
+        .mat-mdc-form-field-outline-gap,
+        .mat-mdc-form-field-outline-end {
+          border-color: #1976d2;
+        }
+      }
+    }
+  }
+
+  // Input field styling
+  input[type="number"] {
+    text-align: right;
+    
+    &.calculated-field {
+      text-align: center;
+      font-weight: 600;
+    }
+  }
+
+  input[type="date"] {
+    text-align: left;
+  }
+
+  // Textarea styling
+  textarea {
+    resize: vertical;
+    min-height: 50px;
+  }
+
+  // Select field styling
+  mat-select {
+    .mat-mdc-select-value {
+      font-size: 14px;
+    }
+  }
+
+  // Error states
+  .mat-mdc-form-field.mat-form-field-invalid {
+    .mat-mdc-text-field-wrapper {
+      .mat-mdc-form-field-flex {
+        .mat-mdc-form-field-infix {
+          input, textarea {
+            caret-color: #f44336;
+          }
+        }
+      }
+    }
+  }
+
+  // Responsive adjustments
+  @media (max-width: 1024px) {
+    .setup-section,
+    .readings-section,
+    .equipment-section,
+    .observations-section,
+    .calculation-display,
+    .classification-section {
+      margin: 16px 0;
+      padding: 16px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .setup-section,
+    .readings-section,
+    .equipment-section,
+    .observations-section,
+    .calculation-display,
+    .classification-section {
+      margin: 12px 0;
+      padding: 12px;
+      
+      h3 {
+        font-size: 14px;
+        margin-bottom: 12px;
+      }
+    }
+    
+    .calc-formula {
+      padding: 8px;
+      font-size: 12px;
+    }
+    
+    .calc-steps {
+      .calc-step {
+        padding: 8px;
+        
+        .calc-detail {
+          font-size: 12px;
+        }
+      }
+    }
+
+    .calc-result {
+      font-size: 16px;
+      padding: 12px;
+    }
+
+    .classification-info {
+      .nlgi-grade {
+        font-size: 16px;
+      }
+    }
+
+    .reading-validation {
+      margin-top: 16px;
+      padding: 12px;
+      
+      .validation-item {
+        padding: 6px;
+        gap: 8px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        span {
+          font-size: 13px;
+        }
+      }
+    }
+  }
+}
+
+// Animation for calculation updates
+.calc-result {
+  animation: highlight 0.5s ease-in-out;
+}
+
+.validation-item {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.classification-info > div {
+  animation: slideInUp 0.4s ease-in-out;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: #ffeb3b;
+  }
+  100% {
+    background-color: #ffffff;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Focus improvements
+mat-form-field {
+  &:hover {
+    .mat-mdc-form-field-outline {
+      .mat-mdc-form-field-outline-start,
+      .mat-mdc-form-field-outline-gap,
+      .mat-mdc-form-field-outline-end {
+        border-color: rgba(0, 0, 0, 0.6);
+      }
+    }
+  }
+}
+
+// Enhanced checkbox styling
+mat-checkbox {
+  .mdc-checkbox__background {
+    border-color: #2196f3;
+  }
+  
+  &.mat-mdc-checkbox-checked {
+    .mdc-checkbox__background {
+      background-color: #2196f3;
+      border-color: #2196f3;
+    }
+  }
+}

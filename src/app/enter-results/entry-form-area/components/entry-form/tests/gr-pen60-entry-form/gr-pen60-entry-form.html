@@ -1,1 +1,220 @@
-<p>Grease Penetration 60°C entry form</p>
+<form [formGroup]="form" class="grease-penetration-form-content">
+  <!-- Test Setup Section -->
+  <div class="setup-section">
+    <h3>Test Setup</h3>
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Test Temperature</mat-label>
+        <mat-select formControlName="testTemperature">
+          <mat-option value="25">25°C (Standard)</mat-option>
+          <mat-option value="0">0°C (Low temperature)</mat-option>
+          <mat-option value="40">40°C (High temperature)</mat-option>
+        </mat-select>
+        <mat-hint>ASTM D217 standard temperature</mat-hint>
+        @if (form.get('testTemperature')?.hasError('required')) {
+          <mat-error>Test temperature is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Penetration Time</mat-label>
+        <input matInput type="number" formControlName="penetrationTime"
+               step="1" min="5" max="10" placeholder="5 sec">
+        <mat-hint>Standard is 5 seconds</mat-hint>
+        @if (form.get('penetrationTime')?.hasError('required')) {
+          <mat-error>Penetration time is required</mat-error>
+        }
+        @if (form.get('penetrationTime')?.hasError('min') || form.get('penetrationTime')?.hasError('max')) {
+          <mat-error>Time must be between 5-10 seconds</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Analyst Initials</mat-label>
+        <input matInput formControlName="analystInitials"
+               maxlength="5" placeholder="ABC">
+        @if (form.get('analystInitials')?.hasError('required')) {
+          <mat-error>Analyst initials are required</mat-error>
+        }
+        @if (form.get('analystInitials')?.hasError('maxlength')) {
+          <mat-error>Maximum 5 characters</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-checkbox formControlName="workedSample" class="worked-sample-checkbox">
+        Sample was worked (60 strokes before test)
+      </mat-checkbox>
+    </div>
+  </div>
+
+  <!-- Cone Readings Section -->
+  <div class="readings-section">
+    <h3>Cone Penetration Readings</h3>
+    <div class="cone-readings">
+      <div class="form-row">
+        <mat-form-field class="quarter-width">
+          <mat-label>Cone 1 Reading</mat-label>
+          <input matInput type="number" formControlName="cone1"
+                 step="1" min="50" max="500" placeholder="Reading 1 (mm/10)">
+          @if (form.get('cone1')?.hasError('required')) {
+            <mat-error>Cone 1 reading is required</mat-error>
+          }
+          @if (form.get('cone1')?.hasError('min') || form.get('cone1')?.hasError('max')) {
+            <mat-error>Reading must be between 50-500 mm/10</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="quarter-width">
+          <mat-label>Cone 2 Reading</mat-label>
+          <input matInput type="number" formControlName="cone2"
+                 step="1" min="50" max="500" placeholder="Reading 2 (mm/10)">
+          @if (form.get('cone2')?.hasError('required')) {
+            <mat-error>Cone 2 reading is required</mat-error>
+          }
+          @if (form.get('cone2')?.hasError('min') || form.get('cone2')?.hasError('max')) {
+            <mat-error>Reading must be between 50-500 mm/10</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="quarter-width">
+          <mat-label>Cone 3 Reading</mat-label>
+          <input matInput type="number" formControlName="cone3"
+                 step="1" min="50" max="500" placeholder="Reading 3 (mm/10)">
+          @if (form.get('cone3')?.hasError('required')) {
+            <mat-error>Cone 3 reading is required</mat-error>
+          }
+          @if (form.get('cone3')?.hasError('min') || form.get('cone3')?.hasError('max')) {
+            <mat-error>Reading must be between 50-500 mm/10</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field class="quarter-width">
+          <mat-label>Average Reading</mat-label>
+          <input matInput type="number" [value]="averageReading" 
+                 readonly class="calculated-field" placeholder="mm/10">
+          <mat-hint>Automatic average</mat-hint>
+        </mat-form-field>
+      </div>
+
+      <!-- Reading validation indicators -->
+      @if (showReadingValidation()) {
+        <div class="reading-validation">
+          <div class="validation-item" [class.valid]="isVariationAcceptable()" [class.invalid]="!isVariationAcceptable()">
+            <mat-icon>{{ isVariationAcceptable() ? 'check_circle' : 'error' }}</mat-icon>
+            <span>
+              Reading variation: {{ getReadingVariation() }} mm/10 
+              ({{ isVariationAcceptable() ? 'Acceptable' : 'High - Check readings' }})
+            </span>
+          </div>
+          
+          <div class="validation-item" [class.valid]="isRangeReasonable()" [class.invalid]="!isRangeReasonable()">
+            <mat-icon>{{ isRangeReasonable() ? 'check_circle' : 'warning' }}</mat-icon>
+            <span>
+              Penetration range: {{ isRangeReasonable() ? 'Normal' : 'Outside typical range' }}
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Equipment Information Section -->
+  <div class="equipment-section">
+    <h3>Equipment Information</h3>
+    <div class="form-row">
+      <mat-form-field class="half-width">
+        <mat-label>Penetrometer ID</mat-label>
+        <input matInput formControlName="penetrometerId" placeholder="Equipment ID">
+        <mat-hint>Calibrated penetrometer identification</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Last Calibration Date</mat-label>
+        <input matInput type="date" formControlName="lastCalibrationDate">
+        <mat-hint>Equipment calibration date</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Sample Observations Section -->
+  <div class="observations-section">
+    <h3>Sample Observations</h3>
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Sample Appearance</mat-label>
+        <textarea matInput formControlName="sampleAppearance" rows="2"
+                  placeholder="Describe grease color, consistency, any foreign matter..."></textarea>
+        <mat-hint>e.g., "Light brown, smooth consistency", "Dark grease with metal particles"</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Test Notes</mat-label>
+        <textarea matInput formControlName="testNotes" rows="2"
+                  placeholder="Any unusual observations during testing..."></textarea>
+        <mat-hint>Note any difficulties, equipment issues, or unusual behavior</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Calculation Display -->
+  @if (showCalculationDetails && averageReading > 0) {
+    <div class="calculation-display">
+      <h3>Calculation Details</h3>
+      <div class="calc-formula">
+        <strong>Formula:</strong> Penetration = (Average × 3.75) + 24<br>
+        <strong>Where:</strong> Average is the arithmetic mean of three cone readings
+      </div>
+      <div class="calc-steps">
+        <div class="calc-step">
+          <strong>Step 1:</strong> Calculate average of cone readings<br>
+          <span class="calc-detail">
+            Average = ({{ form.get('cone1')?.value }} + {{ form.get('cone2')?.value }} + {{ form.get('cone3')?.value }}) ÷ 3 = {{ averageReading }}
+          </span>
+        </div>
+        <div class="calc-step">
+          <strong>Step 2:</strong> Apply penetration formula<br>
+          <span class="calc-detail">
+            Penetration = ({{ averageReading }} × 3.75) + 24 = {{ calculationResult?.result }}
+          </span>
+        </div>
+      </div>
+      <div class="calc-result">
+        <strong>Final Penetration Value:</strong> {{ calculationResult?.result }} mm/10
+      </div>
+    </div>
+  }
+
+  <!-- Classification Section -->
+  @if (calculationResult?.result) {
+    <div class="classification-section">
+      <h3>Grease Classification</h3>
+      <div class="classification-info">
+        <div class="nlgi-grade">
+          <strong>NLGI Grade:</strong> {{ getNLGIGrade() }}
+        </div>
+        <div class="penetration-range">
+          <strong>Typical Range:</strong> {{ getPenetrationRange() }}
+        </div>
+        <div class="consistency-description">
+          <strong>Consistency:</strong> {{ getConsistencyDescription() }}
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Additional Comments Section -->
+  <div class="comments-section">
+    <h3>Additional Comments</h3>
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Additional Comments</mat-label>
+        <textarea matInput formControlName="mainComments" rows="3"
+                  placeholder="Any additional observations or notes about the test..."></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+</form>

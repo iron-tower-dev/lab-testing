@@ -1,1 +1,191 @@
-<p>Flash Point entry form</p>
+<form [formGroup]="form" class="flash-point-form-content">
+  <!-- Test Conditions Section -->
+  <div class="conditions-section">
+    <h3>Test Conditions & Setup</h3>
+    
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Atmospheric Pressure</mat-label>
+        <input matInput type="number" formControlName="pressure" 
+               placeholder="760 mmHg" min="700" max="800" step="0.1">
+        <mat-hint>Standard: 760 mmHg</mat-hint>
+        @if (form.get('pressure')?.hasError('required')) {
+          <mat-error>Pressure is required</mat-error>
+        }
+        @if (form.get('pressure')?.hasError('min') || form.get('pressure')?.hasError('max')) {
+          <mat-error>Pressure must be between 700-800 mmHg</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Test Method</mat-label>
+        <mat-select formControlName="testMethod">
+          <mat-option value="ASTM-D92">ASTM D92 - Cleveland Open Cup</mat-option>
+          <mat-option value="ASTM-D93">ASTM D93 - Pensky-Martens Closed Cup</mat-option>
+          <mat-option value="ISO-2592">ISO 2592 - Cleveland Open Cup</mat-option>
+          <mat-option value="ISO-2719">ISO 2719 - Pensky-Martens</mat-option>
+        </mat-select>
+        @if (form.get('testMethod')?.hasError('required')) {
+          <mat-error>Test method is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Lab Temperature</mat-label>
+        <input matInput type="number" formControlName="labTemperature" 
+               placeholder="°C" min="15" max="35" step="0.5">
+        <mat-hint>Typical: 18-25°C</mat-hint>
+        @if (form.get('labTemperature')?.hasError('min') || form.get('labTemperature')?.hasError('max')) {
+          <mat-error>Temperature must be between 15-35°C</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="half-width">
+        <mat-label>Sample Volume</mat-label>
+        <input matInput type="number" formControlName="sampleVolume" 
+               placeholder="mL" min="50" max="100" step="5">
+        <mat-hint>Standard: 70-80 mL</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Analyst Initials</mat-label>
+        <input matInput formControlName="analystInitials" 
+               maxlength="5" placeholder="ABC">
+        @if (form.get('analystInitials')?.hasError('required')) {
+          <mat-error>Analyst initials are required</mat-error>
+        }
+        @if (form.get('analystInitials')?.hasError('maxlength')) {
+          <mat-error>Maximum 5 characters</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Flash Point Readings Section -->
+  <div class="readings-section">
+    <h3>Flash Point Temperature Readings</h3>
+    
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Trial 1 Temperature</mat-label>
+        <input matInput type="number" formControlName="trial1Temp" 
+               placeholder="°C" min="0" max="400" step="0.5">
+        @if (form.get('trial1Temp')?.hasError('required')) {
+          <mat-error>Trial 1 temperature is required</mat-error>
+        }
+        @if (form.get('trial1Temp')?.hasError('min') || form.get('trial1Temp')?.hasError('max')) {
+          <mat-error>Temperature must be between 0-400°C</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Trial 2 Temperature</mat-label>
+        <input matInput type="number" formControlName="trial2Temp" 
+               placeholder="°C" min="0" max="400" step="0.5">
+        @if (form.get('trial2Temp')?.hasError('required')) {
+          <mat-error>Trial 2 temperature is required</mat-error>
+        }
+        @if (form.get('trial2Temp')?.hasError('min') || form.get('trial2Temp')?.hasError('max')) {
+          <mat-error>Temperature must be between 0-400°C</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Trial 3 Temperature (Optional)</mat-label>
+        <input matInput type="number" formControlName="trial3Temp" 
+               placeholder="°C" min="0" max="400" step="0.5">
+        <mat-hint>Use if precision check needed</mat-hint>
+        @if (form.get('trial3Temp')?.hasError('min') || form.get('trial3Temp')?.hasError('max')) {
+          <mat-error>Temperature must be between 0-400°C</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Flash Point Calculation Display -->
+  @if (averageTemperature > 0) {
+    <div class="calculation-display">
+      <h3>Flash Point Calculation</h3>
+      
+      @if (showCalculationDetails) {
+        <div class="calc-formula">
+          Flash Point (corrected) = Average Temperature + Pressure Correction<br>
+          Pressure Correction = 0.06 × (760 - Actual Pressure)<br>
+        </div>
+      }
+      
+      <div class="calc-values">
+        <p><strong>Average Temperature:</strong> {{ averageTemperature | number:'1.1-1' }}°C</p>
+        <p><strong>Pressure Correction:</strong> {{ pressureCorrection | number:'1.1-1' }}°C</p>
+        <p class="calc-result">
+          <strong>Corrected Flash Point:</strong> 
+          {{ calculationResult?.result | number:'1.0-0' }}°C
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- Quality Control Section -->
+  @if (showQualityControlChecks()) {
+    <div class="qc-section">
+      <h3>Quality Control Checks</h3>
+      
+      <div class="qc-warnings">
+        @if (hasLargePressureDeviation()) {
+          <div class="qc-warning">
+            <mat-icon>warning</mat-icon>
+            <span>Large pressure deviation from standard (760 mmHg) detected. Verify pressure reading accuracy.</span>
+          </div>
+        }
+        
+        @if (hasHighTemperatureVariation()) {
+          <div class="qc-warning">
+            <mat-icon>warning</mat-icon>
+            <span>High temperature variation between trials (>5°C). Consider additional trial or sample preparation check.</span>
+          </div>
+        }
+        
+        @if (hasUnusualFlashPoint()) {
+          <div class="qc-warning">
+            <mat-icon>warning</mat-icon>
+            <span>Unusual flash point result (<30°C or >350°C). Verify sample type and test procedure.</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
+  <!-- Observations Section -->
+  <div class="observations-section">
+    <h3>Test Observations & Comments</h3>
+    
+    <div class="form-row">
+      <mat-form-field class="half-width">
+        <mat-label>Flash Observation</mat-label>
+        <textarea matInput formControlName="flashObservation" 
+                  placeholder="Describe flash characteristics (color, intensity, duration)"
+                  rows="3"></textarea>
+        <mat-hint>Note any unusual flash behavior</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Test Notes</mat-label>
+        <textarea matInput formControlName="testNotes" 
+                  placeholder="Equipment used, deviations, environmental conditions"
+                  rows="3"></textarea>
+        <mat-hint>Document any test variations</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Additional Comments</mat-label>
+        <textarea matInput formControlName="mainComments" 
+                  placeholder="Any additional observations or notes about the test"
+                  rows="2"></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+</form>

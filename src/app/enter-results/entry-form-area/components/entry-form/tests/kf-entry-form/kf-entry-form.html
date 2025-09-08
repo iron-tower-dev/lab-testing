@@ -1,2 +1,179 @@
-<p>KF entry form</p>
+<form [formGroup]="form" class="kf-form-content">
+  <!-- Test Conditions Section -->
+  <div class="test-conditions-section">
+    <h3>Karl Fischer Water Content Test</h3>
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Test Temperature</mat-label>
+        <input matInput type="number" formControlName="testTemperature"
+               step="0.1" min="20" max="30" placeholder="25°C">
+        <mat-hint>Typical range: 20-30°C</mat-hint>
+        @if (form.get('testTemperature')?.hasError('min') || form.get('testTemperature')?.hasError('max')) {
+          <mat-error>Temperature must be between 20-30°C</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Sample Volume</mat-label>
+        <input matInput type="number" formControlName="sampleVolume"
+               step="0.1" min="0.1" max="10" placeholder="mL">
+        <mat-hint>Sample volume in mL</mat-hint>
+        @if (form.get('sampleVolume')?.hasError('min') || form.get('sampleVolume')?.hasError('max')) {
+          <mat-error>Volume must be between 0.1-10 mL</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Analyst Initials</mat-label>
+        <input matInput formControlName="analystInitials"
+               maxlength="5" placeholder="ABC">
+        @if (form.get('analystInitials')?.hasError('required')) {
+          <mat-error>Analyst initials are required</mat-error>
+        }
+        @if (form.get('analystInitials')?.hasError('maxlength')) {
+          <mat-error>Maximum 5 characters</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Trial Results Section -->
+  <div class="trials-section">
+    <h3>Trial Results</h3>
+    <div class="form-row">
+      <mat-form-field class="quarter-width">
+        <mat-label>Trial 1 Result</mat-label>
+        <input matInput type="number" formControlName="trial1Result"
+               step="0.01" min="0" max="100" placeholder="% H₂O">
+        @if (form.get('trial1Result')?.hasError('required')) {
+          <mat-error>Trial 1 result is required</mat-error>
+        }
+        @if (form.get('trial1Result')?.hasError('min') || form.get('trial1Result')?.hasError('max')) {
+          <mat-error>Result must be between 0-100%</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="quarter-width">
+        <mat-label>Trial 2 Result</mat-label>
+        <input matInput type="number" formControlName="trial2Result"
+               step="0.01" min="0" max="100" placeholder="% H₂O">
+        @if (form.get('trial2Result')?.hasError('required')) {
+          <mat-error>Trial 2 result is required</mat-error>
+        }
+        @if (form.get('trial2Result')?.hasError('min') || form.get('trial2Result')?.hasError('max')) {
+          <mat-error>Result must be between 0-100%</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="quarter-width">
+        <mat-label>Trial 3 Result (Optional)</mat-label>
+        <input matInput type="number" formControlName="trial3Result"
+               step="0.01" min="0" max="100" placeholder="% H₂O">
+        <mat-hint>Optional third trial</mat-hint>
+        @if (form.get('trial3Result')?.hasError('min') || form.get('trial3Result')?.hasError('max')) {
+          <mat-error>Result must be between 0-100%</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="quarter-width">
+        <mat-label>Trial 4 Result (Optional)</mat-label>
+        <input matInput type="number" formControlName="trial4Result"
+               step="0.01" min="0" max="100" placeholder="% H₂O">
+        <mat-hint>Optional fourth trial</mat-hint>
+        @if (form.get('trial4Result')?.hasError('min') || form.get('trial4Result')?.hasError('max')) {
+          <mat-error>Result must be between 0-100%</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Calculation Results -->
+  @if (getAverageResult() > 0) {
+    <div class="calculation-section">
+      <h3>Calculation Results</h3>
+      <div class="calc-display">
+        <div class="calc-row">
+          <mat-form-field class="third-width">
+            <mat-label>Average Water Content</mat-label>
+            <input matInput type="number" [value]="getAverageResult()" 
+                   readonly class="calculated-field">
+            <mat-hint>Average of all valid trials</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Result Variation</mat-label>
+            <input matInput type="number" [value]="getResultVariation()" 
+                   readonly class="calculated-field"
+                   [class.error-input]="!isVariationAcceptable()">
+            <mat-hint>Difference between max and min</mat-hint>
+          </mat-form-field>
+
+          <div class="validation-indicator third-width">
+            <mat-icon [color]="isVariationAcceptable() ? 'primary' : 'warn'">
+              {{ isVariationAcceptable() ? 'check_circle' : 'warning' }}
+            </mat-icon>
+            <span [class.valid]="isVariationAcceptable()" [class.warning]="!isVariationAcceptable()">
+              {{ isVariationAcceptable() ? 'Acceptable Variation' : 'High Variation - Review Results' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- File Upload Section -->
+  <div class="file-section">
+    <h3>File Data</h3>
+    <div class="form-row">
+      <button mat-button type="button" (click)="toggleFileUpload()" 
+              [color]="showFileUpload ? 'primary' : 'basic'">
+        <mat-icon>{{ showFileUpload ? 'expand_less' : 'expand_more' }}</mat-icon>
+        {{ showFileUpload ? 'Hide' : 'Show' }} File Upload
+      </button>
+    </div>
+    
+    @if (showFileUpload) {
+      <div class="file-upload-area">
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Uploaded File</mat-label>
+            <input matInput formControlName="uploadedFileName" readonly>
+            <mat-hint>Selected file name will appear here</mat-hint>
+          </mat-form-field>
+          
+          <div class="file-input-wrapper half-width">
+            <input type="file" #fileInput (change)="onFileSelected($event)" 
+                   accept=".txt,.dat,.csv" style="display: none;">
+            <button mat-stroked-button type="button" (click)="fileInput.click()">
+              <mat-icon>upload_file</mat-icon>
+              Select File
+            </button>
+            <span class="file-hint">Accepted formats: .txt, .dat, .csv</span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Test Notes Section -->
+  <div class="notes-section">
+    <h3>Test Notes</h3>
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Test Notes</mat-label>
+        <textarea matInput formControlName="testNotes" rows="3"
+                  placeholder="Note any unusual observations, equipment issues, or deviations from standard procedure..."></textarea>
+        <mat-hint>Document any relevant observations or procedure notes</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Additional Comments</mat-label>
+        <textarea matInput formControlName="mainComments" rows="2"
+                  placeholder="Any additional comments about this test..."></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+</form>
 

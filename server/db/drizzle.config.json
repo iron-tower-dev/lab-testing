@@ -1,0 +1,14 @@
+{
+  "dialect": "postgresql",
+  "schema": "./schema.ts",
+  "out": "./migrations",
+  "dbCredentials": {
+    "host": "localhost",
+    "port": 5432,
+    "user": "postgres",
+    "password": "password",
+    "database": "lab_testing"
+  },
+  "verbose": true,
+  "strict": true
+}

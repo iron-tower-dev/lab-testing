@@ -1,0 +1,680 @@
+// Ferrography Entry Form Styles
+.ferrography-form-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+  
+  &.read-only {
+    pointer-events: none;
+    opacity: 0.8;
+  }
+}
+
+// Overall Record Section
+.overall-record-section {
+  .mat-card-content {
+    padding: 24px;
+  }
+  
+  .overall-form {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+  
+  // Section Headers
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e0e0e0;
+    
+    .section-icon {
+      color: #2196f3;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+    
+    h3 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 500;
+      color: #333;
+      flex: 1;
+    }
+    
+    .comment-counter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      background-color: #f5f5f5;
+      border-radius: 16px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #666;
+      
+      &.warning {
+        background-color: #fff3e0;
+        color: #ff9800;
+      }
+      
+      &.error {
+        background-color: #ffebee;
+        color: #f44336;
+      }
+      
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+    }
+  }
+  
+  // Analysis Controls Section
+  .analysis-controls-section {
+    .control-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      align-items: start;
+      
+      .mat-form-field {
+        width: 100%;
+      }
+      
+      .view-mode-field {
+        .mat-select-panel {
+          max-width: 300px;
+        }
+      }
+      
+      .severity-field {
+        .mat-option {
+          font-weight: 500;
+        }
+      }
+    }
+  }
+  
+  // Dilution Section
+  .dilution-section {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    border: 1px solid #e9ecef;
+    
+    .dilution-controls {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      
+      .dilution-factor-field {
+        flex: 1;
+        min-width: 250px;
+      }
+      
+      .custom-dilution-field {
+        flex: 1;
+        min-width: 200px;
+        max-width: 300px;
+        
+        .mat-icon {
+          color: #666;
+        }
+      }
+    }
+  }
+  
+  // Comments Section
+  .comments-section {
+    .comments-field {
+      width: 100%;
+      
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+      }
+    }
+    
+    .comments-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background-color: rgba(33, 150, 243, 0.08);
+      border-radius: 8px;
+      border-left: 4px solid #2196f3;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+      
+      span {
+        color: #555;
+      }
+    }
+    
+    .mat-hint {
+      &.warning {
+        color: #ff9800;
+        font-weight: 500;
+      }
+      
+      &.error {
+        color: #f44336;
+        font-weight: 500;
+      }
+    }
+  }
+  
+  // Form Actions
+  .form-actions {
+    .actions-header {
+      margin-bottom: 16px;
+    }
+    
+    .action-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      
+      .action-button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 20px;
+        height: auto;
+        min-height: 64px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+        
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+          flex-shrink: 0;
+        }
+        
+        .button-content {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-start;
+          text-align: left;
+          
+          .button-title {
+            font-size: 0.975rem;
+            font-weight: 500;
+            line-height: 1.2;
+          }
+          
+          .button-subtitle {
+            font-size: 0.8rem;
+            opacity: 0.7;
+            margin-top: 2px;
+            line-height: 1.2;
+          }
+        }
+        
+        &.primary-action {
+          box-shadow: 0 2px 4px rgba(33, 150, 243, 0.3);
+          
+          &:hover:not(:disabled) {
+            box-shadow: 0 4px 8px rgba(33, 150, 243, 0.4);
+            transform: translateY(-1px);
+          }
+        }
+        
+        &.clear-action {
+          border: 2px solid #e0e0e0;
+          
+          &:hover:not(:disabled) {
+            border-color: #bdbdbd;
+            background-color: #f5f5f5;
+          }
+          
+          .button-content .button-title {
+            color: #666;
+          }
+        }
+        
+        &:hover:not(:disabled) {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+}
+
+// Particle Types Overview
+.particle-types-overview {
+  .loading-indicator {
+    color: #666;
+    font-style: italic;
+  }
+  
+  .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    gap: 16px;
+    
+    p {
+      margin: 0;
+      color: #666;
+      font-style: italic;
+    }
+  }
+  
+  .error-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    gap: 16px;
+    background-color: rgba(244, 67, 54, 0.05);
+    border: 1px solid rgba(244, 67, 54, 0.2);
+    border-radius: 8px;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+    
+    p {
+      margin: 0;
+      color: #d32f2f;
+    }
+    
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+  
+  .particle-types-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+  
+  .particle-type-card {
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: #fafafa;
+    transition: all 0.3s ease;
+    
+    &.selected {
+      border-color: #2196f3;
+      background-color: rgba(33, 150, 243, 0.05);
+    }
+    
+    &.visible {
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .particle-type-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      
+      h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #333;
+      }
+      
+      .particle-type-controls {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+    }
+    
+    .evaluated-severity {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding: 6px 12px;
+      background-color: rgba(76, 175, 80, 0.1);
+      border-radius: 4px;
+      font-weight: 500;
+      
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+    
+    .particle-type-entry-form {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      
+      .full-width {
+        grid-column: 1 / -1;
+      }
+      
+      .comment-actions {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 8px;
+        
+        button {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          
+          mat-icon {
+            font-size: 16px;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+    }
+  }
+}
+
+// Historical Records Section
+.historical-records-section {
+  .historical-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 24px;
+    text-align: center;
+    color: #666;
+    
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 16px;
+    }
+    
+    p {
+      margin: 8px 0;
+      
+      &.note {
+        font-size: 0.875rem;
+        color: #999;
+        font-style: italic;
+      }
+    }
+  }
+}
+
+// Validation Messages
+.validation-messages {
+  .warning-card {
+    border-left: 4px solid #ff9800;
+    
+    .warning-content {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        margin-top: 2px;
+      }
+      
+      h4 {
+        margin: 0 0 8px 0;
+        font-size: 1rem;
+        font-weight: 500;
+      }
+      
+      p {
+        margin: 4px 0;
+        
+        &.error-text {
+          color: #f44336;
+          font-weight: 500;
+        }
+      }
+    }
+  }
+}
+
+// Form Field Customizations
+.mat-form-field {
+  &.full-width {
+    width: 100%;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .ferrography-form-container {
+    padding: 8px;
+  }
+  
+  .overall-record-section {
+    .mat-card-content {
+      padding: 16px;
+    }
+    
+    .overall-form {
+      gap: 24px;
+    }
+    
+    .analysis-controls-section {
+      .control-row {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
+    
+    .dilution-section {
+      padding: 16px;
+      
+      .dilution-controls {
+        flex-direction: column;
+        gap: 16px;
+        
+        .dilution-factor-field,
+        .custom-dilution-field {
+          width: 100%;
+          min-width: unset;
+          max-width: unset;
+        }
+      }
+    }
+    
+    .form-actions {
+      .action-buttons {
+        grid-template-columns: 1fr;
+        
+        .action-button {
+          justify-content: center;
+          text-align: center;
+          
+          .button-content {
+            align-items: center;
+            text-align: center;
+          }
+        }
+      }
+    }
+  }
+  
+  .particle-types-grid {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .particle-type-entry-form {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .overall-record-section {
+    .section-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+      
+      h3 {
+        font-size: 1.1rem;
+      }
+      
+      .comment-counter {
+        align-self: flex-end;
+      }
+    }
+    
+    .form-actions {
+      .action-buttons {
+        .action-button {
+          min-height: 56px;
+          
+          mat-icon {
+            font-size: 20px;
+            width: 20px;
+            height: 20px;
+          }
+          
+          .button-content {
+            .button-title {
+              font-size: 0.9rem;
+            }
+            
+            .button-subtitle {
+              font-size: 0.75rem;
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  .particle-type-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    
+    .particle-type-controls {
+      align-self: flex-end;
+    }
+  }
+  
+  .comment-actions {
+    flex-direction: column;
+    align-items: stretch;
+    
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// Animation for particle type visibility
+.particle-type-entry-form {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Focus and hover states
+.particle-type-card {
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  }
+  
+  &:focus-within {
+    outline: 2px solid #2196f3;
+    outline-offset: 2px;
+  }
+}
+
+// Accessibility improvements
+@media (prefers-reduced-motion: reduce) {
+  .particle-type-card,
+  .particle-type-entry-form {
+    transition: none;
+    animation: none;
+  }
+  
+  .particle-type-card:hover {
+    transform: none;
+  }
+}
+
+// High contrast mode support
+@media (prefers-contrast: high) {
+  .particle-type-card {
+    border-width: 3px;
+    
+    &.selected {
+      border-color: #000;
+      background-color: #fff;
+    }
+  }
+  
+  .evaluated-severity {
+    background-color: #000;
+    color: #fff;
+  }
+}

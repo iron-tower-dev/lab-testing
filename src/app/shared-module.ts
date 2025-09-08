@@ -14,6 +14,7 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { RouterModule } from '@angular/router';
 
 const sharable: Type<any>[] = [
@@ -30,6 +31,7 @@ const sharable: Type<any>[] = [
   MatTooltipModule,
   MatSnackBarModule,
   MatProgressSpinnerModule,
+  MatCheckboxModule,
   CommonModule,
   RouterModule,
   ReactiveFormsModule,
