@@ -1,0 +1,211 @@
+[
+  {
+    "id": 12262,
+    "test_name": "TAN by Color Indication",
+    "title": "Enter Results - TAN by Color Indication",
+    "fields": [],
+    "calculations": [
+      "(Final Buret * 5."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter test results, by test name, by Sample ID. The following fields are displayed to the user: Trial Four trial lines shall be available for res...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12263,
+    "test_name": "Water - KF",
+    "title": "Enter Results - Water - KF",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "Karl Fischer (KF) test. <Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12264,
+    "test_name": "TBN by Auto Titration",
+    "title": "Enter Results - TBN by Auto Titration",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter test results, by test name, by Sample ID. The following fields are displayed to the user: Trial Four trial lines shall be available for dat...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12265,
+    "test_name": "Emission Spectroscopy - Large",
+    "title": "Enter Results - Emission Spectroscopy - Large",
+    "fields": [
+      "Na, Cr, Sn, Si, Mo, Ca, Al, Ba, Mg, Ni, Mn, Zn, P, Ag, Pb, H, B, Cu, Fe Display only, not editable Results Editable Numeric only The user is able to identify in Trial 1 if a Ferrography Test needs to be scheduled File Data The user is provided ability to Find File to upload, by trial record, by Sample ID Ex: http://lubelab-t/lab/results/getResultsFromFile"
+    ],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter test results, by test name, by Sample ID. The following fields are displayed to the user: Trial Four trial lines shall be available for dat...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12266,
+    "test_name": "Viscosity @ 40",
+    "title": "Enter Results - Viscosity @ 40",
+    "fields": [],
+    "calculations": [
+      "Stop watch time * Tube calibration value."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12267,
+    "test_name": "Viscosity @ 100",
+    "title": "Enter Results - Viscosity @ 100",
+    "fields": [],
+    "calculations": [
+      "Stop watch time * Tube calibration value."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12270,
+    "test_name": "Flashpoint",
+    "title": "Enter Results - Flashpoint",
+    "fields": [],
+    "calculations": [
+      "Flash Point temperature+ (0."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter test results, by test name, by Sample ID. The following fields are displayed to the user: Trial Four trial lines shall be available for res...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12272,
+    "test_name": "Inspect Filter (Special Template)",
+    "title": "Enter Results - Inspect Filter (Special Template)",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "Design Note: \u200bThere are several elements to be entered for test results. In this template, the basic functionality is to choose if you want to see the 'enter results' screen or not for each Particle Type needing result entries. Not all particle types may be applicable to specific testing. Another basic function is to allow users to display all predefined particle types or to choose which ones to be displayed for specific session. Windows/Displays are collapsed/expanded based on user choices. <Se...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by Particle Type The user is able to select one or more Particle Type records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template The user is able to view all or reviewed data."
+  },
+  {
+    "id": 12273,
+    "test_name": "Grease Penetration Worked",
+    "title": "Enter Results - Grease Penetration Worked",
+    "fields": [
+      "<--Get NLGI value obtained from a lookup table where the calculated Result is between lower and upper values associated with the NLGI value The user is provided ability to select one or more trial records to perform Common Navigation Menu tasks The user is provided ability to view results for Last 12 Sample IDs (Historical Record View) Header Last 12 results for <Insert EQID, Component, Location> Test Name Sample Date Sample ID The user is provided ability to Resize section for Historical Record View Does nothing for me? The user is provided ability to navigate to single screen mode for Historical Record View The user is provided ability to view older history for Historical Record View All or ?? count Error Messaging: The system shall display error message to user if field values do not meet criteria"
+    ],
+    "calculations": [
+      "((Average of the 3 penetrations) * 3."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12274,
+    "test_name": "Grease Dropping Point",
+    "title": "Enter Results - Grease Dropping Point",
+    "fields": [],
+    "calculations": [
+      "Dropping Point Temperature + ((Block Temperature - Dropping Point Temperature) / 3)."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12275,
+    "test_name": "Particle Count",
+    "title": "Enter Results - Particle Count",
+    "fields": [
+      "<--Get NAS value obtained from a lookup table where entered values are between lower and upper values for each of various 'channels' and takes the highest associated NAS value File Data The user is provided ability to Find File to upload, by trial record, by Sample ID Ex: http://lubelab-t/lab/results/getResultsFromFile"
+    ],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12277,
+    "test_name": "RBOT",
+    "title": "Enter Results - RBOT",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter test results, by test name, by Sample ID. The following fields are displayed to the user: Trial Four trial lines shall be available for res...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12279,
+    "test_name": "Ferrography (Special Template)",
+    "title": "Enter Results - Ferrography (Special Template)",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "Design Note: \u200bThere are several elements to be entered for test results. In this template, the basic functionality is to choose if you want to see the 'enter results' screen or not for each Particle Type needing result entries. Not all particle types may be applicable to specific testing. Another basic function is to allow users to display all predefined particle types or to choose which ones to be displayed for specific session. Windows/Displays are collapsed/expanded based on user choices. <Se...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by Particle Type The user is able to select one or more Particle Type records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template The user is able to view all or reviewed data."
+  },
+  {
+    "id": 12280,
+    "test_name": "Rust",
+    "title": "Enter Results - Rust",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter test results, by test name, by Sample ID. The following fields are displayed to the user: Trial Four trial lines shall be available for res...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12281,
+    "test_name": "TFOUT",
+    "title": "Enter Results - TFOUT",
+    "fields": [],
+    "calculations": [
+      "What is the calc? File Data The user is provided ability to preview Sample ID file available to be uploaded Ex: file://pvfs-nucpro/pvnucpro/lubelab/RBOT/59082."
+    ],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12282,
+    "test_name": "Debris Identification (Special Template)",
+    "title": "Enter Results - Debris Identification (Special Template)",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "Design Note: \u200bThere are several elements to be entered for test results. In this template, the basic functionality is to choose if you want to see the 'enter results' screen or not for each Particle Type needing result entries. Not all particle types may be applicable to specific testing. Another basic function is to allow users to display all predefined particle types or to choose which ones to be displayed for specific session. Windows/Displays are collapsed/expanded based on user choices. <Se...",
+    "acceptance_criteria_clean": ""
+  },
+  {
+    "id": 12283,
+    "test_name": "Deleterious",
+    "title": "Enter Results - Deleterious",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12284,
+    "test_name": "Rheometer",
+    "title": "Enter Results - Rheometer",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "Data is converted into a .TXT?? Does this enter test result for Rheometer need to be removed? See ADO #14033",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12285,
+    "test_name": "D-inch",
+    "title": "Enter Results - D-inch",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12286,
+    "test_name": "Oil Content",
+    "title": "Enter Results - Oil Content",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  },
+  {
+    "id": 12287,
+    "test_name": "Varnish Potential Rating",
+    "title": "Enter Results - Varnish Potential Rating",
+    "fields": [],
+    "calculations": [],
+    "description_clean": "<Separate Template> The user is provided ability to view Select Sample ID Template data. <Separate Template> The user is provided ability to view Display of Sample ID Data Template data. <Separate Template> The user is provided ability to select from Common Navigation Menu buttons Template Test Name edit results Template The user is provided ability to enter results by test name, by Sample ID. The following fields are displayed to the user. Trial Four trial lines shall be available for results d...",
+    "acceptance_criteria_clean": "The user can select a Sample ID from list available for specific test The user is able to see specific Sample ID data The user is able to see specific test name template fields for entering test results The user is able to update Lab Comments The user is able to enter in test results by trial The user is able to select specific trial records to make changes to The user is able to save/clear or delete test result data entries The system calculates specific fields define for the test name template"
+  }
+]

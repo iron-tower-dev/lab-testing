@@ -1,1 +1,248 @@
-<p>ferrography-entry-form works!</p>
+<!-- Ferrography Entry Form - Comprehensive Implementation -->
+<div class="ferrography-form-container" [class.read-only]="readOnly()">
+  <!-- Overall Record Section -->
+  <mat-card class="overall-record-section">
+    <mat-card-header>
+      <mat-card-title>Ferrography Analysis - Overall Record</mat-card-title>
+      <mat-card-subtitle *ngIf="sampleId()">Sample ID: {{ sampleId() }}</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <form [formGroup]="overallForm" class="overall-form">
+        <!-- Top Section: Analysis Controls -->
+        <div class="analysis-controls-section">
+          <div class="control-row">
+            <mat-form-field appearance="outline" class="view-mode-field">
+              <mat-label>View Mode</mat-label>
+              <mat-select formControlName="viewMode">
+                <mat-option value="All">All Records (N/A and Review)</mat-option>
+                <mat-option value="Review">Selected Records (Review)</mat-option>
+              </mat-select>
+              <mat-hint>Toggle between all records or selected records view</mat-hint>
+            </mat-form-field>
+            
+            <mat-form-field appearance="outline" class="severity-field">
+              <mat-label>Overall Severity</mat-label>
+              <mat-select formControlName="overallSeverity">
+                <mat-option *ngFor="let severity of severityOptions" [value]="severity">
+                  Level {{ severity }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Assessment severity level (1-4)</mat-hint>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- Middle Section: Dilution Factor -->
+        <div class="dilution-section">
+          <div class="section-header">
+            <mat-icon class="section-icon">science</mat-icon>
+            <h3>Dilution Configuration</h3>
+          </div>
+          
+          <div class="dilution-controls">
+            <mat-form-field appearance="outline" class="dilution-factor-field">
+              <mat-label>Dilution Factor</mat-label>
+              <mat-select formControlName="dilutionFactor">
+                <mat-option *ngFor="let factor of dilutionFactorOptions" [value]="factor">
+                  {{ factor === 'Manual' ? 'Custom Entry (X/YYYY)' : factor }}
+                </mat-option>
+              </mat-select>
+              <mat-hint>Sample status changes from X to E when assigned</mat-hint>
+            </mat-form-field>
+            
+            <!-- Manual Dilution Factor Entry -->
+            <mat-form-field 
+              appearance="outline" 
+              *ngIf="overallForm.get('dilutionFactor')?.value === 'Manual'"
+              class="custom-dilution-field">
+              <mat-label>Custom Ratio (X/YYYY)</mat-label>
+              <input matInput formControlName="customDilutionFactor" placeholder="e.g., 1/50">
+              <mat-hint>Enter custom dilution factor ratio</mat-hint>
+              <mat-icon matSuffix>edit</mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <!-- Bottom Section: Comments -->
+        <div class="comments-section">
+          <div class="section-header">
+            <mat-icon class="section-icon">comment</mat-icon>
+            <h3>Analysis Comments</h3>
+            <div class="comment-counter" 
+              [class.warning]="commentLimitWarning()" 
+              [class.error]="commentLimitExceeded()">
+              <mat-icon>text_fields</mat-icon>
+              {{ commentCharacterCount() }}/1000
+            </div>
+          </div>
+          
+          <mat-form-field appearance="outline" class="comments-field">
+            <mat-label>Overall Comments</mat-label>
+            <textarea 
+              matInput 
+              formControlName="overallComments" 
+              rows="5"
+              maxlength="1000"
+              placeholder="Enter detailed analysis comments here...">
+            </textarea>
+            <mat-hint align="start">Detailed observations and analysis notes</mat-hint>
+            <mat-hint align="end" 
+              [class.warning]="commentLimitWarning()" 
+              [class.error]="commentLimitExceeded()">
+              {{ commentCharacterCount() }}/1000 characters
+            </mat-hint>
+            <mat-error *ngIf="overallForm.get('overallComments')?.errors?.['maxlength']">
+              Comments exceed maximum length of 1000 characters
+            </mat-error>
+          </mat-form-field>
+          
+          <div class="comments-info" *ngIf="commentLimitWarning()">
+            <mat-icon [color]="commentLimitExceeded() ? 'warn' : 'accent'">info</mat-icon>
+            <span>Individual particle type comments can be appended to overall comments using the "Add to Overall" button</span>
+          </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="form-actions">
+          <div class="actions-header">
+            <mat-icon class="section-icon">save</mat-icon>
+            <h3>Form Actions</h3>
+          </div>
+          
+          <div class="action-buttons">
+            <button 
+              mat-raised-button 
+              color="accent" 
+              type="button"
+              class="action-button"
+              (click)="onPartialSave()"
+              [disabled]="readOnly()">
+              <mat-icon>save_alt</mat-icon>
+              <div class="button-content">
+                <span class="button-title">Partial Save</span>
+                <span class="button-subtitle">Save progress</span>
+              </div>
+            </button>
+            
+            <button 
+              mat-raised-button 
+              color="primary" 
+              type="button"
+              class="action-button primary-action"
+              (click)="onSave()"
+              [disabled]="readOnly()">
+              <mat-icon>save</mat-icon>
+              <div class="button-content">
+                <span class="button-title">Complete Save</span>
+                <span class="button-subtitle">Finalize analysis</span>
+              </div>
+            </button>
+            
+            <button 
+              mat-stroked-button 
+              type="button"
+              class="action-button clear-action"
+              (click)="onClear()"
+              [disabled]="readOnly()">
+              <mat-icon>clear_all</mat-icon>
+              <div class="button-content">
+                <span class="button-title">Clear Form</span>
+                <span class="button-subtitle">Reset all fields</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+  
+  <!-- Particle Types Overview -->
+  <mat-card class="particle-types-overview">
+    <mat-card-header>
+      <mat-card-title>Particle Types</mat-card-title>
+      <mat-card-subtitle>
+        {{ particleTypes.length }} predefined particle types
+        <span *ngIf="isLoadingParticleTypes()" class="loading-indicator">
+          - Loading definitions...
+        </span>
+      </mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <!-- Loading State -->
+      <div *ngIf="isLoadingParticleTypes()" class="loading-state">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Loading particle type definitions from database...</p>
+      </div>
+      
+      <!-- Error State -->
+      <div *ngIf="particleTypesError()" class="error-state">
+        <mat-icon color="warn">error</mat-icon>
+        <p>Failed to load particle type definitions: {{ particleTypesError() }}</p>
+        <button mat-raised-button color="accent" (click)="retryLoadParticleTypes()">
+          <mat-icon>refresh</mat-icon>
+          Retry
+        </button>
+      </div>
+      
+      <!-- Particle Types Grid -->
+      <div *ngIf="!isLoadingParticleTypes() && !particleTypesError()" class="particle-types-grid">
+        <app-particle-type-card
+          *ngFor="let particleType of particleTypes"
+          [particleType]="particleType"
+          [particleTypeDefinition]="getParticleTypeDefinition(particleType)"
+          [particleForm]="getParticleTypeForm(particleType)"
+          [isVisible]="isParticleTypeVisible(particleType)"
+          [readOnly]="readOnly()"
+          [heatOptions]="heatOptions"
+          [concentrationOptions]="concentrationOptions"
+          [sizeOptions]="sizeOptions"
+          [colorOptions]="colorOptions"
+          [textureOptions]="textureOptions"
+          [compositionOptions]="compositionOptions"
+          [severityOptions]="severityOptions"
+          (selectionToggle)="toggleParticleTypeSelection($event)"
+          (visibilityToggle)="toggleParticleTypeVisibility($event)"
+          (addCommentToOverall)="addParticleCommentToOverall($event)">
+        </app-particle-type-card>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  
+  <!-- Historical Record View Placeholder -->
+  <mat-card class="historical-records-section">
+    <mat-card-header>
+      <mat-card-title>Historical Record View</mat-card-title>
+      <mat-card-subtitle>Last 12 Sample IDs</mat-card-subtitle>
+    </mat-card-header>
+    
+    <mat-card-content>
+      <div class="historical-placeholder">
+        <mat-icon color="primary">history</mat-icon>
+        <p>Historical record view will be implemented here</p>
+        <p class="note">Features: Resize section, Single screen mode, View older history</p>
+      </div>
+    </mat-card-content>
+  </mat-card>
+  
+  <!-- Validation Messages -->
+  <div class="validation-messages" *ngIf="commentLimitWarning()">
+    <mat-card class="warning-card">
+      <mat-card-content>
+        <div class="warning-content">
+          <mat-icon color="warn">warning</mat-icon>
+          <div>
+            <h4>Comment Length Warning</h4>
+            <p *ngIf="commentLimitWarning() && !commentLimitExceeded()">
+              Overall comments are approaching the 1000 character limit ({{ commentCharacterCount() }}/1000)
+            </p>
+            <p *ngIf="commentLimitExceeded()" class="error-text">
+              Overall comments exceed the 1000 character limit ({{ commentCharacterCount() }}/1000)
+            </p>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

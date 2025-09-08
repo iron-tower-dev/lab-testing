@@ -16,6 +16,48 @@ export interface ParticleTypeResponse {
   image2: string;
 }
 
+/**
+ * Particle type definition from database
+ */
+export interface ParticleTypeDefinition {
+  id: number;
+  type: string;
+  description: string;
+  image1: string;
+  image2: string;
+  active: string;
+  sortOrder: number | null;
+}
+
+/**
+ * Particle subtype category definition
+ */
+export interface ParticleSubTypeCategory {
+  id: number;
+  description: string;
+  active: string;
+  sortOrder: number;
+}
+
+/**
+ * Particle subtype definition for selection options
+ */
+export interface ParticleSubTypeDefinition {
+  particleSubTypeCategoryId: number;
+  value: number;
+  description: string;
+  active: string;
+  sortOrder: number | null;
+}
+
+/**
+ * User selection for particle subtype properties
+ */
+export interface ParticleSubTypeSelection {
+  categoryId: number;
+  selectedValue: number | null;
+}
+
 export interface FerrogramTestResultResponse {
   sampleId: number | null;
   testReading1: string | null;
@@ -31,6 +73,97 @@ export interface FerrogramTestResultResponse {
   texture: number | null;
   compostion: number | null;
   severity: number | null;
+}
+
+// ==========================================
+// Ferrography-specific Types
+// ==========================================
+
+export type FerrographyHeat = 'NA' | 'Blue' | 'Straw' | 'Purple' | 'No Change' | 'Melted' | 'Charred';
+export type FerrographyConcentration = 'Few' | 'Moderate' | 'Many' | 'Heavy';
+export type FerrographySize = 'Fine, <5µm' | 'Small, 5 to 15µm' | 'Medium, 15 to 40µm' | 'Large, 40 to 100µm' | 'Huge, >100µm';
+export type FerrographyColor = 'Red' | 'Black' | 'Tempered' | 'Metallic' | 'Straw' | 'Copper' | 'Brass' | 'Other Color';
+export type FerrographyTexture = 'Bright or Reflective' | 'Dull or Oxidized' | 'Pitted' | 'Striated' | 'Smeared' | 'Amorphous' | 'Other Texture';
+export type FerrographyComposition = 'Ferrous Metal' | 'Cupric Metal' | 'Other Metal' | 'Dust' | 'Organic' | 'Sludge' | 'Paint Chips' | 'Other Material';
+export type FerrographySeverity = 1 | 2 | 3 | 4;
+export type FerrographyDilutionFactor = '3:2' | '1:10' | '1:100' | 'Manual';
+export type FerrographyViewMode = 'All' | 'Review';
+
+/**
+ * Predefined particle types for ferrography analysis
+ */
+export const FERROGRAPHY_PARTICLE_TYPES = [
+  'Rubbing Wear (Platelet)',
+  'Rubbing Wear',
+  'Black Oxide',
+  'Dark Metallo-Oxide',
+  'Abrasive Wear',
+  'Rework',
+  'Severe Wear Particles',
+  'Chunks',
+  'Spheres',
+  'Red Oxide (Rust)',
+  'Non Ferrous Metal',
+  'Corrosive',
+  'Non Metallic Crystalline',
+  'Non Metallic Amorphous',
+  'Friction Polymer',
+  'Fibers'
+] as const;
+
+export type FerrographyParticleType = typeof FERROGRAPHY_PARTICLE_TYPES[number];
+
+/**
+ * Individual particle type analysis data
+ */
+export interface FerrographyParticleTypeData {
+  particleType: FerrographyParticleType;
+  isVisible: boolean;
+  isSelected: boolean;
+  heat?: FerrographyHeat;
+  concentration?: FerrographyConcentration;
+  sizeAvg?: FerrographySize;
+  sizeMax?: FerrographySize;
+  color?: FerrographyColor;
+  texture?: FerrographyTexture;
+  composition?: FerrographyComposition;
+  severity?: FerrographySeverity;
+  comments?: string;
+  includeCommentsInOverall: boolean;
+}
+
+/**
+ * Overall ferrography test results data
+ */
+export interface FerrographyOverallData {
+  overallSeverity?: FerrographySeverity;
+  dilutionFactor?: FerrographyDilutionFactor;
+  customDilutionFactor?: string;
+  overallComments: string;
+  viewMode: FerrographyViewMode;
+  mediaReady: boolean;
+  partialSave: boolean;
+}
+
+/**
+ * Complete ferrography test entry form data
+ */
+export interface FerrographyFormData {
+  sampleId?: number;
+  overall: FerrographyOverallData;
+  particleTypes: FerrographyParticleTypeData[];
+  labComments?: string[];
+}
+
+/**
+ * Ferrography form validation state
+ */
+export interface FerrographyFormValidation {
+  isValid: boolean;
+  overallErrors: string[];
+  particleTypeErrors: Record<FerrographyParticleType, string[]>;
+  commentLengthWarning: boolean;
+  hasUnsavedChanges: boolean;
 }
 
 export interface ResultsHeaderResponse {

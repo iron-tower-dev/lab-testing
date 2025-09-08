@@ -1,1 +1,252 @@
-<p>TBN entry form</p>
+<div class="tbn-form-content" [formGroup]="form">
+  <!-- Trial Results Section -->
+  <div class="trials-section">
+    <h3>Trial Results (mL Titrant)</h3>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="quarter-width">
+        <mat-label>Trial 1 *</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="trial1Result"
+          step="0.01"
+          min="0"
+          max="50"
+          placeholder="mL">
+        <mat-error *ngIf="getFieldError('trial1Result')">
+          {{ getFieldError('trial1Result') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="quarter-width">
+        <mat-label>Trial 2 *</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="trial2Result"
+          step="0.01"
+          min="0"
+          max="50"
+          placeholder="mL">
+        <mat-error *ngIf="getFieldError('trial2Result')">
+          {{ getFieldError('trial2Result') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="quarter-width">
+        <mat-label>Trial 3</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="trial3Result"
+          step="0.01"
+          min="0"
+          max="50"
+          placeholder="mL">
+        <mat-error *ngIf="getFieldError('trial3Result')">
+          {{ getFieldError('trial3Result') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="quarter-width">
+        <mat-label>Trial 4</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="trial4Result"
+          step="0.01"
+          min="0"
+          max="50"
+          placeholder="mL">
+        <mat-error *ngIf="getFieldError('trial4Result')">
+          {{ getFieldError('trial4Result') }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+
+    <div class="trial-summary">
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Average Volume (mL)</mat-label>
+        <input 
+          matInput 
+          [value]="averageResult" 
+          readonly
+          class="calculated-field">
+        <mat-hint>Calculated from valid trials</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Variation (mL)</mat-label>
+        <input 
+          matInput 
+          [value]="getResultVariation()" 
+          readonly
+          class="calculated-field"
+          [class.variation-high]="!isVariationAcceptable()">
+        <mat-hint>Max - Min (should be ≤ 0.2)</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>TBN Result</mat-label>
+        <input 
+          matInput 
+          [value]="getTbnResult()" 
+          readonly
+          class="calculated-field result-field">
+        <mat-hint>mg KOH/g</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Test Parameters -->
+  <div class="parameters-section">
+    <h3>Test Parameters</h3>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Sample Weight (g) *</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="sampleWeight"
+          step="0.001"
+          min="0.1"
+          max="10"
+          placeholder="Sample weight">
+        <mat-hint>Typically 0.2 - 2.0 g</mat-hint>
+        <mat-error *ngIf="getFieldError('sampleWeight')">
+          {{ getFieldError('sampleWeight') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Titrant Normality *</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="titrantNormality"
+          step="0.0001"
+          min="0.0001"
+          max="1.0000"
+          placeholder="Normality">
+        <mat-hint>Typically 0.1000 N</mat-hint>
+        <mat-error *ngIf="getFieldError('titrantNormality')">
+          {{ getFieldError('titrantNormality') }}
+        </mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Test Temperature (°C)</mat-label>
+        <input 
+          matInput 
+          type="number" 
+          formControlName="testTemperature"
+          step="0.1"
+          min="20"
+          max="30"
+          placeholder="Temperature">
+        <mat-hint>Lab temperature</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Test Method Details -->
+  <div class="method-section">
+    <h3>Method Details</h3>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Solvent System</mat-label>
+        <input 
+          matInput 
+          formControlName="solventSystem"
+          placeholder="Solvent used">
+        <mat-hint>e.g., Perchloric acid in glacial acetic acid</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>Indicator</mat-label>
+        <input 
+          matInput 
+          formControlName="indicator"
+          placeholder="Indicator used">
+        <mat-hint>e.g., Crystal violet</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Equipment and Analyst -->
+  <div class="equipment-section">
+    <h3>Equipment & Analyst</h3>
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Temperature Equipment ID</mat-label>
+        <input 
+          matInput 
+          formControlName="temperatureEquipmentId"
+          placeholder="Equipment ID">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Titration Equipment ID</mat-label>
+        <input 
+          matInput 
+          formControlName="titrationEquipmentId"
+          placeholder="Equipment ID">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>Analyst Initials *</mat-label>
+        <input 
+          matInput 
+          formControlName="analystInitials"
+          maxlength="5"
+          placeholder="Initials">
+        <mat-error *ngIf="getFieldError('analystInitials')">
+          {{ getFieldError('analystInitials') }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Test Notes -->
+  <div class="notes-section">
+    <h3>Test Notes</h3>
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Additional Notes</mat-label>
+      <textarea 
+        matInput 
+        formControlName="testNotes"
+        rows="2"
+        placeholder="Any observations or notes about the test procedure...">
+      </textarea>
+    </mat-form-field>
+  </div>
+
+  <!-- Quality Control Alerts -->
+  <div class="qc-section" *ngIf="showQualityControlChecks()">
+    <mat-card class="warning-card">
+      <mat-card-header>
+        <mat-card-title>Quality Control Alert</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="warning-message">
+          <mat-icon color="warn">warning</mat-icon>
+          {{ getQualityControlMessage() }}
+        </p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- Calculation Details -->
+  <div class="calculation-display" *ngIf="showCalculationDetails">
+    <h3>Calculation Details</h3>
+    <div class="calc-formula">
+      <strong>Formula:</strong> TBN = (Average Volume × Normality × 56.1) / Sample Weight
+    </div>
+    <div class="calc-values" *ngIf="form.valid && getTbnResult() > 0">
+      <p><strong>Average Volume:</strong> {{ averageResult }} mL</p>
+      <p><strong>Titrant Normality:</strong> {{ form.get('titrantNormality')?.value }} N</p>
+      <p><strong>Sample Weight:</strong> {{ form.get('sampleWeight')?.value }} g</p>
+      <p class="calc-result"><strong>TBN Result:</strong> {{ getTbnResult() }} mg KOH/g</p>
+    </div>
+  </div>
+</div>

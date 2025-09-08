@@ -32,7 +32,8 @@ export class SampleSelectionPanel {
   onSampleClick(sampleId: string) {
     const testRef = this.selectedTestReference();
     if (!testRef) return;
-    this.sampleSelected.emit({ testReference: testRef, sampleId });
+    const event = { testReference: testRef, sampleId };
+    this.sampleSelected.emit(event);
   }
 
   // Helper method to get display name
