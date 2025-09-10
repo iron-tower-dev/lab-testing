@@ -1,5 +1,5 @@
 import { Component, input, computed } from '@angular/core';
-import { TestReference, MigrationUtils, SampleWithTestInfo } from '../../../enter-results.types';
+import { TestReference, SampleWithTestInfo } from '../../../enter-results.types';
 import { FerrographyEntryForm } from './tests/ferrography-entry-form/ferrography-entry-form';
 import { SpectroscopyEntryForm } from './tests/spectroscopy-entry-form/spectroscopy-entry-form';
 import { TanEntryForm } from './tests/tan-entry-form/tan-entry-form';
@@ -58,11 +58,41 @@ export class EntryForm {
   testReference = input<TestReference | null>(null);
   sampleId = input<string | null>(null);
 
-  // Computed property to get legacy test code for backward compatibility
-  // This allows existing test form components to continue working during migration
+  // Computed property to determine test code from test reference
   testCode = computed(() => {
     const testRef = this.testReference();
-    return testRef ? MigrationUtils.referenceToTestCode(testRef) : null;
+    if (!testRef) return null;
+    
+    // Map test reference to test code based on established patterns
+    // This maintains backward compatibility for existing form components
+    const codeMap: Record<number, string> = {
+      10: 'TAN',
+      20: 'KF', 
+      30: 'SpecStd',
+      40: 'SpecLrg',
+      50: 'Vis40',
+      60: 'Vis100',
+      70: 'FTIR',
+      80: 'FlashPt',
+      110: 'TBN',
+      120: 'InspectFilter',
+      130: 'GrPen60',
+      140: 'GrDropPt',
+      160: 'Pcnt',
+      170: 'RBOT',
+      180: 'FltrRes',
+      210: 'Ferrography',
+      220: 'Rust',
+      230: 'TFOUT',
+      240: 'DebrisID',
+      250: 'Deleterious',
+      270: 'Rheometry',
+      284: 'DInch',
+      285: 'OilContent',
+      286: 'VPR'
+    };
+    
+    return codeMap[testRef.id] || null;
   });
 
   // Create sample data for component inputs

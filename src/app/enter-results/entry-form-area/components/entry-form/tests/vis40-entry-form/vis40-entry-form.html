@@ -1,2 +1,335 @@
-<p>Viscosity 40°C entry form</p>
+<div class="vis40-entry-form">
+  @if (isLoading) {
+    <div class="loading-overlay">
+      <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+      <span>Saving...</span>
+    </div>
+  }
 
+  <!-- Sample Information Header -->
+  @if (sampleData()) {
+    <mat-card class="sample-info-header">
+      <mat-card-header>
+        <mat-card-title>{{ sampleData()!.testName }}</mat-card-title>
+        <mat-card-subtitle>
+          Sample: {{ sampleData()!.sampleNumber }} | 
+          Equipment: {{ sampleData()!.eqTagNum }} | 
+          Component: {{ sampleData()!.component }} | 
+          Location: {{ sampleData()!.location }}
+        </mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  }
+
+  <form [formGroup]="form" class="viscosity-40-form">
+    <!-- Test Information Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Test Setup - Viscosity @ 40°C</mat-card-title>
+        <mat-card-subtitle>Equipment and environmental conditions</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="third-width">
+            <mat-label>Analyst Initials</mat-label>
+            <input matInput formControlName="analystInitials" 
+                   maxlength="5" placeholder="ABC">
+            <mat-hint>Your initials (max 5 characters)</mat-hint>
+            @if (form.get('analystInitials')?.hasError('required')) {
+              <mat-error>Analyst initials are required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Viscometer Type</mat-label>
+            <mat-select formControlName="viscometerType">
+              <mat-option value="Cannon-Fenske">Cannon-Fenske</mat-option>
+              <mat-option value="Ubbelohde">Ubbelohde</mat-option>
+              <mat-option value="Zeitfuchs">Zeitfuchs</mat-option>
+            </mat-select>
+            <mat-hint>Type of viscometer used</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Viscometer Constant</mat-label>
+            <input matInput type="number" formControlName="viscometerConstant" 
+                   step="0.001" min="0.001" max="100" placeholder="0.1234">
+            <mat-hint>Calibration constant (mm²/s²)</mat-hint>
+            @if (form.get('viscometerConstant')?.hasError('required')) {
+              <mat-error>Viscometer constant is required</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Test Temperature (°C)</mat-label>
+            <input matInput type="number" formControlName="testTemperature" 
+                   step="0.01" min="39.5" max="40.5" placeholder="40.00">
+            <mat-hint>Must be 40.0 ± 0.02°C</mat-hint>
+            @if (form.get('testTemperature')?.hasError('required')) {
+              <mat-error>Test temperature is required</mat-error>
+            }
+            @if (!isTemperatureControlAcceptable() && form.get('testTemperature')?.value) {
+              <mat-error>Temperature deviation too large (±0.02°C required)</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Sample Appearance</mat-label>
+            <mat-select formControlName="sampleAppearance">
+              <mat-option value="Clear">Clear</mat-option>
+              <mat-option value="Slightly Cloudy">Slightly Cloudy</mat-option>
+              <mat-option value="Cloudy">Cloudy</mat-option>
+              <mat-option value="Dark">Dark</mat-option>
+              <mat-option value="Contaminated">Contaminated</mat-option>
+            </mat-select>
+            <mat-hint>Visual appearance of sample</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Time Measurements Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Flow Time Measurements</mat-card-title>
+        <mat-card-subtitle>Record flow times in seconds (minimum 2 runs required)</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="time-measurements-grid">
+          <mat-form-field class="quarter-width">
+            <mat-label>Run 1 Time (s)</mat-label>
+            <input matInput type="number" formControlName="run1Time" 
+                   step="0.1" min="200" max="1000" placeholder="350.0">
+            <mat-hint>Required</mat-hint>
+            @if (form.get('run1Time')?.hasError('required')) {
+              <mat-error>Run 1 time is required</mat-error>
+            }
+            @if (form.get('run1Time')?.hasError('min') || form.get('run1Time')?.hasError('max')) {
+              <mat-error>Time must be between 200-1000 seconds</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="quarter-width">
+            <mat-label>Run 2 Time (s)</mat-label>
+            <input matInput type="number" formControlName="run2Time" 
+                   step="0.1" min="200" max="1000" placeholder="350.0">
+            <mat-hint>Required</mat-hint>
+            @if (form.get('run2Time')?.hasError('required')) {
+              <mat-error>Run 2 time is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="quarter-width">
+            <mat-label>Run 3 Time (s)</mat-label>
+            <input matInput type="number" formControlName="run3Time" 
+                   step="0.1" min="200" max="1000" placeholder="350.0">
+            <mat-hint>Optional</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="quarter-width">
+            <mat-label>Run 4 Time (s)</mat-label>
+            <input matInput type="number" formControlName="run4Time" 
+                   step="0.1" min="200" max="1000" placeholder="350.0">
+            <mat-hint>Optional</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Calculation Results Section -->
+    @if (averageViscosity > 0) {
+      <mat-card class="form-section calculations-section">
+        <mat-card-header>
+          <mat-card-title>Calculation Results</mat-card-title>
+          <mat-card-subtitle>Kinematic viscosity at 40°C</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="calculations-grid">
+            <div class="calculation-item">
+              <span class="calculation-label">Average Time:</span>
+              <span class="calculation-value">{{ extractCalculationValues()['averageTime'] | number:'1.1-1' }} s</span>
+            </div>
+            <div class="calculation-item">
+              <span class="calculation-label">Viscometer Constant:</span>
+              <span class="calculation-value">{{ extractCalculationValues()['constant'] | number:'1.4-4' }} mm²/s²</span>
+            </div>
+            <div class="calculation-item primary-result">
+              <span class="calculation-label">Kinematic Viscosity:</span>
+              <span class="calculation-value">{{ averageViscosity | number:'1.2-2' }} mm²/s</span>
+            </div>
+            <div class="calculation-item">
+              <span class="calculation-label">ISO 3448 Grade:</span>
+              <span class="calculation-value grade">{{ getISO3448Grade() }}</span>
+            </div>
+          </div>
+          
+          @if (getTimeVariation() > 0) {
+            <div class="quality-info">
+              <span class="quality-label">Time Variation:</span>
+              <span class="quality-value" [class.warning]="!isTimeVariationAcceptable()">
+                {{ getTimeVariation() | number:'1.2-2' }}%
+              </span>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Quality Control Warnings -->
+    @if (showQualityControlChecks()) {
+      <mat-card class="form-section quality-control-section warning">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>warning</mat-icon>
+            Quality Control Alert
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p>{{ getQualityControlMessage() }}</p>
+          
+          @if (!isTimeVariationAcceptable()) {
+            <p><strong>Recommendation:</strong> Clean viscometer and repeat measurement.</p>
+          }
+          
+          @if (!isTemperatureControlAcceptable()) {
+            <p><strong>Temperature Correction:</strong> {{ temperatureCorrection | number:'1.2-2' }}%</p>
+          }
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Environmental Conditions -->
+    <mat-card class="form-section environmental-section">
+      <mat-card-header>
+        <mat-card-title>Environmental Conditions</mat-card-title>
+        <mat-card-subtitle>Optional - for record keeping</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="third-width">
+            <mat-label>Room Temperature (°C)</mat-label>
+            <input matInput type="number" formControlName="roomTemperature" 
+                   step="0.1" min="20" max="30" placeholder="22.0">
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Barometric Pressure (mmHg)</mat-label>
+            <input matInput type="number" formControlName="barometricPressure" 
+                   step="1" min="700" max="800" placeholder="760">
+          </mat-form-field>
+
+          <mat-form-field class="third-width">
+            <mat-label>Sample Volume (mL)</mat-label>
+            <input matInput type="number" formControlName="sampleVolume" 
+                   step="0.1" min="5" max="25" placeholder="10.0">
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Comments Section -->
+    <mat-card class="form-section comments-section">
+      <mat-card-header>
+        <mat-card-title>Test Notes and Comments</mat-card-title>
+        <mat-card-subtitle>Additional observations and remarks</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="full-width">
+            <mat-label>Test Notes</mat-label>
+            <textarea matInput formControlName="testNotes" 
+                      rows="3" maxlength="500"
+                      placeholder="Any observations during testing...">
+            </textarea>
+            <mat-hint>{{ form.get('testNotes')?.value?.length || 0 }}/500 characters</mat-hint>
+          </mat-form-field>
+        </div>
+        
+        <div class="form-row">
+          <mat-form-field class="full-width">
+            <mat-label>Lab Comments</mat-label>
+            <textarea matInput formControlName="mainComments" 
+                      rows="3" maxlength="1000"
+                      placeholder="Additional comments about the test or results...">
+            </textarea>
+            <mat-hint>{{ form.get('mainComments')?.value?.length || 0 }}/1000 characters</mat-hint>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Form Validation Summary -->
+    @if (!form.valid && (form.dirty || form.touched)) {
+      <mat-card class="form-section validation-section error">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>error</mat-icon>
+            Form Validation Errors
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ul class="validation-errors">
+            @if (form.get('analystInitials')?.hasError('required')) {
+              <li>Analyst initials are required</li>
+            }
+            @if (form.get('viscometerConstant')?.hasError('required')) {
+              <li>Viscometer constant is required</li>
+            }
+            @if (form.get('testTemperature')?.hasError('required')) {
+              <li>Test temperature is required</li>
+            }
+            @if (form.get('run1Time')?.hasError('required')) {
+              <li>Run 1 time is required</li>
+            }
+            @if (form.get('run2Time')?.hasError('required')) {
+              <li>Run 2 time is required</li>
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button mat-raised-button color="primary" type="button" (click)="onSave()"
+              [disabled]="!form.valid || isLoading">
+        @if (isLoading) {
+          <ng-container>
+            <mat-icon>hourglass_empty</mat-icon>
+            Saving...
+          </ng-container>
+        } @else {
+          <ng-container>
+            <mat-icon>save</mat-icon>
+            Save Results
+          </ng-container>
+        }
+      </button>
+
+      <button mat-stroked-button type="button" (click)="onClear()"
+              [disabled]="isLoading">
+        <mat-icon>clear</mat-icon>
+        Clear Form
+      </button>
+
+      @if (hasUnsavedChanges()) {
+        <span class="unsaved-changes-indicator">
+          <mat-icon>edit</mat-icon>
+          Unsaved changes
+        </span>
+      }
+    </div>
+  </form>
+
+  <!-- Error Message -->
+  @if (errorMessage()) {
+    <mat-card class="error-message">
+      <mat-card-content>
+        <mat-icon>error</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

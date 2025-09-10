@@ -89,35 +89,12 @@ export type FerrographySeverity = 1 | 2 | 3 | 4;
 export type FerrographyDilutionFactor = '3:2' | '1:10' | '1:100' | 'Manual';
 export type FerrographyViewMode = 'All' | 'Review';
 
-/**
- * Predefined particle types for ferrography analysis
- */
-export const FERROGRAPHY_PARTICLE_TYPES = [
-  'Rubbing Wear (Platelet)',
-  'Rubbing Wear',
-  'Black Oxide',
-  'Dark Metallo-Oxide',
-  'Abrasive Wear',
-  'Rework',
-  'Severe Wear Particles',
-  'Chunks',
-  'Spheres',
-  'Red Oxide (Rust)',
-  'Non Ferrous Metal',
-  'Corrosive',
-  'Non Metallic Crystalline',
-  'Non Metallic Amorphous',
-  'Friction Polymer',
-  'Fibers'
-] as const;
-
-export type FerrographyParticleType = typeof FERROGRAPHY_PARTICLE_TYPES[number];
 
 /**
  * Individual particle type analysis data
  */
 export interface FerrographyParticleTypeData {
-  particleType: FerrographyParticleType;
+  particleType: string; // Now dynamically loaded from database
   isVisible: boolean;
   isSelected: boolean;
   heat?: FerrographyHeat;
@@ -161,7 +138,7 @@ export interface FerrographyFormData {
 export interface FerrographyFormValidation {
   isValid: boolean;
   overallErrors: string[];
-  particleTypeErrors: Record<FerrographyParticleType, string[]>;
+  particleTypeErrors: Record<string, string[]>;
   commentLengthWarning: boolean;
   hasUnsavedChanges: boolean;
 }
@@ -481,95 +458,48 @@ export namespace TestIdentifierUtils {
   }
 }
 
+
 // ==========================================
-// Migration Utilities (Temporary)
+// Deleterious Test Types
 // ==========================================
 
 /**
- * Sample data that maps legacy TestCode values to TestReference objects
- * This is temporary data for the migration - in production this should come from the database
+ * Individual trial data for deleterious analysis
  */
-export const LEGACY_TEST_CODE_TO_REFERENCE: Record<TestCode, TestReference> = {
-  TAN: { id: 10, name: 'TAN by Color Indication', abbrev: 'TAN', shortAbbrev: 'TAN', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  KF: { id: 20, name: 'Water - KF', abbrev: 'K-F', shortAbbrev: 'K-F', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  SpecStd: { id: 30, name: 'Emission Spectroscopy - Standard', abbrev: 'Spec-Std', shortAbbrev: 'S Sp', groupName: 'ELEMENTS--STD' },
-  SpecLrg: { id: 40, name: 'Emission Spectroscopy - Large', abbrev: 'Spec-Lrg', shortAbbrev: 'L Sp', groupName: 'ELEMENTS--LARGE' },
-  Vis40: { id: 50, name: 'Viscosity @ 40', abbrev: 'Vis@40', shortAbbrev: 'V 40', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  Vis100: { id: 60, name: 'Viscosity @ 100', abbrev: 'Vis@100', shortAbbrev: 'V 100', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  FTIR: { id: 70, name: 'FT-IR', abbrev: 'FT-IR', shortAbbrev: 'FT-IR', groupName: 'INFRARED SPECTROSCOPY' },
-  FlashPt: { id: 80, name: 'Flash Point', abbrev: 'Flash Pt.', shortAbbrev: 'Fl Pt', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  TBN: { id: 110, name: 'TBN by Auto Titration', abbrev: 'TBN', shortAbbrev: 'TBN', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  InspectFilter: { id: 120, name: 'Inspect Filter', abbrev: 'InspectFilte', shortAbbrev: 'I F', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  GrPen60: { id: 130, name: 'Grease Penetration Worked', abbrev: 'Gr.Pen/60', shortAbbrev: 'GP 60', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  GrDropPt: { id: 140, name: 'Grease Dropping Point', abbrev: 'Gr.DropPt', shortAbbrev: 'GD Pt', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  Pcnt: { id: 160, name: 'Particle Count', abbrev: 'PCnt', shortAbbrev: 'PC', groupName: 'PARTICLE COUNT' },
-  RBOT: { id: 170, name: 'RBOT', abbrev: 'RBOT', shortAbbrev: 'R BOT', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  FltrRes: { id: 180, name: 'Filter Residue', abbrev: 'FltrRes', shortAbbrev: 'F Res', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  Ferrography: { id: 210, name: 'Ferrography', abbrev: 'Ferrography', shortAbbrev: 'Fer', groupName: 'WEAR PARTICLE ANALYSIS' },
-  Rust: { id: 220, name: 'Rust', abbrev: 'Rust', shortAbbrev: 'Rust', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  TFOUT: { id: 230, name: 'TFOUT', abbrev: 'TFOUT', shortAbbrev: 'TF OUT', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  DebrisID: { id: 240, name: 'Debris Identification', abbrev: 'DebrisID', shortAbbrev: 'Debr', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  Deleterious: { id: 250, name: 'Deleterious', abbrev: 'Deleterious', shortAbbrev: 'Del', groupName: 'PHYSICAL & CHEMICAL PROPERTIES' },
-  Rheometry: { id: 270, name: 'Rheometer', abbrev: 'Rheometer', shortAbbrev: 'Rheo', groupName: 'RHEOMETER' },
-  DInch: { id: 284, name: 'D-inch', abbrev: 'D-inch', shortAbbrev: 'D-in', groupName: 'MISCELLANEOUS' },
-  OilContent: { id: 285, name: 'Oil Content', abbrev: 'Oil Content', shortAbbrev: 'Oil C', groupName: 'MISCELLANEOUS' },
-  VPR: { id: 286, name: 'Varnish Potential Rating', abbrev: 'VPR', shortAbbrev: 'VPR', groupName: 'MISCELLANEOUS' },
-};
+export interface DeleteriousTrial {
+  trialNumber: number;
+  testValue: number | null;
+  notes: string;
+  isSelected: boolean;
+}
 
 /**
- * Migration utilities namespace
- * @deprecated These functions are for temporary use during migration from TestCode to new type system
+ * Complete deleterious test entry form data
  */
-export namespace MigrationUtils {
-  /**
-   * Convert legacy TestCode to TestReference
-   * @deprecated Use proper database lookup instead
-   */
-  export function testCodeToReference(testCode: TestCode): TestReference {
-    return LEGACY_TEST_CODE_TO_REFERENCE[testCode];
-  }
+export interface DeleteriousFormData {
+  sampleId?: number;
+  analystInitials: string;
+  testStandard: string;
+  testConditions: {
+    temperature?: number;
+    humidity?: number;
+    equipment: string;
+  };
+  trials: DeleteriousTrial[];
+  labComments: string;
+  overallResult?: {
+    averageValue: number;
+    standardDeviation: number;
+    coefficientOfVariation: number;
+  };
+}
 
-  /**
-   * Convert TestReference back to legacy TestCode (for backward compatibility)
-   * @deprecated This should not be needed once migration is complete
-   */
-  export function referenceToTestCode(reference: TestReference): TestCode | null {
-    for (const [code, ref] of Object.entries(LEGACY_TEST_CODE_TO_REFERENCE)) {
-      // Match by ID first (most reliable)
-      if (ref.id === reference.id) {
-        return code as TestCode;
-      }
-      // Match by abbrev, handling whitespace
-      if (ref.abbrev && reference.abbrev && 
-          ref.abbrev.trim() === reference.abbrev.trim()) {
-        return code as TestCode;
-      }
-      // Match by shortAbbrev as fallback
-      if (ref.shortAbbrev && reference.shortAbbrev && 
-          ref.shortAbbrev.trim() === reference.shortAbbrev.trim()) {
-        return code as TestCode;
-      }
-    }
-    return null;
-  }
-
-  /**
-   * Get all test references as options for dropdowns/selects
-   * @deprecated Use proper database service instead
-   */
-  export function getAllTestOptions(): Array<{ reference: TestReference; label: string }> {
-    return Object.entries(LEGACY_TEST_CODE_TO_REFERENCE).map(([code, reference]) => ({
-      reference,
-      label: TestIdentifierUtils.getDisplayName(reference)
-    }));
-  }
-
-  /**
-   * Create sample data for a given test reference
-   * @deprecated Replace with actual database service
-   */
-  export function generateSampleIds(testReference: TestReference): string[] {
-    const abbrev = testReference.abbrev || testReference.shortAbbrev || `T${testReference.id}`;
-    return [101, 102, 103, 104].map(n => `${abbrev}-${n}`);
-  }
+/**
+ * Deleterious form validation state
+ */
+export interface DeleteriousFormValidation {
+  isValid: boolean;
+  overallErrors: string[];
+  trialErrors: Record<number, string[]>;
+  hasUnsavedChanges: boolean;
 }

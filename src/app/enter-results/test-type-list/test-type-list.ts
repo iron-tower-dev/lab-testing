@@ -1,5 +1,5 @@
 import { Component, output, signal, inject } from '@angular/core';
-import { TestReference, TestIdentifierUtils, MigrationUtils } from '../enter-results.types';
+import { TestReference, TestIdentifierUtils } from '../enter-results.types';
 import { SharedModule } from '../../shared-module';
 import { TestsService } from '../../shared/services/tests.service';
 
@@ -27,8 +27,8 @@ export class TestTypeList {
         this.testReferenceOptions.set(options);
       },
       error: (error) => {
-        console.warn('Failed to load test options from API, using fallback:', error);
-        this.testReferenceOptions.set(MigrationUtils.getAllTestOptions());
+        console.error('Failed to load test options from API:', error);
+        this.testReferenceOptions.set([]);
       }
     });
   }

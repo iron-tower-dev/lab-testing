@@ -57,7 +57,7 @@
   <app-debris-id-entry-form [sampleData]="createSampleWithTestInfo()"></app-debris-id-entry-form>
 }
 @if (testCode() === 'Deleterious') {
-  <app-deleterious-entry-form></app-deleterious-entry-form>
+  <app-deleterious-entry-form [sampleData]="createSampleWithTestInfo()"></app-deleterious-entry-form>
 }
 @if (testCode() === 'Rheometry') {
   <app-rheometry-entry-form></app-rheometry-entry-form>

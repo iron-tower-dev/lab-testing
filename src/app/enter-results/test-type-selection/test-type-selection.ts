@@ -1,6 +1,7 @@
-import { Component, output, signal } from '@angular/core';
-import { TestReference, TestIdentifierUtils, MigrationUtils } from '../enter-results.types';
+import { Component, output, signal, inject } from '@angular/core';
+import { TestReference, TestIdentifierUtils } from '../enter-results.types';
 import { SharedModule } from '../../shared-module';
+import { TestsService } from '../../shared/services/tests.service';
 
 @Component({
   selector: 'app-test-type-selection',
@@ -9,10 +10,28 @@ import { SharedModule } from '../../shared-module';
   styleUrl: './test-type-selection.scss',
 })
 export class TestTypeSelection {
+  private readonly testsService = inject(TestsService);
+  
   // Signals using new type system
   readonly selectedTestReference = signal<TestReference | null>(null);
   readonly selectedTestReferenceChange = output<TestReference | null>({});
-  readonly testReferenceOptions = MigrationUtils.getAllTestOptions();
+  readonly testReferenceOptions = signal<Array<{ reference: TestReference; label: string }>>([]);
+  
+  constructor() {
+    this.loadTestOptions();
+  }
+  
+  private loadTestOptions() {
+    this.testsService.getAllTestOptions().subscribe({
+      next: (options) => {
+        this.testReferenceOptions.set(options);
+      },
+      error: (error) => {
+        console.error('Failed to load test options from API:', error);
+        this.testReferenceOptions.set([]);
+      }
+    });
+  }
 
   setSelectedTestReference(testReference: TestReference | null) {
     this.selectedTestReference.set(testReference);

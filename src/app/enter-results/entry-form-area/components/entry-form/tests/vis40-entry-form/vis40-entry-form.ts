@@ -1,7 +1,8 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, input } from '@angular/core';
 import { Validators } from '@angular/forms';
 import { BaseTestFormComponent } from '../../../../../../shared/components/base-test-form/base-test-form.component';
 import { SharedModule } from '../../../../../../shared-module';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
 
 @Component({
   standalone: true,
@@ -13,6 +14,19 @@ import { SharedModule } from '../../../../../../shared-module';
   ]
 })
 export class Vis40EntryForm extends BaseTestFormComponent implements OnInit {
+  sampleData = input<SampleWithTestInfo | null>(null);
+  errorMessage = input<string | null>(null);
+  
+  hasUnsavedChanges(): boolean {
+    return this.form?.dirty || false;
+  }
+
+  onClear(): void {
+    this.form?.reset();
+    this.averageViscosity = 0;
+    this.temperatureCorrection = 0;
+  }
+
   averageViscosity = 0;
   temperatureCorrection = 0;
   showCalculationDetails = true;

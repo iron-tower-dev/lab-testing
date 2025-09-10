@@ -1,5 +1,5 @@
 import { Component, computed, input, output, signal, inject, effect } from '@angular/core';
-import { TestReference, TestIdentifierUtils, MigrationUtils, SampleTestResponse } from '../enter-results.types';
+import { TestReference, TestIdentifierUtils, SampleTestResponse } from '../enter-results.types';
 import { SharedModule } from '../../shared-module';
 import { SampleService } from '../../shared/services/sample.service';
 import { TestsService } from '../../shared/services/tests.service';
@@ -50,9 +50,8 @@ export class SampleSelectionPanel {
         this.testReferenceOptions.set(options);
       },
       error: (error) => {
-        console.warn('Failed to load test options from API, using fallback:', error);
-        // Fallback to migration utility if API fails
-        this.testReferenceOptions.set(MigrationUtils.getAllTestOptions());
+        console.error('Failed to load test options from API:', error);
+        this.testReferenceOptions.set([]);
       }
     });
   }
@@ -71,8 +70,9 @@ export class SampleSelectionPanel {
       return apiSamples.map(sample => sample.sampleNumber);
     }
     
-    // Fallback to migration utility for backward compatibility
-    return MigrationUtils.generateSampleIds(testRef);
+    // Fallback: generate sample IDs based on test reference
+    const abbrev = testRef.abbrev || testRef.shortAbbrev || `T${testRef.id}`;
+    return [101, 102, 103, 104].map(n => `${abbrev}-${n}`);
   });
 
   // Get API samples for display with full information
