@@ -61,16 +61,32 @@
           </div>
         </div>
         
-        <div class="detail-row full-width" *ngIf="sampleData()?.labComments && sampleData()!.labComments!.length > 0">
+        <div class="detail-row full-width">
           <div class="detail-group comments">
             <mat-icon class="detail-icon">comment</mat-icon>
-            <div class="detail-content">
+            <div class="detail-content full-width">
               <span class="detail-label">Lab Comments:</span>
-              <div class="comments-list">
-                <div *ngFor="let comment of sampleData()!.labComments" class="comment-item">
-                  {{ comment }}
+              <!-- If a shared control is provided, render an editable textarea -->
+              <ng-container *ngIf="labCommentsControl(); else readonlyComments">
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>Lab Comments</mat-label>
+                  <textarea matInput [formControl]="labCommentsControl()" rows="3" placeholder="Enter or edit lab comments"></textarea>
+                  <mat-hint align="start">These comments will be saved with the form</mat-hint>
+                </mat-form-field>
+              </ng-container>
+              <!-- Fallback: read-only list from sample data -->
+              <ng-template #readonlyComments>
+                <div class="comments-list" *ngIf="sampleData()?.labComments?.length; else noComments">
+                  <div *ngFor="let comment of sampleData()!.labComments" class="comment-item">
+                    {{ comment }}
+                  </div>
                 </div>
-              </div>
+                <ng-template #noComments>
+                  <div class="comments-list">
+                    <div class="comment-item empty">No lab comments</div>
+                  </div>
+                </ng-template>
+              </ng-template>
             </div>
           </div>
         </div>

@@ -34,6 +34,8 @@ export class FerrographyEntryForm implements OnInit {
   sampleId = input<number>();
   initialData = input<FerrographyFormData>();
   readOnly = input<boolean>(false);
+  // Shared lab comments control passed from parent
+  labCommentsControl = input<any | null>(null);
   
   formDataChange = output<FerrographyFormData>();
   validationChange = output<FerrographyFormValidation>();
@@ -329,7 +331,9 @@ export class FerrographyEntryForm implements OnInit {
     return {
       sampleId: this.sampleId(),
       overall: overallData,
-      particleTypes: particleTypesData
+      particleTypes: particleTypesData,
+      // Include lab comments from shared control if provided
+      labComments: this.labCommentsControl() ? [this.labCommentsControl()!.value].filter(Boolean) : undefined
     };
   }
   
