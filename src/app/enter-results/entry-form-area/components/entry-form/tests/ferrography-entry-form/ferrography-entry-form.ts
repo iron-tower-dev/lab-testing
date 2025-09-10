@@ -7,8 +7,6 @@ import {
   FerrographyFormData,
   FerrographyParticleTypeData,
   FerrographyOverallData,
-  FERROGRAPHY_PARTICLE_TYPES,
-  FerrographyParticleType,
   FerrographyHeat,
   FerrographyConcentration,
   FerrographySize,
@@ -51,8 +49,8 @@ export class FerrographyEntryForm implements OnInit {
   commentLimitWarning = computed(() => this.commentCharacterCount() > 900);
   commentLimitExceeded = computed(() => this.commentCharacterCount() > 1000);
   
-  // Constants for templates
-  readonly particleTypes = FERROGRAPHY_PARTICLE_TYPES;
+  // Dynamic particle types from database
+  dynamicParticleTypes = signal<string[]>([]);
   readonly heatOptions: FerrographyHeat[] = ['NA', 'Blue', 'Straw', 'Purple', 'No Change', 'Melted', 'Charred'];
   readonly concentrationOptions: FerrographyConcentration[] = ['Few', 'Moderate', 'Many', 'Heavy'];
   readonly sizeOptions: FerrographySize[] = [
@@ -74,10 +72,8 @@ export class FerrographyEntryForm implements OnInit {
   readonly severityOptions: FerrographySeverity[] = [1, 2, 3, 4];
   readonly dilutionFactorOptions: FerrographyDilutionFactor[] = ['3:2', '1:10', '1:100', 'Manual'];
   
-  // Visibility tracking
-  particleTypeVisibility = signal<Record<FerrographyParticleType, boolean>>(
-    {} as Record<FerrographyParticleType, boolean>
-  );
+  // Visibility tracking for dynamic particle types
+  particleTypeVisibility = signal<Record<string, boolean>>({});
   
   // Particle type definitions loaded from API
   particleTypeDefinitions = signal<ParticleTypeDefinition[]>([]);
@@ -105,13 +101,11 @@ export class FerrographyEntryForm implements OnInit {
       partialSave: [false]
     });
     
-    // Particle type forms array
-    this.particleTypeFormsArray = this.fb.array(
-      this.particleTypes.map((particleType: FerrographyParticleType) => this.createParticleTypeForm(particleType))
-    );
+    // Particle type forms array - will be populated when particle types are loaded
+    this.particleTypeFormsArray = this.fb.array([]);
   }
   
-  private createParticleTypeForm(particleType: FerrographyParticleType): FormGroup {
+  private createParticleTypeForm(particleType: string): FormGroup {
     return this.fb.group({
       particleType: [particleType],
       isVisible: [false],
@@ -153,8 +147,19 @@ export class FerrographyEntryForm implements OnInit {
     this.particleTypesService.getActiveParticleTypes().subscribe({
       next: (definitions: ParticleTypeDefinition[]) => {
         this.particleTypeDefinitions.set(definitions);
+        
+        // Extract particle type names and update dynamic list
+        const particleTypeNames = definitions.map(def => def.type);
+        this.dynamicParticleTypes.set(particleTypeNames);
+        
+        // Re-initialize the forms array with the loaded particle types
+        this.initializeParticleTypeForms(particleTypeNames);
+        
         this.isLoadingParticleTypes.set(false);
         console.log('Loaded particle type definitions:', definitions.length);
+        
+        // Load initial data after particle types are available
+        this.loadInitialData();
       },
       error: (error: Error) => {
         console.error('Failed to load particle type definitions:', error);
@@ -164,16 +169,35 @@ export class FerrographyEntryForm implements OnInit {
     });
   }
   
+  private initializeParticleTypeForms(particleTypes: string[]): void {
+    // Clear existing forms
+    while (this.particleTypeFormsArray.length !== 0) {
+      this.particleTypeFormsArray.removeAt(0);
+    }
+    
+    // Add forms for each particle type
+    particleTypes.forEach(particleType => {
+      this.particleTypeFormsArray.push(this.createParticleTypeForm(particleType));
+    });
+    
+    // Update visibility
+    this.updateParticleTypeVisibility();
+  }
+  
   private loadInitialData(): void {
     const data = this.initialData();
-    if (data) {
+    if (data && this.dynamicParticleTypes().length > 0) {
       this.overallForm.patchValue(data.overall);
       this.viewMode.set(data.overall.viewMode);
       
-      data.particleTypes.forEach((ptData: FerrographyParticleTypeData, index: number) => {
-        const form = this.particleTypeFormsArray.at(index);
-        if (form) {
-          form.patchValue(ptData);
+      // Match initial data to dynamic particle types
+      data.particleTypes.forEach((ptData: FerrographyParticleTypeData) => {
+        const index = this.dynamicParticleTypes().indexOf(ptData.particleType);
+        if (index >= 0) {
+          const form = this.particleTypeFormsArray.at(index);
+          if (form) {
+            form.patchValue(ptData);
+          }
         }
       });
       
@@ -183,9 +207,9 @@ export class FerrographyEntryForm implements OnInit {
   
   private updateParticleTypeVisibility(): void {
     const mode = this.viewMode();
-    const visibility: Record<FerrographyParticleType, boolean> = {} as any;
+    const visibility: Record<string, boolean> = {};
     
-    this.particleTypes.forEach((type: FerrographyParticleType, index: number) => {
+    this.dynamicParticleTypes().forEach((type: string, index: number) => {
       const form = this.particleTypeFormsArray.at(index);
       const isSelected = form?.get('isSelected')?.value || false;
       
@@ -200,8 +224,8 @@ export class FerrographyEntryForm implements OnInit {
   }
   
   // Public methods for template
-  toggleParticleTypeVisibility(particleType: FerrographyParticleType): void {
-    const index = this.particleTypes.indexOf(particleType);
+  toggleParticleTypeVisibility(particleType: string): void {
+    const index = this.dynamicParticleTypes().indexOf(particleType);
     if (index >= 0) {
       const form = this.particleTypeFormsArray.at(index);
       const currentVisibility = form?.get('isVisible')?.value;
@@ -209,8 +233,8 @@ export class FerrographyEntryForm implements OnInit {
     }
   }
   
-  toggleParticleTypeSelection(particleType: FerrographyParticleType): void {
-    const index = this.particleTypes.indexOf(particleType);
+  toggleParticleTypeSelection(particleType: string): void {
+    const index = this.dynamicParticleTypes().indexOf(particleType);
     if (index >= 0) {
       const form = this.particleTypeFormsArray.at(index);
       const currentSelection = form?.get('isSelected')?.value;
@@ -219,8 +243,8 @@ export class FerrographyEntryForm implements OnInit {
     }
   }
   
-  addParticleCommentToOverall(particleType: FerrographyParticleType): void {
-    const index = this.particleTypes.indexOf(particleType);
+  addParticleCommentToOverall(particleType: string): void {
+    const index = this.dynamicParticleTypes().indexOf(particleType);
     if (index >= 0) {
       const form = this.particleTypeFormsArray.at(index);
       const comment = form?.get('comments')?.value;
@@ -238,16 +262,21 @@ export class FerrographyEntryForm implements OnInit {
     }
   }
   
-  getParticleTypeForm(particleType: FerrographyParticleType): FormGroup {
-    const index = this.particleTypes.indexOf(particleType);
+  getParticleTypeForm(particleType: string): FormGroup {
+    const index = this.dynamicParticleTypes().indexOf(particleType);
     return this.particleTypeFormsArray.at(index) as FormGroup;
   }
   
-  isParticleTypeVisible(particleType: FerrographyParticleType): boolean {
+  isParticleTypeVisible(particleType: string): boolean {
     return this.particleTypeVisibility()[particleType] || false;
   }
   
-  getParticleTypeDefinition(particleType: FerrographyParticleType): ParticleTypeDefinition | null {
+  getVisibleParticleTypesCount(): number {
+    const visibility = this.particleTypeVisibility();
+    return Object.values(visibility).filter(visible => visible).length;
+  }
+  
+  getParticleTypeDefinition(particleType: string): ParticleTypeDefinition | null {
     const definitions = this.particleTypeDefinitions();
     return definitions.find(def => def.type === particleType) || null;
   }
@@ -315,7 +344,7 @@ export class FerrographyEntryForm implements OnInit {
   
   private validateForm(): FerrographyFormValidation {
     const overallErrors: string[] = [];
-    const particleTypeErrors: Record<FerrographyParticleType, string[]> = {} as any;
+    const particleTypeErrors: Record<string, string[]> = {};
     
     // Overall form validation
     if (this.overallForm.get('overallComments')?.errors?.['maxlength']) {
@@ -323,7 +352,7 @@ export class FerrographyEntryForm implements OnInit {
     }
     
     // Particle type validation
-    this.particleTypes.forEach((particleType: FerrographyParticleType) => {
+    this.dynamicParticleTypes().forEach((particleType: string) => {
       particleTypeErrors[particleType] = [];
       // Add specific validation rules as needed
     });

@@ -8,9 +8,7 @@ import { ParticleTypeCardComponent } from './components/particle-type-card.compo
 import { ParticleTypesService } from '../../../../../../shared/services/particle-types.service';
 import { ApiService } from '../../../../../../shared/services/api.service';
 import {
-  FERROGRAPHY_PARTICLE_TYPES,
   FerrographyFormData,
-  FerrographyParticleType,
   FerrographyViewMode,
   ParticleTypeDefinition
 } from '../../../../../enter-results.types';
@@ -51,12 +49,20 @@ describe('FerrographyEntryForm', () => {
       mediaReady: false,
       partialSave: false
     },
-    particleTypes: FERROGRAPHY_PARTICLE_TYPES.map((type: FerrographyParticleType) => ({
-      particleType: type,
-      isVisible: false,
-      isSelected: false,
-      includeCommentsInOverall: false
-    }))
+    particleTypes: [
+      {
+        particleType: 'Rubbing Wear (Platelet)',
+        isVisible: false,
+        isSelected: false,
+        includeCommentsInOverall: false
+      },
+      {
+        particleType: 'Rubbing Wear',
+        isVisible: false,
+        isSelected: false,
+        includeCommentsInOverall: false
+      }
+    ]
   };
 
   let mockParticleTypesService: jasmine.SpyObj<ParticleTypesService>;
@@ -108,10 +114,10 @@ describe('FerrographyEntryForm', () => {
       expect(component).toBeTruthy();
     });
 
-    it('should initialize with correct number of particle types', () => {
+    it('should initialize with dynamic particle types from database', () => {
       fixture.detectChanges();
-      expect(component.particleTypes.length).toBe(16);
-      expect(component.particleTypeFormsArray.length).toBe(16);
+      expect(component.dynamicParticleTypes().length).toBe(2); // Mock data has 2 items
+      expect(component.particleTypeFormsArray.length).toBe(2);
     });
 
     it('should initialize forms with default values', () => {
@@ -138,7 +144,7 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should toggle particle type visibility', () => {
-      const particleType = FERROGRAPHY_PARTICLE_TYPES[0];
+      const particleType = 'Rubbing Wear (Platelet)';
       const form = component.getParticleTypeForm(particleType);
       
       expect(form.get('isVisible')?.value).toBe(false);
@@ -149,7 +155,7 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should toggle particle type selection', () => {
-      const particleType = FERROGRAPHY_PARTICLE_TYPES[0];
+      const particleType = 'Rubbing Wear (Platelet)';
       const form = component.getParticleTypeForm(particleType);
       
       expect(form.get('isSelected')?.value).toBe(false);
@@ -160,14 +166,14 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should return correct particle type form', () => {
-      const particleType = FERROGRAPHY_PARTICLE_TYPES[0];
+      const particleType = 'Rubbing Wear (Platelet)';
       const form = component.getParticleTypeForm(particleType);
       
       expect(form.get('particleType')?.value).toBe(particleType);
     });
     
     it('should return correct particle type definition', () => {
-      const particleType = 'Rubbing Wear (Platelet)' as FerrographyParticleType;
+      const particleType = 'Rubbing Wear (Platelet)';
       const definition = component.getParticleTypeDefinition(particleType);
       
       expect(definition).toBeTruthy();
@@ -176,7 +182,7 @@ describe('FerrographyEntryForm', () => {
     });
     
     it('should return null for unknown particle type', () => {
-      const unknownType = 'Unknown Type' as FerrographyParticleType;
+      const unknownType = 'Unknown Type';
       const definition = component.getParticleTypeDefinition(unknownType);
       
       expect(definition).toBeNull();
@@ -197,14 +203,14 @@ describe('FerrographyEntryForm', () => {
     it('should show all particle types in All mode', () => {
       component.overallForm.get('viewMode')?.setValue('All');
       
-      FERROGRAPHY_PARTICLE_TYPES.forEach(type => {
+      component.dynamicParticleTypes().forEach(type => {
         expect(component.isParticleTypeVisible(type)).toBe(true);
       });
     });
 
     it('should show only selected particle types in Review mode', () => {
-      const selectedType = FERROGRAPHY_PARTICLE_TYPES[0];
-      const unselectedType = FERROGRAPHY_PARTICLE_TYPES[1];
+      const selectedType = 'Rubbing Wear (Platelet)';
+      const unselectedType = 'Rubbing Wear';
       
       // Set one particle type as selected
       component.toggleParticleTypeSelection(selectedType);
@@ -212,6 +218,25 @@ describe('FerrographyEntryForm', () => {
       
       expect(component.isParticleTypeVisible(selectedType)).toBe(true);
       expect(component.isParticleTypeVisible(unselectedType)).toBe(false);
+    });
+    
+    it('should count visible particle types correctly', () => {
+      // Initially all types should be visible in 'All' mode
+      component.overallForm.get('viewMode')?.setValue('All');
+      expect(component.getVisibleParticleTypesCount()).toBe(2); // Mock data has 2 types
+      
+      // Select one particle type and switch to Review mode
+      const selectedType = 'Rubbing Wear (Platelet)';
+      component.toggleParticleTypeSelection(selectedType);
+      component.overallForm.get('viewMode')?.setValue('Review');
+      
+      expect(component.getVisibleParticleTypesCount()).toBe(1); // Only 1 selected
+      
+      // Select another particle type
+      const anotherType = 'Rubbing Wear';
+      component.toggleParticleTypeSelection(anotherType);
+      
+      expect(component.getVisibleParticleTypesCount()).toBe(2); // Both selected
     });
   });
 
@@ -244,7 +269,7 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should append particle type comment to overall comments', () => {
-      const particleType = FERROGRAPHY_PARTICLE_TYPES[0];
+      const particleType = 'Rubbing Wear (Platelet)';
       const form = component.getParticleTypeForm(particleType);
       const particleComment = 'Particle specific comment';
       
@@ -373,7 +398,7 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should handle empty particle type comment append', () => {
-      const particleType = FERROGRAPHY_PARTICLE_TYPES[0];
+      const particleType = 'Rubbing Wear (Platelet)';
       const form = component.getParticleTypeForm(particleType);
       const initialComments = component.overallForm.get('overallComments')?.value;
       
@@ -386,7 +411,7 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should not append comment when flag is false', () => {
-      const particleType = FERROGRAPHY_PARTICLE_TYPES[0];
+      const particleType = 'Rubbing Wear (Platelet)';
       const form = component.getParticleTypeForm(particleType);
       const initialComments = component.overallForm.get('overallComments')?.value;
       
@@ -399,7 +424,7 @@ describe('FerrographyEntryForm', () => {
     });
 
     it('should handle invalid particle type in toggle methods', () => {
-      const invalidType = 'Invalid Particle Type' as FerrographyParticleType;
+      const invalidType = 'Invalid Particle Type';
       
       expect(() => {
         component.toggleParticleTypeVisibility(invalidType);

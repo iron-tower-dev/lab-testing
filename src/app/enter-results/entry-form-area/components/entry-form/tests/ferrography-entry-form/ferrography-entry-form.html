@@ -176,7 +176,17 @@
     <mat-card-header>
       <mat-card-title>Particle Types</mat-card-title>
       <mat-card-subtitle>
-        {{ particleTypes.length }} predefined particle types
+        <ng-container *ngIf="viewMode() === 'All'; else reviewModeSubtitle">
+          {{ dynamicParticleTypes().length }} particle types loaded from database
+        </ng-container>
+        <ng-template #reviewModeSubtitle>
+          <ng-container *ngIf="getVisibleParticleTypesCount() === 0">
+            No particle types selected - please select particle types to view them
+          </ng-container>
+          <ng-container *ngIf="getVisibleParticleTypesCount() > 0">
+            {{ getVisibleParticleTypesCount() }} selected particle types shown
+          </ng-container>
+        </ng-template>
         <span *ngIf="isLoadingParticleTypes()" class="loading-indicator">
           - Loading definitions...
         </span>
@@ -202,25 +212,27 @@
 
       <!-- Particle Types Grid -->
       <div *ngIf="!isLoadingParticleTypes() && !particleTypesError()" class="particle-types-grid">
-        <app-particle-type-card
-          *ngFor="let particleType of particleTypes"
-          [particleType]="particleType"
-          [particleTypeDefinition]="getParticleTypeDefinition(particleType)"
-          [particleForm]="getParticleTypeForm(particleType)"
-          [isVisible]="isParticleTypeVisible(particleType)"
-          [readOnly]="readOnly()"
-          [heatOptions]="heatOptions"
-          [concentrationOptions]="concentrationOptions"
-          [sizeOptions]="sizeOptions"
-          [colorOptions]="colorOptions"
-          [textureOptions]="textureOptions"
-          [compositionOptions]="compositionOptions"
-          [severityOptions]="severityOptions"
-          (selectionToggle)="toggleParticleTypeSelection($event)"
-          (visibilityToggle)="toggleParticleTypeVisibility($event)"
-          (addCommentToOverall)="addParticleCommentToOverall($event)"
-        >
-        </app-particle-type-card>
+        <ng-container *ngFor="let particleType of dynamicParticleTypes()">
+          <app-particle-type-card
+            *ngIf="isParticleTypeVisible(particleType)"
+            [particleType]="particleType"
+            [particleTypeDefinition]="getParticleTypeDefinition(particleType)"
+            [particleForm]="getParticleTypeForm(particleType)"
+            [isVisible]="isParticleTypeVisible(particleType)"
+            [readOnly]="readOnly()"
+            [heatOptions]="heatOptions"
+            [concentrationOptions]="concentrationOptions"
+            [sizeOptions]="sizeOptions"
+            [colorOptions]="colorOptions"
+            [textureOptions]="textureOptions"
+            [compositionOptions]="compositionOptions"
+            [severityOptions]="severityOptions"
+            (selectionToggle)="toggleParticleTypeSelection($event)"
+            (visibilityToggle)="toggleParticleTypeVisibility($event)"
+            (addCommentToOverall)="addParticleCommentToOverall($event)"
+          >
+          </app-particle-type-card>
+        </ng-container>
       </div>
     </mat-card-content>
   </mat-card>

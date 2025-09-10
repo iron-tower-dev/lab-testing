@@ -3,7 +3,6 @@ import { FormGroup } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { SharedModule } from '../../../../../../../shared-module';
 import {
-  FerrographyParticleType,
   FerrographyHeat,
   FerrographyConcentration,
   FerrographySize,
@@ -462,7 +461,7 @@ export class ParticleTypeCardComponent {
   private dialog = inject(MatDialog);
 
   // Input signals
-  particleType = input.required<FerrographyParticleType>();
+  particleType = input.required<string>();
   particleTypeDefinition = input<ParticleTypeDefinition | null>(null);
   particleForm = input.required<FormGroup>();
   isVisible = input<boolean>(true);
@@ -478,9 +477,9 @@ export class ParticleTypeCardComponent {
   severityOptions = input.required<FerrographySeverity[]>();
 
   // Output signals
-  selectionToggle = output<FerrographyParticleType>();
-  visibilityToggle = output<FerrographyParticleType>();
-  addCommentToOverall = output<FerrographyParticleType>();
+  selectionToggle = output<string>();
+  visibilityToggle = output<string>();
+  addCommentToOverall = output<string>();
 
   onSelectionToggle(): void {
     this.selectionToggle.emit(this.particleType());
