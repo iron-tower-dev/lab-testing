@@ -14,6 +14,8 @@ export class EntryFormHeader {
   
   // Input signals
   selectedSample = input<{ testReference: TestReference; sampleId: string; sampleDetails?: any } | null>(null);
+  // Optional shared lab comments control passed from parent/forms
+  labCommentsControl = input<any | null>(null);
   
   // Internal state signals
   private readonly sampleInfo = signal<SampleWithTestInfo | null>(null);

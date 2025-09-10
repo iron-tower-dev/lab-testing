@@ -1,7 +1,8 @@
 <div class="entry-form-area">
-  <app-entry-form-header [selectedSample]="selectedSample()"></app-entry-form-header>
-  <app-entry-form
-    [testReference]="selectedSample()?.testReference ?? null"
-    [sampleId]="selectedSample()?.sampleId ?? null">
+<app-entry-form-header [selectedSample]="selectedSample()" [labCommentsControl]="labCommentsControl"></app-entry-form-header>
+<app-entry-form
+  [testReference]="selectedSample()?.testReference ?? null"
+  [sampleId]="selectedSample()?.sampleId ?? null"
+  [labCommentsControl]="labCommentsControl">
   </app-entry-form>
 </div>

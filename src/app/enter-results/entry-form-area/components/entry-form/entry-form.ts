@@ -57,6 +57,7 @@ import { VprEntryForm } from './tests/vpr-entry-form/vpr-entry-form';
 export class EntryForm {
   testReference = input<TestReference | null>(null);
   sampleId = input<string | null>(null);
+  labCommentsControl = input<any | null>(null);
 
   // Computed property to determine test code from test reference
   testCode = computed(() => {
