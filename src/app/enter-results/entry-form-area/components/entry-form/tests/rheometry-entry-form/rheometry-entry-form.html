@@ -1,1 +1,239 @@
-<p>Rheometry entry form</p>
+<div class="rheometry-entry-form">
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+      <span>Saving...</span>
+    </div>
+  }
+
+  <!-- Sample Information Header -->
+  @if (sampleData()) {
+    <mat-card class="sample-info-header">
+      <mat-card-header>
+        <mat-card-title>{{ sampleData()!.testName }}</mat-card-title>
+        <mat-card-subtitle>
+          Sample: {{ sampleData()!.sampleNumber }}
+        </mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  }
+
+  <form [formGroup]="form" class="rheometry-form">
+    <!-- Test Information Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Test Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Analyst Initials</mat-label>
+            <input matInput formControlName="analystInitials" maxlength="5">
+            @if (form.get('analystInitials')?.hasError('required')) {
+              <mat-error>Analyst initials are required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Test Standard</mat-label>
+            <mat-select formControlName="testStandard">
+              @for (standard of testStandardOptions(); track standard.value) {
+                <mat-option [value]="standard.value">{{ standard.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Test Method</mat-label>
+            <mat-select formControlName="testMethod">
+              @for (method of testMethods; track method) {
+                <mat-option [value]="method">{{ method }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Rheometer Used</mat-label>
+            <mat-select formControlName="rheometerUsed">
+              @for (rheometer of rheometers; track rheometer) {
+                <mat-option [value]="rheometer">{{ rheometer }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Test Temperature (°C)</mat-label>
+            <input matInput formControlName="testTemperature" type="number" 
+                   min="-20" max="200" step="1">
+            <span matTextSuffix>°C</span>
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Sample Volume (mL)</mat-label>
+            <input matInput formControlName="sampleVolume" type="number" 
+                   min="0.1" max="100" step="0.1">
+            <span matTextSuffix>mL</span>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Measurements Section -->
+    <mat-card class="form-section measurements-section">
+      <mat-card-header>
+        <mat-card-title>
+          Rheological Measurements
+          <span class="measurement-count">({{ selectedMeasurementsCount() }} of 8 selected)</span>
+        </mat-card-title>
+        <mat-card-subtitle>Select at least 2 measurement points</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="measurements-grid" formArrayName="measurements">
+          @for (measurement of measurementsFormArray.controls; track measurement; let i = $index) {
+            <mat-card class="measurement-card" 
+                      [class.selected]="getMeasurementForm(i).get('isSelected')?.value"
+                      [formGroupName]="i">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-checkbox formControlName="isSelected">
+                    Point {{ i + 1 }}
+                  </mat-checkbox>
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                @if (getMeasurementForm(i).get('isSelected')?.value) {
+                  <div class="measurement-form-content">
+                    <mat-form-field class="full-width">
+                      <mat-label>Shear Rate (1/s)</mat-label>
+                      <input matInput type="number" formControlName="shearRate" 
+                             step="0.1" min="0.1" max="10000" placeholder="10.0">
+                      <span matTextSuffix>1/s</span>
+                    </mat-form-field>
+
+                    <mat-form-field class="full-width">
+                      <mat-label>Viscosity (mPa·s)</mat-label>
+                      <input matInput type="number" formControlName="viscosity" 
+                             step="0.1" min="0.1" max="100000" placeholder="100.0">
+                      <span matTextSuffix>mPa·s</span>
+                    </mat-form-field>
+
+                    <mat-form-field class="full-width">
+                      <mat-label>Temperature (°C)</mat-label>
+                      <input matInput type="number" formControlName="temperature" 
+                             step="1" min="-20" max="200" placeholder="25">
+                      <span matTextSuffix>°C</span>
+                    </mat-form-field>
+
+                    <mat-form-field class="full-width">
+                      <mat-label>Notes</mat-label>
+                      <textarea matInput formControlName="notes" rows="2" maxlength="200"></textarea>
+                    </mat-form-field>
+                  </div>
+                }
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Results Section -->
+    @if (calculatedResults()) {
+      <mat-card class="form-section results-section">
+        <mat-card-header>
+          <mat-card-title>Calculated Results</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="results-grid">
+            <div class="result-item">
+              <span class="result-label">Average Viscosity:</span>
+              <span class="result-value">{{ calculatedResults()!.averageViscosity | number:'1.2-2' }} mPa·s</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Viscosity Index:</span>
+              <span class="result-value">{{ calculatedResults()!.viscosityIndex | number:'1.2-2' }}%</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Thixotropic Index:</span>
+              <span class="result-value">{{ calculatedResults()!.thixotropicIndex | number:'1.2-2' }}</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Flow Behavior Index:</span>
+              <span class="result-value">{{ calculatedResults()!.flowBehaviorIndex | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          
+          <div class="result-interpretation">
+            <h4>Interpretation:</h4>
+            <ul>
+              @if (calculatedResults()!.flowBehaviorIndex < 1) {
+                <li>Shear-thinning (pseudoplastic) behavior detected</li>
+              } @else if (calculatedResults()!.flowBehaviorIndex > 1) {
+                <li>Shear-thickening (dilatant) behavior detected</li>
+              } @else {
+                <li>Newtonian behavior</li>
+              }
+              
+              @if (calculatedResults()!.thixotropicIndex > 1.5) {
+                <li>Significant thixotropic behavior present</li>
+              }
+              
+              @if (calculatedResults()!.viscosityIndex > 50) {
+                <li>High viscosity variation across shear rates</li>
+              }
+            </ul>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Lab Comments Section -->
+    <mat-card class="form-section comments-section">
+      <mat-card-header>
+        <mat-card-title>Laboratory Comments</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-form-field class="full-width">
+          <mat-label>Lab Comments</mat-label>
+          <textarea matInput formControlName="labComments" rows="4" maxlength="1000"
+                    placeholder="Enter any additional comments about the rheological behavior..."></textarea>
+          <mat-hint [class.warning]="commentLimitWarning()">{{ commentCharacterCount() }}/1000 characters</mat-hint>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <mat-card class="form-section error-section error">
+        <mat-card-content>
+          <div class="error-content">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Action Buttons -->
+    <mat-card class="form-section actions-section">
+      <mat-card-actions align="end">
+        <button mat-button type="button" (click)="onClear()" [disabled]="isLoading()">
+          Clear Form
+        </button>
+        <button mat-raised-button type="button" (click)="onSave()" 
+                [disabled]="!formIsValid() || isLoading()" color="primary">
+          @if (isLoading()) {
+            <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Save Results
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

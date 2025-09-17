@@ -2,351 +2,207 @@
 
 .deleterious-entry-form {
   position: relative;
-  padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
 
-  .loading-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(255, 255, 255, 0.8);
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  gap: 16px;
+
+  span {
+    color: white;
+    font-size: 16px;
+  }
+}
+
+.sample-info-header {
+  margin-bottom: 20px;
+  background-color: #f5f5f5;
+}
+
+.form-section {
+  margin-bottom: 20px;
+
+  &.error {
+    background-color: #ffebee;
+    border-left: 4px solid #f44336;
+  }
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+
+  .half-width {
+    flex: 1;
+  }
+
+  .third-width {
+    flex: 1;
+  }
+
+  .full-width {
+    width: 100%;
+  }
+}
+
+.trials-section {
+  .trial-count {
+    font-size: 0.9em;
+    color: #666;
+    font-weight: normal;
+  }
+
+  .trials-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+    margin-top: 16px;
+  }
+
+  .trial-card {
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    min-height: 120px;
+
+    &.selected {
+      border-color: #1976d2;
+      box-shadow: 0 4px 8px rgba(25, 118, 210, 0.1);
+    }
+
+    .trial-form-content {
+      margin-top: 12px;
+
+      .full-width {
+        width: 100%;
+        margin-bottom: 8px;
+      }
+    }
+  }
+}
+
+.calculations-section {
+  .calculations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+
+  .calculation-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    gap: 1rem;
+    padding: 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border: 1px solid #e0e0e0;
 
-    span {
+    .calculation-label {
+      font-size: 0.875rem;
+      color: #666;
+      margin-bottom: 4px;
+      font-weight: 500;
+    }
+
+    .calculation-value {
       font-size: 1.1rem;
-      color: #666;
-    }
-  }
-
-  // Sample Information Header
-  .sample-info-header {
-    margin-bottom: 1.5rem;
-    background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
-    
-    mat-card-title {
+      font-weight: 600;
       color: #1976d2;
-      font-size: 1.5rem;
-      font-weight: 500;
-    }
-
-    mat-card-subtitle {
-      font-size: 1rem;
-      color: #666;
-      margin-top: 0.5rem;
     }
   }
+}
 
-  // Form sections
-  .form-section {
-    margin-bottom: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-
-    mat-card-header {
-      padding-bottom: 1rem;
-      border-bottom: 1px solid #e0e0e0;
-      margin-bottom: 1rem;
-
-      mat-card-title {
-        color: #333;
-        font-size: 1.3rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-
-        .trial-count {
-          font-size: 0.9rem;
-          color: #666;
-          font-weight: normal;
-        }
-      }
-
-      mat-card-subtitle {
-        color: #666;
-        font-size: 0.95rem;
-        margin-top: 0.5rem;
-      }
-    }
+.comments-section {
+  .full-width {
+    width: 100%;
   }
 
-  // Form layout
-  .form-row {
+  mat-hint.warning {
+    color: #ff9800;
+  }
+}
+
+.error-section {
+  .error-content {
     display: flex;
-    gap: 1rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-
-    @media (max-width: 768px) {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .third-width {
-      flex: 1;
-      min-width: 250px;
-    }
-
-    .half-width {
-      flex: 1;
-      min-width: 300px;
-    }
-
-    .quarter-width {
-      flex: 0 1 200px;
-      min-width: 180px;
-    }
-
-    .full-width {
-      flex: 1;
-      width: 100%;
-    }
-  }
-
-  // Trials Section
-  .trials-section {
-    .trial-actions {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-      flex-wrap: wrap;
-
-      button {
-        min-width: 120px;
-      }
-    }
-
-    .trials-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1rem;
-
-      @media (max-width: 768px) {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    .trial-card {
-      border: 2px solid #e0e0e0;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-
-      &.selected {
-        border-color: #2196f3;
-        background-color: #f8f9fa;
-        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
-      }
-
-      mat-card-header {
-        padding-bottom: 0.5rem;
-        border-bottom: 1px solid #e0e0e0;
-        margin-bottom: 0.5rem;
-
-        mat-card-title {
-          font-size: 1rem;
-          color: #333;
-        }
-      }
-
-      .trial-form-content {
-        .full-width {
-          width: 100%;
-          margin-bottom: 1rem;
-        }
-      }
-    }
-  }
-
-  // Calculations Section
-  .calculations-section {
-    background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
-    border: 1px solid #4caf50;
-
-    .calculations-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-
-      .calculation-item {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        padding: 1rem;
-        background: rgba(255, 255, 255, 0.6);
-        border-radius: 8px;
-        border: 1px solid #e0e0e0;
-
-        .calculation-label {
-          font-size: 0.9rem;
-          color: #666;
-          margin-bottom: 0.5rem;
-          font-weight: 500;
-        }
-
-        .calculation-value {
-          font-size: 1.3rem;
-          color: #2e7d32;
-          font-weight: bold;
-        }
-      }
-    }
-  }
-
-  // Comments Section
-  .comments-section {
-    .full-width {
-      width: 100%;
-    }
-
-    .warning {
-      color: #f57c00 !important;
-      font-weight: 500;
-    }
-  }
-
-  // Validation Section
-  .validation-section {
-    &.error {
-      border: 2px solid #f44336;
-      background-color: #ffebee;
-    }
-
-    mat-card-title {
-      color: #d32f2f;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .validation-errors {
-      margin: 0;
-      padding-left: 1.5rem;
-      
-      li {
-        color: #d32f2f;
-        margin-bottom: 0.5rem;
-        font-size: 0.9rem;
-      }
-    }
-  }
-
-  // Form Actions
-  .form-actions {
-    display: flex;
-    gap: 1rem;
     align-items: center;
-    margin-top: 2rem;
-    flex-wrap: wrap;
+    gap: 8px;
+    color: #d32f2f;
+
+    mat-icon {
+      color: #d32f2f;
+    }
+  }
+}
+
+.actions-section {
+  mat-card-actions {
+    padding: 16px;
+    gap: 12px;
 
     button {
-      min-width: 140px;
-      height: 44px;
-      font-weight: 500;
+      min-width: 120px;
+
+      mat-progress-spinner {
+        margin-right: 8px;
+      }
 
       mat-icon {
-        margin-right: 0.5rem;
-      }
-    }
-
-    .unsaved-changes-indicator {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #f57c00;
-      font-size: 0.9rem;
-      font-weight: 500;
-      margin-left: auto;
-
-      mat-icon {
-        font-size: 1.1rem;
-        width: 1.1rem;
-        height: 1.1rem;
+        margin-right: 8px;
       }
     }
   }
+}
 
-  // Error Message
-  .error-message {
-    background-color: #ffebee;
-    border: 1px solid #f44336;
-    margin-top: 1rem;
+// Responsive design
+@media (max-width: 768px) {
+  .deleterious-entry-form {
+    padding: 12px;
+  }
 
-    mat-card-content {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: #d32f2f;
-      font-weight: 500;
+  .form-row {
+    flex-direction: column;
+    gap: 8px;
+
+    .half-width,
+    .third-width {
+      width: 100%;
     }
   }
 
-  // Responsive Design
-  @media (max-width: 1024px) {
-    padding: 0.5rem;
-    
-    .form-section {
-      margin-bottom: 1rem;
+  .trials-section {
+    .trials-grid {
+      grid-template-columns: 1fr;
     }
   }
 
-  @media (max-width: 768px) {
-    padding: 0.25rem;
-
-    .sample-info-header {
-      mat-card-subtitle {
-        font-size: 0.85rem;
-        line-height: 1.3;
-      }
+  .calculations-section {
+    .calculations-grid {
+      grid-template-columns: 1fr;
     }
+  }
 
-    .form-section {
-      mat-card-header {
-        mat-card-title {
-          font-size: 1.1rem;
-        }
-      }
-    }
-
-    .trials-section {
-      .trial-actions {
-        button {
-          min-width: 100px;
-          font-size: 0.85rem;
-        }
-      }
-    }
-
-    .form-actions {
-      flex-direction: column;
+  .actions-section {
+    mat-card-actions {
+      flex-direction: column-reverse;
       align-items: stretch;
 
       button {
         width: 100%;
-        min-width: auto;
-      }
-
-      .unsaved-changes-indicator {
-        margin-left: 0;
-        justify-content: center;
-      }
-    }
-  }
-
-  @media (max-width: 480px) {
-    padding: 0.125rem;
-
-    .calculations-section {
-      .calculations-grid {
-        grid-template-columns: 1fr;
       }
     }
   }

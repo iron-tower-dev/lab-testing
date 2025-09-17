@@ -122,3 +122,38 @@ export const testStandTable = sqliteTable('test_stand_table', {
   id: int().notNull(),
   name: text(),
 });
+
+// Test standards for each test type (replaces hardcoded values)
+export const testStandardsTable = sqliteTable('test_standards_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  testId: int().notNull(), // References testTable.id
+  standardCode: text().notNull(), // e.g., "ASTM-D664", "IP-135"
+  standardName: text().notNull(), // e.g., "ASTM D664 - Potentiometric"
+  description: text(),
+  isDefault: int({ mode: 'boolean' }).default(false),
+  active: int({ mode: 'boolean' }).default(true),
+  sortOrder: int().default(0),
+});
+
+// Test method configurations (procedures, parameters)
+export const testMethodConfigTable = sqliteTable('test_method_config_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  testId: int().notNull(), // References testTable.id
+  configKey: text().notNull(), // e.g., "solvents", "indicators", "temperature_range"
+  configValue: text().notNull(), // JSON string for complex values
+  description: text(),
+  active: int({ mode: 'boolean' }).default(true),
+});
+
+// Form data storage for test entries
+export const testFormDataTable = sqliteTable('test_form_data_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  sampleId: int().notNull(),
+  testId: int().notNull(),
+  formData: text().notNull(), // JSON string of form data
+  status: text().default('draft'), // draft, submitted, validated
+  createdBy: text(),
+  createdAt: int({ mode: 'timestamp' }),
+  updatedAt: int({ mode: 'timestamp' }),
+  version: int().default(1),
+});

@@ -1,7 +1,7 @@
 <div class="test-type-panel mat-elevation-z4">
   <mat-form-field>
     <mat-label>Select Test</mat-label>
-    <mat-select [value]="selectedTestReference()" (selectionChange)="setSelectedTestReference($event.value)">
+    <mat-select [value]="selectedTestReference()" (selectionChange)="setSelectedTestReference($event.value)" [compareWith]="compareTestReferences">
       @for (testOption of testReferenceOptions(); track testOption.reference.id) {
         <mat-option [value]="testOption.reference">{{ testOption.label }}</mat-option>
       }

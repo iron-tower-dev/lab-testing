@@ -194,65 +194,81 @@ export interface SampleTestResponse {
   assignedDate: Date;
 }
 
-/**
- * @deprecated Use TestReference, TestLookupKey, or TestDefinition instead.
- * This type is kept for backward compatibility during migration.
- */
-export type TestCode =
-  | 'TAN'
-  | 'KF'
-  | 'SpecStd'
-  | 'SpecLrg'
-  | 'Vis40'
-  | 'Vis100'
-  | 'FTIR'
-  | 'FlashPt'
-  | 'TBN'
-  | 'InspectFilter'
-  | 'GrPen60'
-  | 'GrDropPt'
-  | 'Pcnt'
-  | 'RBOT'
-  | 'FltrRes'
-  | 'Ferrography'
-  | 'Rust'
-  | 'TFOUT'
-  | 'DebrisID'
-  | 'Deleterious'
-  | 'Rheometry'
-  | 'DInch'
-  | 'OilContent'
-  | 'VPR';
+// ==========================================
+// Test Helper Functions for Testing
+// ==========================================
 
 /**
- * @deprecated Use TestDefinition with proper database lookup instead.
- * This mapping is kept for backward compatibility during migration.
+ * Helper functions to create TestReference instances for testing purposes.
+ * These replace the deprecated LEGACY_TEST_CODE_TO_REFERENCE constant.
  */
-export const testCodeToType: Record<TestCode, string> = {
-  TAN: 'TAN by Color Indication',
-  KF: 'Water Content by Karl Fischer',
-  SpecStd: 'Emission Spectroscopy - Standard',
-  SpecLrg: 'Emission Spectroscopy - Large',
-  Vis40: 'Viscosity - 40°C',
-  Vis100: 'Viscosity - 100°C',
-  FTIR: 'FTIR',
-  FlashPt: 'Flash Point',
-  TBN: 'TBN by Auto Titration',
-  InspectFilter: 'Inspect Filter',
-  GrPen60: 'Grease Penetration - 60°C',
-  GrDropPt: 'Grease Drop Point',
-  Pcnt: 'Particle Count',
-  RBOT: 'Rheology - Brookfield',
-  FltrRes: 'Filter Residue',
-  Ferrography: 'Ferrography',
-  Rust: 'Rust',
-  TFOUT: 'TFOUT',
-  DebrisID: 'Debris Identification',
-  Deleterious: 'Deleterious',
-  Rheometry: 'Rheometry',
-  DInch: 'Diameter Inch',
-  OilContent: 'Oil Content',
-  VPR: 'Varnish Potential Rating',
+export const TestHelpers = {
+  createTANReference(): TestReference {
+    return { id: 10, name: 'TAN by Color Indication', abbrev: 'TAN', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createKFReference(): TestReference {
+    return { id: 20, name: 'Water Content by Karl Fischer', abbrev: 'KF', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createSpecStdReference(): TestReference {
+    return { id: 30, name: 'Emission Spectroscopy - Standard', abbrev: 'SpecStd', shortAbbrev: null, groupName: 'Spectroscopy' };
+  },
+  createSpecLrgReference(): TestReference {
+    return { id: 40, name: 'Emission Spectroscopy - Large', abbrev: 'SpecLrg', shortAbbrev: null, groupName: 'Spectroscopy' };
+  },
+  createVis40Reference(): TestReference {
+    return { id: 50, name: 'Viscosity - 40°C', abbrev: 'Vis40', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createVis100Reference(): TestReference {
+    return { id: 60, name: 'Viscosity - 100°C', abbrev: 'Vis100', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createFlashPtReference(): TestReference {
+    return { id: 80, name: 'Flash Point', abbrev: 'FlashPt', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createTBNReference(): TestReference {
+    return { id: 110, name: 'TBN by Auto Titration', abbrev: 'TBN', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createInspectFilterReference(): TestReference {
+    return { id: 120, name: 'Inspect Filter', abbrev: 'InspectFilter', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createGrPen60Reference(): TestReference {
+    return { id: 130, name: 'Grease Penetration - 60°C', abbrev: 'GrPen60', shortAbbrev: null, groupName: 'Grease' };
+  },
+  createGrDropPtReference(): TestReference {
+    return { id: 140, name: 'Grease Drop Point', abbrev: 'GrDropPt', shortAbbrev: null, groupName: 'Grease' };
+  },
+  createPcntReference(): TestReference {
+    return { id: 160, name: 'Particle Count', abbrev: 'Pcnt', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createRBOTReference(): TestReference {
+    return { id: 170, name: 'RBOT', abbrev: 'RBOT', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createFerrographyReference(): TestReference {
+    return { id: 210, name: 'Ferrography', abbrev: 'Ferrography', shortAbbrev: null, groupName: 'Particle Analysis' };
+  },
+  createRustReference(): TestReference {
+    return { id: 220, name: 'Rust', abbrev: 'Rust', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createTFOUTReference(): TestReference {
+    return { id: 230, name: 'TFOUT', abbrev: 'TFOUT', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createDebrisIDReference(): TestReference {
+    return { id: 240, name: 'Debris Identification', abbrev: 'DebrisID', shortAbbrev: null, groupName: 'Particle Analysis' };
+  },
+  createDeleteriousReference(): TestReference {
+    return { id: 250, name: 'Deleterious', abbrev: 'Deleterious', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createRheometryReference(): TestReference {
+    return { id: 270, name: 'Rheometry', abbrev: 'Rheometry', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createDInchReference(): TestReference {
+    return { id: 284, name: 'Diameter Inch', abbrev: 'DInch', shortAbbrev: null, groupName: 'Physical' };
+  },
+  createOilContentReference(): TestReference {
+    return { id: 285, name: 'Oil Content', abbrev: 'OilContent', shortAbbrev: null, groupName: 'Chemical' };
+  },
+  createVPRReference(): TestReference {
+    return { id: 286, name: 'Varnish Potential Rating', abbrev: 'VPR', shortAbbrev: null, groupName: 'Chemical' };
+  }
 };
 
 // ==========================================

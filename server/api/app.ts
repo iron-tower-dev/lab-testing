@@ -8,6 +8,9 @@ import tests from './routes/tests';
 import particleTypes from './routes/particle-types';
 import testReadings from './routes/test-readings';
 import testStands from './routes/test-stands';
+import testStandards from './routes/test-standards';
+import testMethodConfig from './routes/test-method-config';
+import testFormData from './routes/test-form-data';
 import { closeDatabase } from './db/connection';
 
 // Create the main Hono app
@@ -33,7 +36,10 @@ app.get('/', (c) => {
       tests: '/api/tests',
       particleTypes: '/api/particle-types',
       testReadings: '/api/test-readings',
-      testStands: '/api/test-stands'
+      testStands: '/api/test-stands',
+      testStandards: '/api/test-standards',
+      testMethodConfig: '/api/test-method-config',
+      testFormData: '/api/test-form-data'
     }
   });
 });
@@ -53,6 +59,9 @@ app.route('/api/tests', tests);
 app.route('/api/particle-types', particleTypes);
 app.route('/api/test-readings', testReadings);
 app.route('/api/test-stands', testStands);
+app.route('/api/test-standards', testStandards);
+app.route('/api/test-method-config', testMethodConfig);
+app.route('/api/test-form-data', testFormData);
 
 // 404 handler for API routes
 app.notFound((c) => {
@@ -64,7 +73,10 @@ app.notFound((c) => {
       tests: '/api/tests',
       particleTypes: '/api/particle-types',
       testReadings: '/api/test-readings',
-      testStands: '/api/test-stands'
+      testStands: '/api/test-stands',
+      testStandards: '/api/test-standards',
+      testMethodConfig: '/api/test-method-config',
+      testFormData: '/api/test-form-data'
     }
   }, 404);
 });

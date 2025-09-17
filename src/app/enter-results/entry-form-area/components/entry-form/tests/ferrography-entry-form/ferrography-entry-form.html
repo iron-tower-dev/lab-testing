@@ -96,7 +96,6 @@
             [severityOptions]="severityOptions"
             (selectionToggle)="toggleParticleTypeSelection($event)"
             (visibilityToggle)="toggleParticleTypeVisibility($event)"
-            (addCommentToOverall)="addParticleCommentToOverall($event)"
           >
           </app-particle-type-card>
         </ng-container>
@@ -181,9 +180,27 @@
             </mat-error>
           </mat-form-field>
 
+          <!-- Add to Overall Comments Section -->
+          <div class="add-to-overall-section">
+            <div class="instruction-text">
+              Particle type comments from visible forms can be added to overall comments
+            </div>
+            <button
+              mat-raised-button
+              color="accent"
+              type="button"
+              class="add-overall-btn"
+              (click)="addSelectedParticleCommentsToOverall()"
+              [disabled]="!hasParticleCommentsToAdd() || readOnly()"
+            >
+              <mat-icon>add_comment</mat-icon>
+              <span>Add Selected Comments</span>
+            </button>
+          </div>
+
           <div class="comments-info" *ngIf="commentLimitWarning()">
             <mat-icon [color]="commentLimitExceeded() ? 'warn' : 'accent'">info</mat-icon>
-            <span>Individual particle type comments can be appended using "Add to Overall"</span>
+            <span>Use "Add Selected Comments" to append particle comments to overall comments</span>
           </div>
         </div>
 

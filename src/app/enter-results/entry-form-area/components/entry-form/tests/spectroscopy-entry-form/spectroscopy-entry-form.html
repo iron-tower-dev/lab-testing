@@ -1,1 +1,269 @@
-<p>spectroscopy-entry-form works!</p>
+<div class="spectroscopy-entry-form">
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+      <span>Saving...</span>
+    </div>
+  }
+
+  <!-- Sample Information Header -->
+  @if (sampleData()) {
+    <mat-card class="sample-info-header">
+      <mat-card-header>
+        <mat-card-title>{{ sampleData()!.testName }}</mat-card-title>
+        <mat-card-subtitle>
+          Sample: {{ sampleData()!.sampleNumber }} | 
+          Equipment: {{ sampleData()!.eqTagNum }} | 
+          Component: {{ sampleData()!.component }} | 
+          Location: {{ sampleData()!.location }}
+        </mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  }
+
+  <form [formGroup]="form" class="spectroscopy-form">
+    <!-- Test Information Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Test Information</mat-card-title>
+        <mat-card-subtitle>Basic test setup and instrument information</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Analyst Initials</mat-label>
+            <input matInput formControlName="analystInitials" 
+                   maxlength="5" placeholder="ABC">
+            <mat-hint>Your initials (max 5 characters)</mat-hint>
+            @if (form.get('analystInitials')?.hasError('required')) {
+              <mat-error>Analyst initials are required</mat-error>
+            }
+            @if (form.get('analystInitials')?.hasError('maxlength')) {
+              <mat-error>Maximum 5 characters allowed</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Test Standard</mat-label>
+            <mat-select formControlName="testStandard">
+              @for (standard of testStandardOptions(); track standard.value) {
+                <mat-option [value]="standard.value">{{ standard.label }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>Standard test method</mat-hint>
+            @if (form.get('testStandard')?.hasError('required')) {
+              <mat-error>Test standard is required</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Spectrometer Model</mat-label>
+            <input matInput formControlName="spectrometerModel" 
+                   placeholder="e.g., Agilent 5110 ICP-OES">
+            <mat-hint>Instrument model and type</mat-hint>
+            @if (form.get('spectrometerModel')?.hasError('required')) {
+              <mat-error>Spectrometer model is required</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Calibration Date</mat-label>
+            <input matInput formControlName="calibrationDate" 
+                   type="date">
+            <mat-hint>Last calibration date</mat-hint>
+            @if (form.get('calibrationDate')?.hasError('required')) {
+              <mat-error>Calibration date is required</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Test Type</mat-label>
+            <mat-select formControlName="testType">
+              <mat-option value="standard">Standard Elements</mat-option>
+              <mat-option value="large">Extended Elements</mat-option>
+            </mat-select>
+            <mat-hint>Standard or extended element analysis</mat-hint>
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Dilution Factor</mat-label>
+            <input matInput formControlName="dilutionFactor" 
+                   type="number" min="1" max="1000" step="1">
+            <mat-hint>Sample dilution factor (1 = no dilution)</mat-hint>
+            @if (form.get('dilutionFactor')?.hasError('required')) {
+              <mat-error>Dilution factor is required</mat-error>
+            }
+            @if (form.get('dilutionFactor')?.hasError('min') || form.get('dilutionFactor')?.hasError('max')) {
+              <mat-error>Dilution factor must be between 1 and 1000</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Elements Analysis Section -->
+    <mat-card class="form-section elements-section">
+      <mat-card-header>
+        <mat-card-title>
+          Element Analysis Results
+          <span class="element-count">({{ measuredElementsCount() }} of {{ commonElements.length }} measured)</span>
+        </mat-card-title>
+        <mat-card-subtitle>
+          Enter measured values for each element. Values outside normal ranges will be highlighted.
+          @if (abnormalElementsCount() > 0) {
+            <span class="warning-text">{{ abnormalElementsCount() }} elements outside normal range</span>
+          }
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="elements-grid" formArrayName="elements">
+          @for (element of elementsFormArray.controls; track element; let i = $index) {
+            <mat-card class="element-card" 
+                      [class.normal]="getElementForm(i).get('status')?.value === 'normal'"
+                      [class.high]="getElementForm(i).get('status')?.value === 'high'"
+                      [class.low]="getElementForm(i).get('status')?.value === 'low'"
+                      [formGroupName]="i">
+              <mat-card-header>
+                <mat-card-title>
+                  {{ commonElements[i].symbol }} - {{ commonElements[i].name }}
+                </mat-card-title>
+                <mat-card-subtitle>
+                  Normal: {{ commonElements[i].normalRange[0] }}-{{ commonElements[i].normalRange[1] }} {{ commonElements[i].units }}
+                </mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="element-form-content">
+                  <mat-form-field class="full-width">
+                    <mat-label>Measured Value</mat-label>
+                    <input matInput type="number" formControlName="measuredValue" 
+                           step="0.1" min="0" max="10000" 
+                           [placeholder]="'Enter value in ' + commonElements[i].units">
+                    <span matTextSuffix>{{ commonElements[i].units }}</span>
+                    <mat-hint>Enter measured concentration</mat-hint>
+                    @if (getElementForm(i).get('measuredValue')?.hasError('min')) {
+                      <mat-error>Value cannot be negative</mat-error>
+                    }
+                    @if (getElementForm(i).get('measuredValue')?.hasError('max')) {
+                      <mat-error>Value too high (max 10,000)</mat-error>
+                    }
+                  </mat-form-field>
+
+                  @if (getElementForm(i).get('measuredValue')?.value !== null) {
+                    <mat-form-field class="full-width">
+                      <mat-label>Notes</mat-label>
+                      <textarea matInput formControlName="notes" 
+                                rows="2" maxlength="200"
+                                placeholder="Any observations for this element...">
+                      </textarea>
+                      <mat-hint>{{ getElementForm(i).get('notes')?.value?.length || 0 }}/200 characters</mat-hint>
+                    </mat-form-field>
+                  }
+
+                  @if (getElementForm(i).get('status')?.value !== 'normal' && getElementForm(i).get('measuredValue')?.value !== null) {
+                    <div class="status-indicator">
+                      <mat-icon [class.high]="getElementForm(i).get('status')?.value === 'high'"
+                               [class.low]="getElementForm(i).get('status')?.value === 'low'">
+                        {{ getElementForm(i).get('status')?.value === 'high' ? 'trending_up' : 'trending_down' }}
+                      </mat-icon>
+                      <span class="status-text">
+                        {{ getElementForm(i).get('status')?.value === 'high' ? 'Above Normal' : 'Below Normal' }}
+                      </span>
+                    </div>
+                  }
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Lab Comments Section -->
+    <mat-card class="form-section comments-section">
+      <mat-card-header>
+        <mat-card-title>Laboratory Comments</mat-card-title>
+        <mat-card-subtitle>Additional observations and notes</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-form-field class="full-width">
+          <mat-label>Lab Comments</mat-label>
+          <textarea matInput formControlName="labComments" 
+                    rows="4" maxlength="1000"
+                    placeholder="Enter any additional comments about the analysis, sample condition, or results...">
+          </textarea>
+          <mat-hint [class.warning]="commentLimitWarning()">{{ commentCharacterCount() }}/1000 characters</mat-hint>
+          @if (form.get('labComments')?.hasError('maxlength')) {
+            <mat-error>Comments cannot exceed 1000 characters</mat-error>
+          }
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Validation Summary -->
+    @if (!formIsValid()) {
+      <mat-card class="form-section validation-section error">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>error</mat-icon>
+            Form Validation Errors
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <ul class="validation-errors">
+            @if (!form.get('analystInitials')?.valid) {
+              <li>Analyst initials are required</li>
+            }
+            @if (!form.get('testStandard')?.valid) {
+              <li>Test standard is required</li>
+            }
+            @if (!form.get('spectrometerModel')?.valid) {
+              <li>Spectrometer model is required</li>
+            }
+            @if (!form.get('calibrationDate')?.valid) {
+              <li>Calibration date is required</li>
+            }
+            @if (measuredElementsCount() === 0) {
+              <li>At least one element must have a measured value</li>
+            }
+          </ul>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <mat-card class="form-section error-section error">
+        <mat-card-content>
+          <div class="error-content">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Action Buttons -->
+    <mat-card class="form-section actions-section">
+      <mat-card-actions align="end">
+        <button mat-button type="button" (click)="onClear()" 
+                [disabled]="isLoading()">
+          Clear Form
+        </button>
+        <button mat-raised-button type="button" (click)="onSave()" 
+                [disabled]="!formIsValid() || isLoading()" 
+                color="primary">
+          @if (isLoading()) {
+            <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Save Results
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

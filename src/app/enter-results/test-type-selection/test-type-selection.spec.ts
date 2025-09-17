@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { TestTypeSelection } from './test-type-selection';
-import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from '../enter-results.types';
+import { TestReference, TestHelpers } from '../enter-results.types';
 
 describe('TestTypeSelection', () => {
   let component: TestTypeSelection;
@@ -15,7 +15,7 @@ describe('TestTypeSelection', () => {
 
     fixture = TestBed.createComponent(TestTypeSelection);
     component = fixture.componentInstance;
-    sampleTestReference = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
+    sampleTestReference = TestHelpers.createTANReference();
     fixture.detectChanges();
   });
 
@@ -33,7 +33,7 @@ describe('TestTypeSelection', () => {
   });
 
   it('should emit selectedTestReferenceChange when setSelectedTestReference is called', () => {
-    const kfTestReference = LEGACY_TEST_CODE_TO_REFERENCE.KF;
+    const kfTestReference = TestHelpers.createKFReference();
     spyOn(component.selectedTestReferenceChange, 'emit');
     component.setSelectedTestReference(kfTestReference);
     expect(component.selectedTestReferenceChange.emit).toHaveBeenCalledWith(kfTestReference);

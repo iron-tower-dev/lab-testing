@@ -120,8 +120,7 @@ export class FerrographyEntryForm implements OnInit {
       texture: [''],
       composition: [''],
       severity: [''],
-      comments: [''],
-      includeCommentsInOverall: [false]
+      comments: ['']
     });
   }
   
@@ -245,21 +244,46 @@ export class FerrographyEntryForm implements OnInit {
     }
   }
   
-  addParticleCommentToOverall(particleType: string): void {
-    const index = this.dynamicParticleTypes().indexOf(particleType);
-    if (index >= 0) {
+  hasParticleCommentsToAdd(): boolean {
+    return this.dynamicParticleTypes().some((type: string, index: number) => {
       const form = this.particleTypeFormsArray.at(index);
+      const isVisible = form?.get('isVisible')?.value;
       const comment = form?.get('comments')?.value;
-      const includeFlag = form?.get('includeCommentsInOverall')?.value;
+      return isVisible && comment && comment.trim().length > 0;
+    });
+  }
+
+  addSelectedParticleCommentsToOverall(): void {
+    const commentsToAdd: string[] = [];
+    
+    this.dynamicParticleTypes().forEach((type: string, index: number) => {
+      const form = this.particleTypeFormsArray.at(index);
+      const isVisible = form?.get('isVisible')?.value;
+      const comment = form?.get('comments')?.value;
       
-      if (comment && includeFlag) {
-        const overallComments = this.overallForm.get('overallComments')?.value || '';
-        const newComment = overallComments ? `${overallComments}\n${particleType}: ${comment}` : `${particleType}: ${comment}`;
+      if (isVisible && comment && comment.trim().length > 0) {
+        commentsToAdd.push(`${type}: ${comment.trim()}`);
+      }
+    });
+    
+    if (commentsToAdd.length > 0) {
+      const overallComments = this.overallForm.get('overallComments')?.value || '';
+      const newCommentsText = commentsToAdd.join('\n');
+      const combinedComments = overallComments ? 
+        `${overallComments}\n\n--- Particle Type Comments ---\n${newCommentsText}` : 
+        `--- Particle Type Comments ---\n${newCommentsText}`;
+      
+      if (combinedComments.length <= 1000) {
+        this.overallForm.get('overallComments')?.setValue(combinedComments);
         
-        if (newComment.length <= 1000) {
-          this.overallForm.get('overallComments')?.setValue(newComment);
-          form?.get('includeCommentsInOverall')?.setValue(false); // Reset flag after adding
-        }
+        // Clear the comments from particle forms after adding
+        this.dynamicParticleTypes().forEach((type: string, index: number) => {
+          const form = this.particleTypeFormsArray.at(index);
+          const isVisible = form?.get('isVisible')?.value;
+          if (isVisible && form?.get('comments')?.value) {
+            form?.get('comments')?.setValue('');
+          }
+        });
       }
     }
   }
@@ -309,8 +333,7 @@ export class FerrographyEntryForm implements OnInit {
       control.reset({
         particleType,
         isVisible: false,
-        isSelected: false,
-        includeCommentsInOverall: false
+        isSelected: false
       });
     });
     

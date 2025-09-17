@@ -43,5 +43,26 @@ serve({
   console.log(`  POST   /api/test-stands     - Create new test stand`);
   console.log(`  PUT    /api/test-stands/:id - Update test stand`);
   console.log(`  DELETE /api/test-stands/:id - Delete test stand`);
+  console.log(`
+📋 Test Standards:
+  GET    /api/test-standards     - Get all test standards`);
+  console.log(`  GET    /api/test-standards/:testId - Get standards for test`);
+  console.log(`  POST   /api/test-standards     - Create new standard`);
+  console.log(`  PUT    /api/test-standards/:id - Update standard`);
+  console.log(`  DELETE /api/test-standards/:id - Delete standard`);
+  console.log(`
+⚙️  Test Method Config:
+  GET    /api/test-method-config     - Get all configurations`);
+  console.log(`  GET    /api/test-method-config/:testId - Get configs for test`);
+  console.log(`  POST   /api/test-method-config     - Create new config`);
+  console.log(`  PUT    /api/test-method-config/:id - Update config`);
+  console.log(`  DELETE /api/test-method-config/:id - Delete config`);
+  console.log(`
+💾 Test Form Data:
+  GET    /api/test-form-data     - Get all form data`);
+  console.log(`  GET    /api/test-form-data/:sampleId/:testId - Get latest form data`);
+  console.log(`  POST   /api/test-form-data     - Save form data`);
+  console.log(`  PUT    /api/test-form-data/:id - Update form data`);
+  console.log(`  DELETE /api/test-form-data/:id - Delete form data`);
   console.log(`\n💡 Try: curl http://localhost:${port}/api/status`);
 });

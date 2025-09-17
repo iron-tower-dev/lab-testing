@@ -6,6 +6,7 @@ import { TestReadingsService, TestReading, TestReadingCreate } from '../../servi
 import { SampleService, Sample } from '../../services/sample.service';
 import { TestTypesService, TestType } from '../../services/test-types.service';
 import { SharedModule } from '../../../shared-module';
+import { SampleWithTestInfo } from '../../../enter-results/enter-results.types';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -169,6 +170,7 @@ export interface FormFieldConfig {
 export class BaseTestFormComponent implements OnInit, OnDestroy {
   @Input() sample?: Sample;
   @Input() testType?: TestType;
+  @Input() sampleData?: SampleWithTestInfo | null;
   @Input() existingReading?: TestReading;
   @Input() trialNumber: number = 1;
 
@@ -189,9 +191,33 @@ export class BaseTestFormComponent implements OnInit, OnDestroy {
   loadingMessage = '';
 
   ngOnInit(): void {
+    this.processSampleData();
     this.initializeForm();
     this.setupCalculationWatchers();
     this.loadExistingData();
+  }
+
+  private processSampleData(): void {
+    // If sampleData is provided, use it to set sample and testType
+    if (this.sampleData) {
+      // Convert SampleWithTestInfo to Sample format expected by BaseTestFormComponent
+      this.sample = {
+        sampleId: this.sampleData.sampleId,
+        sampleNumber: this.sampleData.sampleNumber,
+        description: this.sampleData.testName,
+        customerName: (this.sampleData.component || this.sampleData.location) || undefined,
+        dateReceived: new Date() // This should come from the actual sample data if available
+      };
+      
+      // Convert TestReference to TestType format
+      this.testType = {
+        testId: this.sampleData.testReference.id,
+        testName: this.sampleData.testReference.name || 'Unknown Test',
+        testCode: this.sampleData.testReference.abbrev || 'UNK',
+        description: this.sampleData.testName,
+        isActive: true
+      };
+    }
   }
 
   ngOnDestroy(): void {
