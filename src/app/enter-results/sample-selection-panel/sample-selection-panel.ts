@@ -8,7 +8,7 @@ import { TestsService } from '../../shared/services/tests.service';
   selector: 'app-sample-selection-panel',
   imports: [SharedModule],
   templateUrl: './sample-selection-panel.html',
-  styleUrl: './sample-selection-panel.scss'
+  styleUrl: './sample-selection-panel.css'
 })
 export class SampleSelectionPanel {
   private readonly sampleService = inject(SampleService);

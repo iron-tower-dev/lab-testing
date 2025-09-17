@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-rbot-entry-form',
   standalone: true,
   templateUrl: './rbot-entry-form.html',
-  styleUrls: ['./rbot-entry-form.scss'],
+  styleUrl: './rbot-entry-form.css',
   imports: [
     SharedModule
   ]

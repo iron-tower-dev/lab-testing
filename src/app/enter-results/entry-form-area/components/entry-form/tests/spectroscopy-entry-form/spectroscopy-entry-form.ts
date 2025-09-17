@@ -4,7 +4,7 @@ import { Component } from '@angular/core';
   selector: 'app-spectroscopy-entry-form',
   imports: [],
   templateUrl: './spectroscopy-entry-form.html',
-  styleUrl: './spectroscopy-entry-form.scss'
+  styleUrl: './spectroscopy-entry-form.css',
 })
 export class SpectroscopyEntryForm {
 

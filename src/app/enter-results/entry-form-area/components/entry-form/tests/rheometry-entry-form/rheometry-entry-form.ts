@@ -4,6 +4,6 @@ import { Component } from '@angular/core';
   selector: 'app-rheometry-entry-form',
   imports: [],
   templateUrl: './rheometry-entry-form.html',
-  styleUrl: './rheometry-entry-form.scss'
+  styleUrl: './rheometry-entry-form.css',
 })
 export class RheometryEntryForm {}

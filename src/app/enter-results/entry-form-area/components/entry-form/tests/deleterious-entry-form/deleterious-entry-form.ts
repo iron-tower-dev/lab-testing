@@ -7,7 +7,7 @@ import { SampleWithTestInfo, DeleteriousFormData, DeleteriousFormValidation, Del
   selector: 'app-deleterious-entry-form',
   imports: [SharedModule],
   templateUrl: './deleterious-entry-form.html',
-  styleUrl: './deleterious-entry-form.scss'
+  styleUrl: './deleterious-entry-form.css',
 })
 export class DeleteriousEntryForm implements OnInit {
   // Input/Output signals

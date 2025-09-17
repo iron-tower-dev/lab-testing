@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-fltr-res-entry-form',
   standalone: true,
   templateUrl: './fltr-res-entry-form.html',
-  styleUrls: ['./fltr-res-entry-form.scss'],
+  styleUrl: './fltr-res-entry-form.css',
   imports: [
     SharedModule
   ]

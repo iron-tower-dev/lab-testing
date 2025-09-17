@@ -52,7 +52,7 @@ import { VprEntryForm } from './tests/vpr-entry-form/vpr-entry-form';
     VprEntryForm
   ],
   templateUrl: './entry-form.html',
-  styleUrl: './entry-form.scss'
+  styleUrl: './entry-form.css'
 })
 export class EntryForm {
   testReference = input<TestReference | null>(null);

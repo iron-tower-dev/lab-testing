@@ -34,7 +34,7 @@ export interface DInchFormValidation {
   selector: 'app-d-inch-entry-form',
   imports: [SharedModule],
   templateUrl: './d-inch-entry-form.html',
-  styleUrl: './d-inch-entry-form.scss'
+  styleUrl: './d-inch-entry-form.css',
 })
 export class DInchEntryForm implements OnInit {
   // Input/Output signals following Angular best practices

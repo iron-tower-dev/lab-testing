@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-rust-entry-form',
   standalone: true,
   templateUrl: './rust-entry-form.html',
-  styleUrls: ['./rust-entry-form.scss'],
+  styleUrl: './rust-entry-form.css',
   imports: [
     SharedModule
   ]

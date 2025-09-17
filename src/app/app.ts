@@ -6,7 +6,7 @@ import { SharedModule } from './shared-module';
   selector: 'app-root',
   imports: [RouterOutlet, SharedModule],
   templateUrl: './app.html',
-  styleUrl: './app.scss'
+  styleUrl: './app.css'
 })
 export class App {
 }

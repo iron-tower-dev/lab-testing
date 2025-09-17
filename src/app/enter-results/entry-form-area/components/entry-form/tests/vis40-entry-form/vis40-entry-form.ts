@@ -8,7 +8,7 @@ import { SampleWithTestInfo } from '../../../../../enter-results.types';
   standalone: true,
   selector: 'app-vis40-entry-form',
   templateUrl: './vis40-entry-form.html',
-  styleUrls: ['./vis40-entry-form.scss'],
+  styleUrl: './vis40-entry-form.css',
   imports: [
     SharedModule
   ]

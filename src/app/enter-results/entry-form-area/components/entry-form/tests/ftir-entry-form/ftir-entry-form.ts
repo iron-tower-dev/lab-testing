@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-ftir-entry-form',
   standalone: true,
   templateUrl: './ftir-entry-form.html',
-  styleUrls: ['./ftir-entry-form.scss'],
+  styleUrl: './ftir-entry-form.css',
   imports: [
     SharedModule
   ]

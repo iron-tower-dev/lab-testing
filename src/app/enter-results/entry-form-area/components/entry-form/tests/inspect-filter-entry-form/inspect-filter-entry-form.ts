@@ -5,7 +5,7 @@ import { Component, ChangeDetectionStrategy } from '@angular/core';
   selector: 'app-inspect-filter-entry-form',
   imports: [],
   templateUrl: './inspect-filter-entry-form.html',
-  styleUrls: ['./inspect-filter-entry-form.scss'],
+  styleUrl: './inspect-filter-entry-form.css',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InspectFilterEntryForm {}

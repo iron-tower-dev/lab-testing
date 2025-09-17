@@ -1,0 +1,23 @@
+.enter-results-layout {
+  display: flex;
+  height: 100vh;
+}
+
+.side-panel {
+  width: 20rem;
+  background: #fafafa;
+  box-shadow: 0.125rem 0 0.5rem rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 0.5rem;
+  z-index: 100;
+}
+
+.main-area {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

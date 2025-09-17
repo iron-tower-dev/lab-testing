@@ -24,7 +24,7 @@ import {
   selector: 'app-ferrography-entry-form',
   imports: [SharedModule, ParticleTypeCardComponent],
   templateUrl: './ferrography-entry-form.html',
-  styleUrl: './ferrography-entry-form.scss'
+  styleUrl: './ferrography-entry-form.css',
 })
 export class FerrographyEntryForm implements OnInit {
   // Injected services

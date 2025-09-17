@@ -1,0 +1,331 @@
+.tan-form-content .form-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (max-width: 768px) {
+  .tan-form-content .form-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+
+.tan-form-content .half-width {
+  flex: 0 0 calc(50% - 0.5rem);
+}
+
+@media (max-width: 768px) {
+  .tan-form-content .half-width {
+    flex: 1;
+  }
+}
+
+.tan-form-content .third-width {
+  flex: 0 0 calc(33.333% - 0.6875rem);
+}
+
+@media (max-width: 768px) {
+  .tan-form-content .third-width {
+    flex: 1;
+  }
+}
+
+.tan-form-content .full-width {
+  flex: 1;
+  width: 100%;
+}
+
+.tan-form-content .calculated-field {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  font-weight: 600;
+  text-align: center;
+}
+
+.tan-form-content .sample-section,
+.tan-form-content .conditions-section,
+.tan-form-content .observations-section {
+  background-color: #fafafa;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  border-left: 0.25rem solid #2196f3;
+}
+
+.tan-form-content .sample-section h3,
+.tan-form-content .conditions-section h3,
+.tan-form-content .observations-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1976d2;
+}
+
+.tan-form-content .titration-section {
+  background-color: #fff8e1;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  border-left: 0.25rem solid #ff9800;
+}
+
+.tan-form-content .titration-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #f57c00;
+}
+
+.tan-form-content .color-section {
+  background-color: #f3e5f5;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  border-left: 0.25rem solid #9c27b0;
+}
+
+.tan-form-content .color-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #7b1fa2;
+}
+
+.tan-form-content .observations-section {
+  border-left-color: #607d8b;
+}
+
+.tan-form-content .observations-section h3 {
+  color: #455a64;
+}
+
+.tan-form-content .calculation-display {
+  background-color: #e8f5e8;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  border-left: 0.25rem solid #4caf50;
+}
+
+.tan-form-content .calculation-display h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #2e7d32;
+}
+
+.tan-form-content .calculation-display .calc-formula {
+  background-color: #ffffff;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid #ddd;
+  margin-bottom: 1rem;
+  font-family: 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.tan-form-content .calculation-display .calc-values p {
+  margin: 0.5rem 0;
+  font-size: 0.875rem;
+}
+
+.tan-form-content .calculation-display .calc-values p.calc-result {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2e7d32;
+  background-color: #ffffff;
+  padding: 0.75rem;
+  border-radius: 0.25rem;
+  border: 1px solid #4caf50;
+  margin-top: 1rem;
+}
+
+.tan-form-content .calculation-display .calc-values p.calc-result .rounded-note {
+  font-size: 0.75rem;
+  font-weight: normal;
+  color: #666;
+  display: block;
+  margin-top: 0.25rem;
+}
+
+.tan-form-content .qc-section {
+  background-color: #fff3e0;
+  padding: 1.25rem;
+  border-radius: 0.5rem;
+  margin: 1.5rem 0;
+  border-left: 0.25rem solid #ff9800;
+}
+
+.tan-form-content .qc-section h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #f57c00;
+}
+
+.tan-form-content .qc-section .qc-warnings .qc-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: #ffffff;
+  border-radius: 0.25rem;
+  border: 1px solid #ffcc02;
+  margin-bottom: 0.5rem;
+}
+
+.tan-form-content .qc-section .qc-warnings .qc-warning:last-child {
+  margin-bottom: 0;
+}
+
+.tan-form-content .qc-section .qc-warnings .qc-warning mat-icon {
+  color: #ff9800;
+  font-size: 1.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.tan-form-content .qc-section .qc-warnings .qc-warning span {
+  font-size: 0.875rem;
+  color: #e65100;
+}
+
+.tan-form-content mat-form-field .mat-mdc-form-field-hint-wrapper .mat-mdc-form-field-hint {
+  font-size: 0.75rem;
+  color: #666;
+}
+
+.tan-form-content mat-form-field.mat-focused .mat-mdc-form-field-outline-thick .mat-mdc-form-field-outline-start,
+.tan-form-content mat-form-field.mat-focused .mat-mdc-form-field-outline-thick .mat-mdc-form-field-outline-gap,
+.tan-form-content mat-form-field.mat-focused .mat-mdc-form-field-outline-thick .mat-mdc-form-field-outline-end {
+  border-color: #1976d2;
+}
+
+.tan-form-content input[type="number"] {
+  text-align: right;
+}
+
+.tan-form-content input[type="number"].calculated-field {
+  text-align: center;
+  font-weight: 600;
+}
+
+.tan-form-content textarea {
+  resize: vertical;
+  min-height: 3.125rem;
+}
+
+.tan-form-content mat-select .mat-mdc-select-value {
+  font-size: 0.875rem;
+}
+
+.tan-form-content .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix input,
+.tan-form-content .mat-mdc-form-field.mat-form-field-invalid .mat-mdc-text-field-wrapper .mat-mdc-form-field-flex .mat-mdc-form-field-infix textarea {
+  caret-color: #f44336;
+}
+
+@media (max-width: 1024px) {
+  .tan-form-content .sample-section,
+  .tan-form-content .titration-section,
+  .tan-form-content .conditions-section,
+  .tan-form-content .color-section,
+  .tan-form-content .observations-section,
+  .tan-form-content .calculation-display,
+  .tan-form-content .qc-section {
+    margin: 1rem 0;
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .tan-form-content .sample-section,
+  .tan-form-content .titration-section,
+  .tan-form-content .conditions-section,
+  .tan-form-content .color-section,
+  .tan-form-content .observations-section,
+  .tan-form-content .calculation-display,
+  .tan-form-content .qc-section {
+    margin: 0.75rem 0;
+    padding: 0.75rem;
+  }
+  
+  .tan-form-content .sample-section h3,
+  .tan-form-content .titration-section h3,
+  .tan-form-content .conditions-section h3,
+  .tan-form-content .color-section h3,
+  .tan-form-content .observations-section h3,
+  .tan-form-content .calculation-display h3,
+  .tan-form-content .qc-section h3 {
+    font-size: 0.875rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .tan-form-content .calc-formula {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+  
+  .tan-form-content .calc-values p {
+    font-size: 0.8125rem;
+  }
+  
+  .tan-form-content .calc-values p.calc-result {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+  }
+  
+  .tan-form-content .calc-values p.calc-result .rounded-note {
+    font-size: 0.6875rem;
+  }
+  
+  .tan-form-content .qc-warnings .qc-warning {
+    padding: 0.5rem;
+    gap: 0.5rem;
+  }
+  
+  .tan-form-content .qc-warnings .qc-warning mat-icon {
+    font-size: 1.125rem;
+    width: 1.125rem;
+    height: 1.125rem;
+  }
+  
+  .tan-form-content .qc-warnings .qc-warning span {
+    font-size: 0.8125rem;
+  }
+}
+
+.calc-result {
+  animation: highlight 0.5s ease-in-out;
+}
+
+.qc-warning {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes highlight {
+  0% {
+    background-color: #ffeb3b;
+  }
+  100% {
+    background-color: #ffffff;
+  }
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-0.625rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+mat-form-field:hover .mat-mdc-form-field-outline .mat-mdc-form-field-outline-start,
+mat-form-field:hover .mat-mdc-form-field-outline .mat-mdc-form-field-outline-gap,
+mat-form-field:hover .mat-mdc-form-field-outline .mat-mdc-form-field-outline-end {
+  border-color: rgba(0, 0, 0, 0.6);
+}

@@ -95,7 +95,7 @@ export interface DebrisIdFormValidation {
   selector: 'app-debris-id-entry-form',
   imports: [SharedModule],
   templateUrl: './debris-id-entry-form.html',
-  styleUrl: './debris-id-entry-form.scss'
+    styleUrl: './debris-id-entry-form.css',
 })
 export class DebrisIdEntryForm implements OnInit {
   // Injected services

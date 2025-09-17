@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-vpr-entry-form',
   standalone: true,
   templateUrl: './vpr-entry-form.html',
-  styleUrls: ['./vpr-entry-form.scss'],
+  styleUrl: './vpr-entry-form.css',
   imports: [
     SharedModule
   ]

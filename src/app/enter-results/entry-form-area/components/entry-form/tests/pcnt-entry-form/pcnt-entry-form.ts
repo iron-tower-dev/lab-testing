@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   standalone: true,
   selector: 'app-pcnt-entry-form',
   templateUrl: './pcnt-entry-form.html',
-  styleUrls: ['./pcnt-entry-form.scss'],
+  styleUrl: './pcnt-entry-form.css',
   imports: [
     SharedModule
   ]
