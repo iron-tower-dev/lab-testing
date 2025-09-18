@@ -8,7 +8,7 @@ import { TestsService } from '../../shared/services/tests.service';
   selector: 'app-sample-selection-panel',
   imports: [SharedModule],
   templateUrl: './sample-selection-panel.html',
-  styleUrl: './sample-selection-panel.scss'
+  styleUrl: './sample-selection-panel.css'
 })
 export class SampleSelectionPanel {
   private readonly sampleService = inject(SampleService);
@@ -152,4 +152,12 @@ export class SampleSelectionPanel {
   getDisplayName(testReference: TestReference): string {
     return TestIdentifierUtils.getDisplayName(testReference);
   }
+
+  // Compare function for mat-select to properly match TestReference objects
+  compareTestReferences = (ref1: TestReference | null, ref2: TestReference | null): boolean => {
+    if (!ref1 || !ref2) {
+      return ref1 === ref2;
+    }
+    return ref1.id === ref2.id;
+  };
 }

@@ -1,459 +1,198 @@
-import { Component, OnInit, inject, input, output, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, input, signal, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { SharedModule } from '../../../../../../shared-module';
-import { ParticleTypesService } from '../../../../../../shared/services/particle-types.service';
-import {
-  SampleWithTestInfo,
-  ParticleTypeDefinition
-} from '../../../../../enter-results.types';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
 
-// Debris ID specific types
-export type DebrisIdParticleType = 
-  | 'Metallic Debris' 
-  | 'Organic Debris'
-  | 'Inorganic Debris'
-  | 'Synthetic Debris'
-  | 'Cutting Debris'
-  | 'Fatigue Debris'
-  | 'Sliding Debris'
-  | 'Rolling Debris'
-  | 'Corrosion Debris'
-  | 'Contamination';
-
-export type DebrisIdViewMode = 'All' | 'Review' | 'Selected';
-
-export type DebrisIdSeverity = 1 | 2 | 3 | 4 | 5;
-
-export type DebrisIdConcentration = 'Trace' | 'Light' | 'Moderate' | 'Heavy' | 'Extreme';
-
-export type DebrisIdSize = 
-  | 'Microscopic <5µm'
-  | 'Small 5-25µm'
-  | 'Medium 25-50µm'
-  | 'Large 50-100µm'
-  | 'Very Large >100µm';
-
-export type DebrisIdShape = 
-  | 'Spherical'
-  | 'Angular'
-  | 'Platelet'
-  | 'Needle-like'
-  | 'Irregular'
-  | 'Chunky';
-
-export type DebrisIdComposition = 
-  | 'Iron/Steel'
-  | 'Aluminum'
-  | 'Copper/Bronze'
-  | 'Organic Material'
-  | 'Silicon'
-  | 'Carbon'
-  | 'Unknown';
-
-export interface DebrisIdParticleTypeData {
-  particleType: DebrisIdParticleType;
-  isVisible: boolean;
+interface DebrisObservation {
   isSelected: boolean;
-  concentration: DebrisIdConcentration | '';
-  sizeRange: DebrisIdSize | '';
-  primaryShape: DebrisIdShape | '';
-  composition: DebrisIdComposition | '';
-  severity: DebrisIdSeverity | '';
-  observations: string;
-  recommendedAction: string;
-  includeInReport: boolean;
-}
-
-export interface DebrisIdOverallData {
-  overallSeverity: DebrisIdSeverity | '';
-  analystInitials: string;
-  testStandard: string;
-  equipmentUsed: string;
-  magnification: string;
-  overallComments: string;
-  recommendedActions: string;
-  viewMode: DebrisIdViewMode;
-  analysisComplete: boolean;
-  partialSave: boolean;
-}
-
-export interface DebrisIdFormData {
-  sampleId?: number;
-  overall: DebrisIdOverallData;
-  particleTypes: DebrisIdParticleTypeData[];
-}
-
-export interface DebrisIdFormValidation {
-  isValid: boolean;
-  overallErrors: string[];
-  particleTypeErrors: Record<DebrisIdParticleType, string[]>;
-  commentLengthWarning: boolean;
-  hasUnsavedChanges: boolean;
+  debrisType: string;
+  concentration: string;
+  size: string;
+  severity: number | null;
+  notes: string;
 }
 
 @Component({
   selector: 'app-debris-id-entry-form',
+  standalone: true,
   imports: [SharedModule],
   templateUrl: './debris-id-entry-form.html',
-  styleUrl: './debris-id-entry-form.scss'
+  styleUrl: './debris-id-entry-form.scss',
 })
-export class DebrisIdEntryForm implements OnInit {
-  // Injected services
-  private readonly particleTypesService = inject(ParticleTypesService);
-  
-  // Input/Output signals following Angular best practices
+export class DebrisIdEntryForm implements OnInit, OnDestroy {
   sampleData = input<SampleWithTestInfo | null>(null);
-  initialData = input<DebrisIdFormData | null>(null);
-  readOnly = input<boolean>(false);
   
-  formDataChange = output<DebrisIdFormData>();
-  validationChange = output<DebrisIdFormValidation>();
-  partialSave = output<DebrisIdFormData>();
+  private fb = inject(FormBuilder);
+  private destroy$ = new Subject<void>();
   
-  // Form groups
-  overallForm!: FormGroup;
-  particleTypeFormsArray!: FormArray;
+  form!: FormGroup;
   
-  // Reactive signals
-  viewMode = signal<DebrisIdViewMode>('All');
-  commentCharacterCount = signal<number>(0);
-  commentLimitWarning = computed(() => this.commentCharacterCount() > 900);
-  commentLimitExceeded = computed(() => this.commentCharacterCount() > 1000);
-  selectedParticleCount = signal<number>(0);
+  // Signals for reactive state
+  isLoading = signal(false);
+  errorMessage = signal<string | null>(null);
+  testStandardOptions = signal<Array<{value: string, label: string}>>([
+    { value: 'ASTM-D7670', label: 'ASTM D7670 - Microscopic Debris Analysis' },
+    { value: 'ASTM-D6595', label: 'ASTM D6595 - Oil Analysis Particle Counting' },
+    { value: 'ISO-4406', label: 'ISO 4406 - Particle Counting' },
+    { value: 'Custom', label: 'Custom Method' }
+  ]);
   
-  // Constants for debris identification
-  readonly debrisParticleTypes: DebrisIdParticleType[] = [
+  // Debris type options
+  debrisTypes = [
     'Metallic Debris',
     'Organic Debris', 
-    'Inorganic Debris',
-    'Synthetic Debris',
     'Cutting Debris',
     'Fatigue Debris',
     'Sliding Debris',
-    'Rolling Debris',
     'Corrosion Debris',
     'Contamination'
   ];
   
-  readonly concentrationOptions: DebrisIdConcentration[] = ['Trace', 'Light', 'Moderate', 'Heavy', 'Extreme'];
-  readonly sizeOptions: DebrisIdSize[] = [
-    'Microscopic <5µm',
-    'Small 5-25µm',
-    'Medium 25-50µm', 
-    'Large 50-100µm',
-    'Very Large >100µm'
-  ];
-  readonly shapeOptions: DebrisIdShape[] = [
-    'Spherical', 'Angular', 'Platelet', 'Needle-like', 'Irregular', 'Chunky'
-  ];
-  readonly compositionOptions: DebrisIdComposition[] = [
-    'Iron/Steel', 'Aluminum', 'Copper/Bronze', 'Organic Material', 'Silicon', 'Carbon', 'Unknown'
-  ];
-  readonly severityOptions: DebrisIdSeverity[] = [1, 2, 3, 4, 5];
-  readonly testStandardOptions = [
-    { value: 'ASTM-D7670', label: 'ASTM D7670 - Microscopic Debris' },
-    { value: 'ASTM-D6595', label: 'ASTM D6595 - Oil Analysis' },
-    { value: 'ISO-4406', label: 'ISO 4406 - Particle Counting' },
-    { value: 'Custom', label: 'Custom Method' }
-  ];
+  concentrationOptions = ['Trace', 'Light', 'Moderate', 'Heavy', 'Extreme'];
+  sizeOptions = ['<5µm', '5-25µm', '25-50µm', '50-100µm', '>100µm'];
+  severityOptions = [1, 2, 3, 4, 5];
   
-  // Visibility tracking
-  particleTypeVisibility = signal<Record<DebrisIdParticleType, boolean>>(
-    {} as Record<DebrisIdParticleType, boolean>
-  );
+  // Computed properties
+  selectedObservationsCount = computed(() => {
+    if (!this.observationsFormArray) {
+      return 0;
+    }
+    const observations = this.observationsFormArray.controls || [];
+    return observations.filter(control => control.get('isSelected')?.value).length;
+  });
   
-  // Particle type definitions loaded from API
-  particleTypeDefinitions = signal<ParticleTypeDefinition[]>([]);
-  isLoadingParticleTypes = signal<boolean>(false);
-  particleTypesError = signal<string | null>(null);
+  formIsValid = computed(() => {
+    if (!this.form) return false;
+    
+    return this.form.valid && this.selectedObservationsCount() >= 1;
+  });
   
-  constructor(private fb: FormBuilder) {}
+  commentCharacterCount = computed(() => {
+    return this.form?.get('labComments')?.value?.length || 0;
+  });
+  
+  commentLimitWarning = computed(() => {
+    return this.commentCharacterCount() > 800;
+  });
+  
+  get observationsFormArray(): FormArray {
+    return this.form.get('observations') as FormArray;
+  }
   
   ngOnInit(): void {
-    this.initializeForms();
-    this.setupFormSubscriptions();
-    this.loadParticleTypeDefinitions();
-    this.loadInitialData();
-    this.initializeParticleTypeVisibility();
+    this.initializeForm();
+    this.setupAutoSave();
+    this.loadSavedData();
   }
   
-  private initializeForms(): void {
-    // Overall form for general debris identification information
-    this.overallForm = this.fb.group({
-      overallSeverity: [''],
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  
+  private initializeForm(): void {
+    this.form = this.fb.group({
       analystInitials: ['', [Validators.required, Validators.maxLength(5)]],
-      testStandard: ['ASTM-D7670', Validators.required],
-      equipmentUsed: [''],
-      magnification: [''],
-      overallComments: ['', [Validators.maxLength(1000)]],
-      recommendedActions: ['', [Validators.maxLength(500)]],
-      viewMode: ['All'],
-      analysisComplete: [false],
-      partialSave: [false]
+      testStandard: ['', Validators.required],
+      equipment: ['', Validators.required],
+      magnification: ['', Validators.required],
+      observations: this.fb.array(this.createObservationForms()),
+      labComments: ['', Validators.maxLength(1000)]
     });
-    
-    // Particle type forms array
-    this.particleTypeFormsArray = this.fb.array(
-      this.debrisParticleTypes.map((particleType: DebrisIdParticleType) => this.createParticleTypeForm(particleType))
-    );
   }
   
-  private createParticleTypeForm(particleType: DebrisIdParticleType): FormGroup {
-    return this.fb.group({
-      particleType: [particleType],
-      isVisible: [true],
+  private createObservationForms(): FormGroup[] {
+    return this.debrisTypes.map(debrisType => this.fb.group({
       isSelected: [false],
+      debrisType: [debrisType],
       concentration: [''],
-      sizeRange: [''],
-      primaryShape: [''],
-      composition: [''],
-      severity: [''],
-      observations: ['', Validators.maxLength(500)],
-      recommendedAction: ['', Validators.maxLength(200)],
-      includeInReport: [false]
+      size: [''],
+      severity: [null, [Validators.min(1), Validators.max(5)]],
+      notes: ['', Validators.maxLength(200)]
+    }));
+  }
+  
+  private setupAutoSave(): void {
+    this.form.valueChanges.pipe(
+      debounceTime(2000),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.saveFormData();
     });
   }
   
-  private setupFormSubscriptions(): void {
-    // Track view mode changes
-    this.overallForm.get('viewMode')?.valueChanges.subscribe(mode => {
-      this.viewMode.set(mode);
-      this.updateParticleTypeVisibility();
-    });
-    
-    // Track overall comments character count
-    this.overallForm.get('overallComments')?.valueChanges.subscribe(comments => {
-      this.commentCharacterCount.set((comments || '').length);
-    });
-    
-    // Track selected particle types count
-    this.particleTypeFormsArray.valueChanges.subscribe(() => {
-      this.updateSelectedParticleCount();
-      this.emitFormChanges();
-    });
-    
-    // Track overall form changes
-    this.overallForm.valueChanges.subscribe(() => this.emitFormChanges());
-  }
-  
-  private loadParticleTypeDefinitions(): void {
-    this.isLoadingParticleTypes.set(true);
-    this.particleTypesError.set(null);
-    
-    this.particleTypesService.getActiveParticleTypes().subscribe({
-      next: (definitions: ParticleTypeDefinition[]) => {
-        this.particleTypeDefinitions.set(definitions);
-        this.isLoadingParticleTypes.set(false);
-        console.log('Loaded particle type definitions for debris ID:', definitions.length);
-      },
-      error: (error: Error) => {
-        console.warn('Failed to load particle type definitions, using fallback:', error);
-        this.particleTypesError.set(error.message || 'Failed to load particle types');
-        this.isLoadingParticleTypes.set(false);
-      }
-    });
-  }
-  
-  private loadInitialData(): void {
-    const data = this.initialData();
-    if (data) {
-      this.overallForm.patchValue(data.overall);
-      this.viewMode.set(data.overall.viewMode);
+  private saveFormData(): void {
+    if (this.form.valid && this.sampleData()) {
+      const formData = {
+        ...this.form.value,
+        sampleData: this.sampleData(),
+        timestamp: new Date().toISOString()
+      };
       
-      data.particleTypes.forEach((ptData: DebrisIdParticleTypeData, index: number) => {
-        const form = this.particleTypeFormsArray.at(index);
-        if (form) {
-          form.patchValue(ptData);
-        }
-      });
-      
-      this.updateParticleTypeVisibility();
-      this.updateSelectedParticleCount();
+      const key = `debris_id_form_${this.sampleData()?.sampleId}`;
+      localStorage.setItem(key, JSON.stringify(formData));
     }
   }
   
-  private initializeParticleTypeVisibility(): void {
-    const visibility: Record<DebrisIdParticleType, boolean> = {} as any;
-    this.debrisParticleTypes.forEach(type => {
-      visibility[type] = true;
-    });
-    this.particleTypeVisibility.set(visibility);
-  }
-  
-  private updateParticleTypeVisibility(): void {
-    const mode = this.viewMode();
-    const visibility: Record<DebrisIdParticleType, boolean> = {} as any;
-    
-    this.debrisParticleTypes.forEach((type: DebrisIdParticleType, index: number) => {
-      const form = this.particleTypeFormsArray.at(index);
-      const isSelected = form?.get('isSelected')?.value || false;
+  private loadSavedData(): void {
+    if (this.sampleData()) {
+      const key = `debris_id_form_${this.sampleData()?.sampleId}`;
+      const savedData = localStorage.getItem(key);
       
-      if (mode === 'All') {
-        visibility[type] = true;
-      } else if (mode === 'Review' || mode === 'Selected') {
-        visibility[type] = isSelected;
-      }
-    });
-    
-    this.particleTypeVisibility.set(visibility);
-  }
-  
-  private updateSelectedParticleCount(): void {
-    const selectedCount = this.particleTypeFormsArray.controls
-      .filter(control => control.get('isSelected')?.value === true)
-      .length;
-    this.selectedParticleCount.set(selectedCount);
-  }
-  
-  private emitFormChanges(): void {
-    const formData: DebrisIdFormData = {
-      sampleId: this.sampleData()?.sampleId,
-      overall: this.overallForm.value,
-      particleTypes: this.particleTypeFormsArray.value
-    };
-    
-    this.formDataChange.emit(formData);
-    
-    // Emit validation state
-    const validation = this.validateForm();
-    this.validationChange.emit(validation);
-  }
-  
-  private validateForm(): DebrisIdFormValidation {
-    const particleTypeErrors: Record<DebrisIdParticleType, string[]> = {} as any;
-    const overallErrors: string[] = [];
-    
-    // Validate overall form
-    if (this.overallForm.get('analystInitials')?.errors?.['required']) {
-      overallErrors.push('Analyst initials are required');
-    }
-    if (this.overallForm.get('testStandard')?.errors?.['required']) {
-      overallErrors.push('Test standard is required');
-    }
-    
-    // Validate particle types
-    this.particleTypeFormsArray.controls.forEach((control, index) => {
-      const particleType = this.debrisParticleTypes[index];
-      const errors: string[] = [];
-      
-      const isSelected = control.get('isSelected')?.value;
-      if (isSelected) {
-        if (!control.get('concentration')?.value) {
-          errors.push('Concentration is required for selected particle types');
-        }
-        if (!control.get('severity')?.value) {
-          errors.push('Severity rating is required for selected particle types');
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          this.form.patchValue(parsedData, { emitEvent: false });
+        } catch (error) {
+          console.warn('Failed to load saved debris ID form data:', error);
         }
       }
-      
-      const observations = control.get('observations')?.value;
-      if (observations && observations.length > 500) {
-        errors.push('Observations cannot exceed 500 characters');
-      }
-      
-      if (errors.length > 0) {
-        particleTypeErrors[particleType] = errors;
-      }
-    });
-    
-    return {
-      isValid: overallErrors.length === 0 && Object.keys(particleTypeErrors).length === 0,
-      overallErrors,
-      particleTypeErrors,
-      commentLengthWarning: this.commentLimitWarning(),
-      hasUnsavedChanges: this.overallForm.dirty || this.particleTypeFormsArray.dirty
-    };
+    }
   }
   
-  // Public methods for template
-  getParticleTypeForm(index: number): FormGroup {
-    return this.particleTypeFormsArray.at(index) as FormGroup;
-  }
-  
-  isParticleTypeVisible(particleType: DebrisIdParticleType): boolean {
-    return this.particleTypeVisibility()[particleType] || false;
-  }
-  
-  onSelectAllParticleTypes(): void {
-    const allSelected = this.particleTypeFormsArray.controls.every(
-      control => control.get('isSelected')?.value === true
-    );
-    
-    this.particleTypeFormsArray.controls.forEach(control => {
-      control.get('isSelected')?.setValue(!allSelected);
-    });
-    
-    this.updateParticleTypeVisibility();
-  }
-  
-  onClearSelectedParticleTypes(): void {
-    this.particleTypeFormsArray.controls.forEach(control => {
-      if (control.get('isSelected')?.value) {
-        control.patchValue({
-          isSelected: false,
-          concentration: '',
-          sizeRange: '',
-          primaryShape: '',
-          composition: '',
-          severity: '',
-          observations: '',
-          recommendedAction: '',
-          includeInReport: false
-        });
-      }
-    });
-    
-    this.updateParticleTypeVisibility();
-  }
-  
-  onToggleParticleType(index: number): void {
-    const control = this.particleTypeFormsArray.at(index);
-    const isSelected = control.get('isSelected')?.value;
-    control.get('isSelected')?.setValue(!isSelected);
-    
-    this.updateParticleTypeVisibility();
+  getObservationForm(index: number): FormGroup {
+    return this.observationsFormArray.at(index) as FormGroup;
   }
   
   onSave(): void {
-    if (this.validateForm().isValid) {
-      const formData: DebrisIdFormData = {
-        sampleId: this.sampleData()?.sampleId,
-        overall: { ...this.overallForm.value, analysisComplete: true },
-        particleTypes: this.particleTypeFormsArray.value
-      };
-      
-      this.formDataChange.emit(formData);
+    if (!this.formIsValid()) {
+      this.errorMessage.set('Please complete all required fields and select at least 1 debris observation.');
+      return;
     }
-  }
-  
-  onPartialSave(): void {
-    const formData: DebrisIdFormData = {
-      sampleId: this.sampleData()?.sampleId,
-      overall: { ...this.overallForm.value, partialSave: true },
-      particleTypes: this.particleTypeFormsArray.value
-    };
     
-    this.partialSave.emit(formData);
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    
+    // Simulate API call
+    setTimeout(() => {
+      this.isLoading.set(false);
+      
+      // Clear saved data after successful save
+      if (this.sampleData()) {
+        const key = `debris_id_form_${this.sampleData()?.sampleId}`;
+        localStorage.removeItem(key);
+      }
+      
+      console.log('Debris ID data saved successfully');
+    }, 1500);
   }
   
   onClear(): void {
-    this.overallForm.reset({
-      testStandard: 'ASTM-D7670',
-      viewMode: 'All',
-      analysisComplete: false,
-      partialSave: false
+    this.form.reset();
+    this.errorMessage.set(null);
+    
+    // Reset observations array properly
+    this.observationsFormArray.clear();
+    this.createObservationForms().forEach(obsForm => {
+      this.observationsFormArray.push(obsForm);
     });
     
-    this.particleTypeFormsArray.controls.forEach((control, index) => {
-      control.reset({
-        particleType: this.debrisParticleTypes[index],
-        isVisible: true,
-        isSelected: false,
-        includeInReport: false
-      });
-    });
-    
-    this.viewMode.set('All');
-    this.initializeParticleTypeVisibility();
+    // Clear saved data
+    if (this.sampleData()) {
+      const key = `debris_id_form_${this.sampleData()?.sampleId}`;
+      localStorage.removeItem(key);
+    }
   }
 }

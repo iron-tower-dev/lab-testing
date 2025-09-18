@@ -214,7 +214,7 @@ import { SharedModule } from '../../../../../../shared-module';
       </div>
     </form>
   `,
-  styleUrls: ['./tan-entry-form.scss'],
+  styleUrl: './tan-entry-form.css',
   standalone: true,
   imports: [
     SharedModule

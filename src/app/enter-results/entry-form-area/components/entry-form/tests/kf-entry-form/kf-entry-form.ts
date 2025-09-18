@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-kf-entry-form',
   standalone: true,
   templateUrl: './kf-entry-form.html',
-  styleUrls: ['./kf-entry-form.scss'],
+  styleUrl: './kf-entry-form.css',
   imports: [
     SharedModule
   ]

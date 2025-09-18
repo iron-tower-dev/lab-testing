@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../shared-module';
   selector: 'app-entry-form-header',
   imports: [SharedModule],
   templateUrl: './entry-form-header.html',
-  styleUrl: './entry-form-header.scss'
+  styleUrl: './entry-form-header.css'
 })
 export class EntryFormHeader {
   private readonly sampleService = inject(SampleService);

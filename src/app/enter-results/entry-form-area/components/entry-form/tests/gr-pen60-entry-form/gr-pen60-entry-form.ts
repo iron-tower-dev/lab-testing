@@ -6,7 +6,7 @@ import { SharedModule } from '../../../../../../shared-module';
 @Component({
   selector: 'app-gr-pen60-entry-form',
   templateUrl: './gr-pen60-entry-form.html',
-  styleUrls: ['./gr-pen60-entry-form.scss'],
+  styleUrl: './gr-pen60-entry-form.css',
   standalone: true,
   imports: [
     SharedModule

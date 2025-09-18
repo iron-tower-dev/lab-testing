@@ -1,246 +1,230 @@
-import { Component, OnInit, input, output, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, input, signal, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { SharedModule } from '../../../../../../shared-module';
-import { SampleWithTestInfo, DeleteriousFormData, DeleteriousFormValidation, DeleteriousTrial } from '../../../../../enter-results.types';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
+
+interface DeleteriousTrial {
+  trialNumber: number;
+  testValue: number | null;
+  notes: string;
+  isSelected: boolean;
+}
+
+interface DeleteriousResults {
+  average: number;
+  stdDev: number;
+  cv: number;
+}
 
 @Component({
   selector: 'app-deleterious-entry-form',
+  standalone: true,
   imports: [SharedModule],
   templateUrl: './deleterious-entry-form.html',
-  styleUrl: './deleterious-entry-form.scss'
+  styleUrl: './deleterious-entry-form.scss',
 })
-export class DeleteriousEntryForm implements OnInit {
-  // Input/Output signals
+export class DeleteriousEntryForm implements OnInit, OnDestroy {
   sampleData = input<SampleWithTestInfo | null>(null);
-  formDataChange = output<DeleteriousFormData>();
-  validationChange = output<DeleteriousFormValidation>();
-  formSaved = output<DeleteriousFormData>();
-  formCleared = output<void>();
+  
+  private fb = inject(FormBuilder);
+  private destroy$ = new Subject<void>();
 
-  // Form and validation
   form!: FormGroup;
-  trialsFormArray!: FormArray;
-
-  // Reactive state signals
-  readonly selectedTrialsCount = signal<number>(0);
-  readonly commentCharacterCount = signal<number>(0);
-  readonly calculatedResults = signal<{ average: number; stdDev: number; cv: number } | null>(null);
-  readonly hasUnsavedChanges = signal<boolean>(false);
-  readonly isLoading = signal<boolean>(false);
-  readonly errorMessage = signal<string | null>(null);
-
-  // Computed properties
-  readonly commentLimitWarning = computed(() => this.commentCharacterCount() > 900);
-  readonly formIsValid = computed(() => this.form?.valid && this.selectedTrialsCount() > 0);
-  readonly allTrialsSelected = computed(() => this.selectedTrialsCount() === 4);
-
-  // Constants
-  readonly testStandardOptions = [
+  
+  // Signals for reactive state
+  isLoading = signal(false);
+  errorMessage = signal<string | null>(null);
+  testStandardOptions = signal<Array<{value: string, label: string}>>([
     { value: 'ASTM-D7216', label: 'ASTM D7216 - Standard Test Method for Deleterious Materials' },
     { value: 'ASTM-D4055', label: 'ASTM D4055 - Field Measurement of Surface Wind' },
     { value: 'ISO-12185', label: 'ISO 12185 - Crude petroleum and petroleum products' },
     { value: 'Custom', label: 'Custom Method' }
+  ]);
+  
+  // Equipment options
+  equipmentOptions = [
+    'Standard Test Equipment',
+    'Automated Analyzer',
+    'Manual Test Kit',
+    'Portable Detector'
   ];
-
-  constructor(private fb: FormBuilder) {}
+  
+  // Computed properties
+  selectedTrialsCount = computed(() => {
+    const trials = this.trialsFormArray?.controls || [];
+    return trials.filter(control => control.get('isSelected')?.value).length;
+  });
+  
+  calculatedResults = computed(() => {
+    const selectedTrials = this.getSelectedTrials();
+    if (selectedTrials.length < 2) return null;
+    
+    return this.calculateResults(selectedTrials);
+  });
+  
+  formIsValid = computed(() => {
+    if (!this.form) return false;
+    
+    const requiredFields = ['analystInitials', 'testStandard', 'equipment'];
+    const allRequiredValid = requiredFields.every(field => 
+      this.form.get(field)?.valid
+    );
+    
+    return allRequiredValid && this.selectedTrialsCount() >= 1;
+  });
+  
+  commentCharacterCount = computed(() => {
+    return this.form?.get('labComments')?.value?.length || 0;
+  });
+  
+  commentLimitWarning = computed(() => {
+    return this.commentCharacterCount() > 800;
+  });
+  
+  get trialsFormArray(): FormArray {
+    return this.form.get('trials') as FormArray;
+  }
 
   ngOnInit(): void {
     this.initializeForm();
-    this.setupFormWatchers();
+    this.setupAutoSave();
+    this.loadSavedData();
+  }
+  
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private initializeForm(): void {
-    // Create trials form array
-    this.trialsFormArray = this.fb.array([
-      this.createTrialForm(1),
-      this.createTrialForm(2),
-      this.createTrialForm(3),
-      this.createTrialForm(4)
-    ]);
-
-    // Main form
     this.form = this.fb.group({
       analystInitials: ['', [Validators.required, Validators.maxLength(5)]],
-      testStandard: ['ASTM-D7216', Validators.required],
+      testStandard: ['', Validators.required],
+      equipment: ['', Validators.required],
       temperature: [null, [Validators.min(15), Validators.max(35)]],
       humidity: [null, [Validators.min(0), Validators.max(100)]],
-      equipment: ['', Validators.required],
-      trials: this.trialsFormArray,
+      trials: this.fb.array(this.createTrialForms()),
       labComments: ['', Validators.maxLength(1000)]
     });
   }
-
-  private createTrialForm(trialNumber: number): FormGroup {
-    return this.fb.group({
-      trialNumber: [trialNumber],
+  
+  private createTrialForms(): FormGroup[] {
+    return Array.from({ length: 4 }, (_, index) => this.fb.group({
+      trialNumber: [index + 1],
+      isSelected: [false],
       testValue: [null, [Validators.min(0)]],
-      notes: ['', Validators.maxLength(200)],
-      isSelected: [false]
+      notes: ['', Validators.maxLength(200)]
+    }));
+  }
+
+  private setupAutoSave(): void {
+    this.form.valueChanges.pipe(
+      debounceTime(2000),
+      distinctUntilChanged(),
+      takeUntil(this.destroy$)
+    ).subscribe(() => {
+      this.saveFormData();
     });
   }
-
-  private setupFormWatchers(): void {
-    // Watch for form changes
-    this.form.valueChanges.subscribe(() => {
-      this.updateSelectedTrialsCount();
-      this.updateCommentCharacterCount();
-      this.calculateResults();
-      this.hasUnsavedChanges.set(true);
-      this.emitFormData();
-      this.emitValidationState();
-    });
-  }
-
-  private updateSelectedTrialsCount(): void {
-    const trials = this.trialsFormArray.value as DeleteriousTrial[];
-    const count = trials.filter(trial => trial.isSelected).length;
-    this.selectedTrialsCount.set(count);
-  }
-
-  private updateCommentCharacterCount(): void {
-    const comments = this.form.get('labComments')?.value || '';
-    this.commentCharacterCount.set(comments.length);
-  }
-
-  private calculateResults(): void {
-    const trials = this.trialsFormArray.value as DeleteriousTrial[];
-    const selectedTrials = trials.filter(trial => trial.isSelected && trial.testValue !== null);
-    
-    if (selectedTrials.length < 2) {
-      this.calculatedResults.set(null);
-      return;
+  
+  private saveFormData(): void {
+    if (this.form.valid && this.sampleData()) {
+      const formData = {
+        ...this.form.value,
+        sampleData: this.sampleData(),
+        timestamp: new Date().toISOString()
+      };
+      
+      const key = `deleterious_form_${this.sampleData()?.sampleId}`;
+      localStorage.setItem(key, JSON.stringify(formData));
     }
-
-    const values = selectedTrials.map(trial => trial.testValue!);
+  }
+  
+  private loadSavedData(): void {
+    if (this.sampleData()) {
+      const key = `deleterious_form_${this.sampleData()?.sampleId}`;
+      const savedData = localStorage.getItem(key);
+      
+      if (savedData) {
+        try {
+          const parsedData = JSON.parse(savedData);
+          this.form.patchValue(parsedData, { emitEvent: false });
+        } catch (error) {
+          console.warn('Failed to load saved deleterious form data:', error);
+        }
+      }
+    }
+  }
+  
+  getTrialForm(index: number): FormGroup {
+    return this.trialsFormArray.at(index) as FormGroup;
+  }
+  
+  private getSelectedTrials(): DeleteriousTrial[] {
+    return this.trialsFormArray.controls
+      .filter(control => control.get('isSelected')?.value)
+      .map(control => control.value as DeleteriousTrial)
+      .filter(trial => trial.testValue !== null);
+  }
+  
+  private calculateResults(trials: DeleteriousTrial[]): DeleteriousResults {
+    const values = trials.map(t => t.testValue!).filter(v => v >= 0);
+    
+    if (values.length < 2) {
+      return { average: values[0] || 0, stdDev: 0, cv: 0 };
+    }
+    
     const average = values.reduce((sum, val) => sum + val, 0) / values.length;
     const variance = values.reduce((sum, val) => sum + Math.pow(val - average, 2), 0) / (values.length - 1);
     const stdDev = Math.sqrt(variance);
     const cv = average !== 0 ? (stdDev / average) * 100 : 0;
-
-    this.calculatedResults.set({
+    
+    return {
       average: Math.round(average * 1000) / 1000,
       stdDev: Math.round(stdDev * 1000) / 1000,
       cv: Math.round(cv * 100) / 100
-    });
+    };
   }
 
-  // Form action methods
   onSave(): void {
-    if (this.formIsValid()) {
-      this.isLoading.set(true);
-      const formData = this.getFormData();
-      this.formSaved.emit(formData);
-      this.hasUnsavedChanges.set(false);
-      // Simulate save operation
-      setTimeout(() => {
-        this.isLoading.set(false);
-        this.errorMessage.set(null);
-      }, 1000);
+    if (!this.formIsValid()) {
+      this.errorMessage.set('Please complete all required fields and select at least 1 trial.');
+      return;
     }
-  }
-
-  onClear(): void {
-    if (confirm('Are you sure you want to clear all form data?')) {
-      this.form.reset();
-      this.trialsFormArray.controls.forEach((control, index) => {
-        control.patchValue({
-          trialNumber: index + 1,
-          testValue: null,
-          notes: '',
-          isSelected: false
-        });
-      });
-      this.hasUnsavedChanges.set(false);
-      this.formCleared.emit();
-    }
-  }
-
-  onSelectAllTrials(): void {
-    const selectAll = !this.allTrialsSelected();
-    this.trialsFormArray.controls.forEach(control => {
-      control.patchValue({ isSelected: selectAll });
-    });
-  }
-
-  onClearSelectedTrials(): void {
-    this.trialsFormArray.controls.forEach(control => {
-      if (control.get('isSelected')?.value) {
-        control.patchValue({ isSelected: false });
-      }
-    });
-  }
-
-  // Utility methods
-  getTrialForm(index: number): FormGroup {
-    return this.trialsFormArray.at(index) as FormGroup;
-  }
-
-  private emitFormData(): void {
-    this.formDataChange.emit(this.getFormData());
-  }
-
-  private emitValidationState(): void {
-    this.validationChange.emit(this.getValidationState());
-  }
-
-  private getFormData(): DeleteriousFormData {
-    const formValues = this.form.value;
-    const calculatedResults = this.calculatedResults();
     
-    return {
-      sampleId: this.sampleData()?.sampleId,
-      analystInitials: formValues.analystInitials,
-      testStandard: formValues.testStandard,
-      testConditions: {
-        temperature: formValues.temperature,
-        humidity: formValues.humidity,
-        equipment: formValues.equipment
-      },
-      trials: formValues.trials,
-      labComments: formValues.labComments,
-      overallResult: calculatedResults ? {
-        averageValue: calculatedResults.average,
-        standardDeviation: calculatedResults.stdDev,
-        coefficientOfVariation: calculatedResults.cv
-      } : undefined
-    };
-  }
-
-  private getValidationState(): DeleteriousFormValidation {
-    const overallErrors: string[] = [];
-    const trialErrors: Record<number, string[]> = {};
-
-    if (!this.form.get('analystInitials')?.valid) {
-      overallErrors.push('Analyst initials are required');
-    }
-
-    if (!this.form.get('equipment')?.valid) {
-      overallErrors.push('Equipment information is required');
-    }
-
-    if (this.selectedTrialsCount() === 0) {
-      overallErrors.push('At least one trial must be selected');
-    }
-
-    // Check individual trials
-    this.trialsFormArray.controls.forEach((control, index) => {
-      const errors: string[] = [];
-      const trialData = control.value;
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    
+    // Simulate API call
+    setTimeout(() => {
+      this.isLoading.set(false);
       
-      if (trialData.isSelected && (trialData.testValue === null || trialData.testValue === undefined)) {
-        errors.push('Test value is required for selected trials');
+      // Clear saved data after successful save
+      if (this.sampleData()) {
+        const key = `deleterious_form_${this.sampleData()?.sampleId}`;
+        localStorage.removeItem(key);
       }
-
-      if (errors.length > 0) {
-        trialErrors[index + 1] = errors;
-      }
-    });
-
-    return {
-      isValid: this.formIsValid(),
-      overallErrors,
-      trialErrors,
-      hasUnsavedChanges: this.hasUnsavedChanges()
-    };
+      
+      console.log('Deleterious data saved successfully');
+    }, 1500);
   }
+  
+  onClear(): void {
+    this.form.reset();
+    this.errorMessage.set(null);
+    
+    // Reset trials array properly
+    this.trialsFormArray.clear();
+    this.createTrialForms().forEach(trialForm => {
+      this.trialsFormArray.push(trialForm);
+    });
+    
+    // Clear saved data
+    if (this.sampleData()) {
+      const key = `deleterious_form_${this.sampleData()?.sampleId}`;
+      localStorage.removeItem(key);
+    }
+  }
+
 }

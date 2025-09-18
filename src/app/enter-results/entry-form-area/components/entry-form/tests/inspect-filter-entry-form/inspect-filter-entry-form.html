@@ -1,1 +1,220 @@
-<p>Inspect Filter entry form</p>
+<div class="inspect-filter-entry-form">
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+      <span>Saving...</span>
+    </div>
+  }
+
+  <!-- Sample Information Header -->
+  @if (sampleData()) {
+    <mat-card class="sample-info-header">
+      <mat-card-header>
+        <mat-card-title>{{ sampleData()!.testName }}</mat-card-title>
+        <mat-card-subtitle>
+          Sample: {{ sampleData()!.sampleNumber }} | Equipment: {{ sampleData()!.eqTagNum }}
+        </mat-card-subtitle>
+      </mat-card-header>
+    </mat-card>
+  }
+
+  <form [formGroup]="form" class="filter-inspection-form">
+    <!-- Test Information Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Test Information</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Analyst Initials</mat-label>
+            <input matInput formControlName="analystInitials" maxlength="5" placeholder="ABC">
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Test Standard</mat-label>
+            <mat-select formControlName="testStandard">
+              @for (standard of testStandardOptions(); track standard.value) {
+                <mat-option [value]="standard.value">{{ standard.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Filter Details Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Filter Details</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Filter Type</mat-label>
+            <mat-select formControlName="filterType">
+              @for (type of filterTypes; track type) {
+                <mat-option [value]="type">{{ type }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Filter Size</mat-label>
+            <mat-select formControlName="filterSize">
+              @for (size of filterSizes; track size) {
+                <mat-option [value]="size">{{ size }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Inspection Date</mat-label>
+            <input matInput formControlName="inspectionDate" type="date">
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Color Observation</mat-label>
+            <mat-select formControlName="colorObservation">
+              @for (color of colorOptions; track color) {
+                <mat-option [value]="color">{{ color }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Visual Inspection Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Visual Inspection Results</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-form-field class="full-width">
+          <mat-label>Visual Appearance</mat-label>
+          <textarea matInput formControlName="visualAppearance" rows="3" 
+                    placeholder="Describe the overall appearance of the filter..."></textarea>
+        </mat-form-field>
+
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Particle Size</mat-label>
+            <mat-select formControlName="particleSize">
+              <mat-option value="none">None Observed</mat-option>
+              <mat-option value="fine">Fine</mat-option>
+              <mat-option value="medium">Medium</mat-option>
+              <mat-option value="coarse">Coarse</mat-option>
+              <mat-option value="mixed">Mixed Sizes</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field class="half-width">
+            <mat-label>Particle Amount</mat-label>
+            <mat-select formControlName="particleAmount">
+              <mat-option value="none">None</mat-option>
+              <mat-option value="light">Light</mat-option>
+              <mat-option value="moderate">Moderate</mat-option>
+              <mat-option value="heavy">Heavy</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field class="full-width">
+          <mat-label>Particle Types</mat-label>
+          <mat-select formControlName="particleType" multiple>
+            @for (type of particleTypes; track type) {
+              <mat-option [value]="type">{{ type }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>Select all applicable particle types</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Contamination Description</mat-label>
+          <textarea matInput formControlName="contamination" rows="2" 
+                    placeholder="Describe any contamination observed..."></textarea>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Assessment Section -->
+    <mat-card class="form-section">
+      <mat-card-header>
+        <mat-card-title>Assessment & Documentation</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field class="half-width">
+            <mat-label>Filter Condition</mat-label>
+            <mat-select formControlName="filterCondition">
+              <mat-option value="good">Good</mat-option>
+              <mat-option value="fair">Fair</mat-option>
+              <mat-option value="poor">Poor</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="half-width">
+            <mat-checkbox formControlName="photographsTaken">
+              Photographs Taken
+            </mat-checkbox>
+          </div>
+        </div>
+
+        @if (form.get('photographsTaken')?.value) {
+          <mat-form-field class="full-width">
+            <mat-label>Photograph File Names</mat-label>
+            <input matInput formControlName="photographFileNames" 
+                   placeholder="e.g., filter_001.jpg, filter_002.jpg">
+            <mat-hint>List the file names of photographs taken</mat-hint>
+          </mat-form-field>
+        }
+
+        <mat-form-field class="full-width">
+          <mat-label>Recommendations</mat-label>
+          <textarea matInput formControlName="recommendations" rows="3" 
+                    placeholder="Enter any recommendations based on the inspection..."></textarea>
+        </mat-form-field>
+
+        <mat-form-field class="full-width">
+          <mat-label>Lab Comments</mat-label>
+          <textarea matInput formControlName="labComments" rows="4" maxlength="1000"
+                    placeholder="Enter any additional comments..."></textarea>
+          <mat-hint [class.warning]="commentLimitWarning()">{{ commentCharacterCount() }}/1000 characters</mat-hint>
+        </mat-form-field>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Error Message -->
+    @if (errorMessage()) {
+      <mat-card class="form-section error-section error">
+        <mat-card-content>
+          <div class="error-content">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Action Buttons -->
+    <mat-card class="form-section actions-section">
+      <mat-card-actions align="end">
+        <button mat-button type="button" (click)="onClear()" [disabled]="isLoading()">
+          Clear Form
+        </button>
+        <button mat-raised-button type="button" (click)="onSave()" 
+                [disabled]="!formIsValid() || isLoading()" color="primary">
+          @if (isLoading()) {
+            <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          Save Inspection
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </form>
+</div>

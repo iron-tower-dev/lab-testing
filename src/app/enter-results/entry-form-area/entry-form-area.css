@@ -1,0 +1,11 @@
+.entry-form-area {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.75rem;
+}
+
+.entry-form-area > *:last-child {
+  flex: 1;
+  overflow-y: auto;
+}

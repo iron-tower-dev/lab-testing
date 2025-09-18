@@ -3,7 +3,7 @@ import { Component, signal } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { SampleSelectionPanel } from './sample-selection-panel';
-import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from '../enter-results.types';
+import { TestReference, TestHelpers } from '../enter-results.types';
 import { SampleService } from '../../shared/services/sample.service';
 import { TestsService } from '../../shared/services/tests.service';
 import { ApiService } from '../../shared/services/api.service';
@@ -32,7 +32,7 @@ describe('SampleSelectionPanel', () => {
     fixture = TestBed.createComponent(SampleSelectionPanel);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    sampleTestReference = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
+    sampleTestReference = TestHelpers.createTANReference();
     
     fixture.detectChanges();
     
@@ -50,7 +50,7 @@ describe('SampleSelectionPanel', () => {
   });
 
   it('should emit selectedTestReferenceChange when setSelectedTestReference is called', () => {
-    const kfTestReference = LEGACY_TEST_CODE_TO_REFERENCE.KF;
+    const kfTestReference = TestHelpers.createKFReference();
     spyOn(component.selectedTestReferenceChange, 'emit');
     component.setSelectedTestReference(kfTestReference);
     expect(component.selectedTestReferenceChange.emit).toHaveBeenCalledWith(kfTestReference);
@@ -72,7 +72,7 @@ describe('SampleSelectionPanel', () => {
   });
 
   it('should emit sampleSelected with correct testReference when sample is clicked', () => {
-    const testRef = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
+    const testRef = TestHelpers.createTANReference();
     // Use a fixture with the test reference set
     const testFixture = TestBed.createComponent(SampleSelectionPanel);
     const testComponent = testFixture.componentInstance;

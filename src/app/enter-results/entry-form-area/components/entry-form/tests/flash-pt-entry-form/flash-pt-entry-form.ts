@@ -6,7 +6,7 @@ import { SharedModule } from '../../../../../../shared-module';
 @Component({
   selector: 'app-flash-pt-entry-form',
   templateUrl: './flash-pt-entry-form.html',
-  styleUrls: ['./flash-pt-entry-form.scss'],
+  styleUrl: './flash-pt-entry-form.css',
   standalone: true,
   imports: [
     SharedModule

@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { EnterResults } from './enter-results';
-import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from './enter-results.types';
+import { TestReference, TestHelpers } from './enter-results.types';
 import { SampleService } from '../shared/services/sample.service';
 import { TestsService } from '../shared/services/tests.service';
 import { ApiService } from '../shared/services/api.service';
@@ -21,7 +21,7 @@ describe('EnterResults', () => {
 
     fixture = TestBed.createComponent(EnterResults);
     component = fixture.componentInstance;
-    sampleTestReference = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
+    sampleTestReference = TestHelpers.createTANReference();
     fixture.detectChanges();
   });
 
@@ -63,7 +63,7 @@ describe('EnterResults', () => {
     expect(component.selectedSample()).not.toBeNull();
     
     // Change test type - should reset sample
-    const differentTestRef = LEGACY_TEST_CODE_TO_REFERENCE.KF;
+    const differentTestRef = TestHelpers.createKFReference();
     component.onTestTypeSelected(differentTestRef);
     expect(component.selectedSample()).toBeNull();
     expect(component.selectedTestReference()).toBe(differentTestRef);

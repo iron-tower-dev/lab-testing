@@ -8,7 +8,7 @@ import { TestReference } from '../enter-results.types';
   selector: 'app-entry-form-area',
   imports: [EntryFormHeader, EntryForm],
   templateUrl: './entry-form-area.html',
-  styleUrl: './entry-form-area.scss'
+  styleUrl: './entry-form-area.css'
 })
 export class EntryFormArea {
   // Shared lab comments control for forms that support it

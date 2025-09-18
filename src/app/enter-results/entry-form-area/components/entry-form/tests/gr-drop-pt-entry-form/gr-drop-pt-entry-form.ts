@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-gr-drop-pt-entry-form',
   standalone: true,
   templateUrl: './gr-drop-pt-entry-form.html',
-  styleUrls: ['./gr-drop-pt-entry-form.scss'],
+  styleUrl: './gr-drop-pt-entry-form.css',
   imports: [
     SharedModule
   ]

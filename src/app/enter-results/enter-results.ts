@@ -8,7 +8,7 @@ import { TestReference } from './enter-results.types';
   selector: 'app-enter-results',
   imports: [SampleSelectionPanel, EntryFormArea, TestTypeList],
   templateUrl: './enter-results.html',
-  styleUrl: './enter-results.scss',
+  styleUrl: './enter-results.css'
 })
 export class EnterResults {
   // Signals for reactive state management

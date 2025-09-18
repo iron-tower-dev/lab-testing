@@ -6,6 +6,7 @@ import { TestReadingsService, TestReading, TestReadingCreate } from '../../servi
 import { SampleService, Sample } from '../../services/sample.service';
 import { TestTypesService, TestType } from '../../services/test-types.service';
 import { SharedModule } from '../../../shared-module';
+import { SampleWithTestInfo } from '../../../enter-results/enter-results.types';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -169,6 +170,7 @@ export interface FormFieldConfig {
 export class BaseTestFormComponent implements OnInit, OnDestroy {
   @Input() sample?: Sample;
   @Input() testType?: TestType;
+  @Input() sampleData?: SampleWithTestInfo | null;
   @Input() existingReading?: TestReading;
   @Input() trialNumber: number = 1;
 
@@ -189,9 +191,37 @@ export class BaseTestFormComponent implements OnInit, OnDestroy {
   loadingMessage = '';
 
   ngOnInit(): void {
+    this.processSampleData();
     this.initializeForm();
     this.setupCalculationWatchers();
     this.loadExistingData();
+  }
+
+  private processSampleData(): void {
+    // If sampleData is provided, use it to set sample and testType only if not already provided
+    if (this.sampleData) {
+      // Only set sample if not already provided
+      if (!this.sample) {
+        this.sample = {
+          sampleId: this.sampleData.sampleId,
+          sampleNumber: this.sampleData.sampleNumber,
+          description: this.sampleData.testName, // Use testName as description since SampleWithTestInfo doesn't have description
+          customerName: this.sampleData.component || this.sampleData.location || undefined, // Use available fields
+          // dateReceived is not available in SampleWithTestInfo, so omit it
+        };
+      }
+      
+      // Only set testType if not already provided
+      if (!this.testType) {
+        this.testType = {
+          testId: this.sampleData.testReference?.id,
+          testName: this.sampleData.testReference?.name || 'Unknown Test',
+          testCode: this.sampleData.testReference?.abbrev || 'UNK',
+          description: this.sampleData.testName, // Use testName since description property doesn't exist
+          isActive: true
+        };
+      }
+    }
   }
 
   ngOnDestroy(): void {

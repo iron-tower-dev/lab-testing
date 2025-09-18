@@ -7,7 +7,7 @@ import { TestsService } from '../../shared/services/tests.service';
   selector: 'app-test-type-selection',
   imports: [SharedModule],
   templateUrl: './test-type-selection.html',
-  styleUrl: './test-type-selection.scss',
+  styleUrl: './test-type-selection.css'
 })
 export class TestTypeSelection {
   private readonly testsService = inject(TestsService);

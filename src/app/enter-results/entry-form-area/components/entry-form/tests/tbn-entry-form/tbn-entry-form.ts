@@ -7,7 +7,7 @@ import { SharedModule } from '../../../../../../shared-module';
   selector: 'app-tbn-entry-form',
   standalone: true,
   templateUrl: './tbn-entry-form.html',
-  styleUrls: ['./tbn-entry-form.scss'],
+  styleUrl: './tbn-entry-form.css',
   imports: [
     SharedModule
   ]

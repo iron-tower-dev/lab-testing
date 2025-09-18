@@ -234,29 +234,6 @@ import { ParticleImageModalComponent, ParticleImageModalData } from './particle-
           >
           </textarea>
         </mat-form-field>
-
-        <!-- Add comments to overall -->
-        <div class="comment-actions">
-          <mat-checkbox formControlName="includeCommentsInOverall">
-            Include comments in overall
-          </mat-checkbox>
-
-          <button
-            mat-raised-button
-            color="accent"
-            size="small"
-            type="button"
-            (click)="onAddCommentToOverall()"
-            [disabled]="
-              !particleForm().get('comments')?.value ||
-              !particleForm().get('includeCommentsInOverall')?.value ||
-              readOnly()
-            "
-          >
-            <mat-icon>add_comment</mat-icon>
-            Add to Overall
-          </button>
-        </div>
       </div>
     </div>
   `,
@@ -264,13 +241,13 @@ import { ParticleImageModalComponent, ParticleImageModalData } from './particle-
     `
       .particle-type-card {
         border: 1px solid #e0e0e0;
-        border-radius: 6px; // Smaller radius
-        padding: 12px; // Reduced from 16px
-        margin-bottom: 8px; // Reduced from 16px
+        border-radius: 6px; /* Smaller radius */
+        padding: 12px; /* Reduced from 16px */
+        margin-bottom: 8px; /* Reduced from 16px */
         background: #fff;
         transition: all 0.3s ease;
         position: relative;
-        height: fit-content; // Prevent cards from stretching unnecessarily
+        height: fit-content; /* Prevent cards from stretching unnecessarily */
       }
 
       .particle-type-card.selected {
@@ -286,16 +263,16 @@ import { ParticleImageModalComponent, ParticleImageModalData } from './particle-
       .particle-type-header {
         background-color: #f8f9fa;
         border-bottom: 1px solid #dee2e6;
-        margin: -12px -12px 12px -12px; // Adjusted for smaller card padding
-        padding: 12px; // Reduced from 16px
-        border-radius: 6px 6px 0 0; // Match card radius
+        margin: -12px -12px 12px -12px; /* Adjusted for smaller card padding */
+        padding: 12px; /* Reduced from 16px */
+        border-radius: 6px 6px 0 0; /* Match card radius */
       }
 
       .database-header,
       .fallback-header {
         display: flex;
         flex-direction: column;
-        gap: 8px; // Slightly reduced for more compact layout
+        gap: 8px; /* Slightly reduced for more compact layout */
       }
 
       .header-text {
@@ -306,8 +283,8 @@ import { ParticleImageModalComponent, ParticleImageModalData } from './particle-
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 20px; // Slightly increased for better spacing in full-width cards
-        min-height: 40px; // Ensure consistent height
+        gap: 20px; /* Slightly increased for better spacing in full-width cards */
+        min-height: 40px; /* Ensure consistent height */
       }
 
       .particle-type-title {
@@ -394,38 +371,28 @@ import { ParticleImageModalComponent, ParticleImageModalData } from './particle-
 
       .particle-type-entry-form {
         display: grid;
-        gap: 12px; // Reduced from 16px
-        margin-top: 12px; // Reduced from 16px
+        gap: 16px;
+        margin-top: 16px;
         
-        // Responsive grid to make use of full card width
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); // Slightly larger minimum for readability
+        /* Ensure form fields are properly sized for readability */
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
         
-        // Use more columns for better space utilization since cards are full width
+        /* Responsive layout that prioritizes readability */
         @media (min-width: 768px) {
-          grid-template-columns: repeat(4, 1fr); // 4 columns on tablet+
+          grid-template-columns: repeat(3, 1fr); /* 3 columns on tablet+ */
         }
         
         @media (min-width: 1024px) {
-          grid-template-columns: repeat(6, 1fr); // 6 columns on desktop
+          grid-template-columns: repeat(4, 1fr); /* 4 columns on desktop */
         }
         
-        @media (min-width: 1400px) {
-          grid-template-columns: repeat(8, 1fr); // 8 columns on large screens for maximum space usage
+        @media (min-width: 1200px) {
+          grid-template-columns: repeat(5, 1fr); /* 5 columns on large screens */
         }
       }
 
       .full-width {
         grid-column: 1 / -1;
-      }
-
-      .comment-actions {
-        grid-column: 1 / -1;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 12px; // Reduced from 16px
-        margin-top: 8px;
-        border-top: 1px solid #e0e0e0;
       }
 
       @media (max-width: 768px) {
@@ -445,13 +412,7 @@ import { ParticleImageModalComponent, ParticleImageModalData } from './particle-
         }
 
         .particle-type-entry-form {
-          grid-template-columns: repeat(2, 1fr); // 2 columns on mobile for better space usage
-        }
-
-        .comment-actions {
-          flex-direction: column;
-          align-items: stretch;
-          gap: 12px;
+          grid-template-columns: 1fr; /* Single column on mobile for better readability */
         }
       }
     `,
@@ -479,7 +440,6 @@ export class ParticleTypeCardComponent {
   // Output signals
   selectionToggle = output<string>();
   visibilityToggle = output<string>();
-  addCommentToOverall = output<string>();
 
   onSelectionToggle(): void {
     this.selectionToggle.emit(this.particleType());
@@ -489,9 +449,6 @@ export class ParticleTypeCardComponent {
     this.visibilityToggle.emit(this.particleType());
   }
 
-  onAddCommentToOverall(): void {
-    this.addCommentToOverall.emit(this.particleType());
-  }
 
   /**
    * Convert JPG image filename to SVG and return full asset path

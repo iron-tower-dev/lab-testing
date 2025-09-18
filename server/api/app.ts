@@ -2,12 +2,16 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
+import { authMiddleware, requireRead, requireWrite, requireDelete } from './middleware/auth';
 
 // Import route handlers
 import tests from './routes/tests';
 import particleTypes from './routes/particle-types';
 import testReadings from './routes/test-readings';
 import testStands from './routes/test-stands';
+import testStandards from './routes/test-standards';
+import testMethodConfig from './routes/test-method-config';
+import testFormData from './routes/test-form-data';
 import { closeDatabase } from './db/connection';
 
 // Create the main Hono app
@@ -22,6 +26,23 @@ app.use('*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// Apply authentication to protected routes by HTTP method
+// Add global auth to write/delete operations (will be skipped if route already has auth)
+app.use('/api/*', (c, next) => {
+  // Skip OPTIONS requests (for CORS preflight)
+  if (c.req.method === 'OPTIONS') {
+    return next();
+  }
+  
+  // Only apply global auth to mutating operations
+  // Individual route handlers may override with their own auth requirements
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(c.req.method)) {
+    return authMiddleware(c, next);
+  }
+  
+  return next();
+});
+
 // Health check endpoint
 app.get('/', (c) => {
   return c.json({
@@ -33,13 +54,16 @@ app.get('/', (c) => {
       tests: '/api/tests',
       particleTypes: '/api/particle-types',
       testReadings: '/api/test-readings',
-      testStands: '/api/test-stands'
+      testStands: '/api/test-stands',
+      testStandards: '/api/test-standards',
+      testMethodConfig: '/api/test-method-config',
+      testFormData: '/api/test-form-data'
     }
   });
 });
 
 // API status endpoint
-app.get('/api/status', (c) => {
+app.get('/api/status', authMiddleware, (c) => {
   return c.json({
     success: true,
     status: 'healthy',
@@ -53,6 +77,9 @@ app.route('/api/tests', tests);
 app.route('/api/particle-types', particleTypes);
 app.route('/api/test-readings', testReadings);
 app.route('/api/test-stands', testStands);
+app.route('/api/test-standards', testStandards);
+app.route('/api/test-method-config', testMethodConfig);
+app.route('/api/test-form-data', testFormData);
 
 // 404 handler for API routes
 app.notFound((c) => {
@@ -64,7 +91,10 @@ app.notFound((c) => {
       tests: '/api/tests',
       particleTypes: '/api/particle-types',
       testReadings: '/api/test-readings',
-      testStands: '/api/test-stands'
+      testStands: '/api/test-stands',
+      testStandards: '/api/test-standards',
+      testMethodConfig: '/api/test-method-config',
+      testFormData: '/api/test-form-data'
     }
   }, 404);
 });

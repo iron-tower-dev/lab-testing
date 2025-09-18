@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { TestTypeList } from './test-type-list';
-import { TestReference, LEGACY_TEST_CODE_TO_REFERENCE } from '../enter-results.types';
+import { TestReference, TestHelpers } from '../enter-results.types';
 import { SampleService } from '../../shared/services/sample.service';
 import { TestsService } from '../../shared/services/tests.service';
 import { ApiService } from '../../shared/services/api.service';
@@ -21,7 +21,7 @@ describe('TestTypeList', () => {
     fixture = TestBed.createComponent(TestTypeList);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
-    sampleTestReference = LEGACY_TEST_CODE_TO_REFERENCE.TAN;
+    sampleTestReference = TestHelpers.createTANReference();
     
     // Mock the HTTP request for test options and provide empty response to trigger fallback
     fixture.detectChanges();
@@ -52,7 +52,7 @@ describe('TestTypeList', () => {
   });
 
   it('should emit selectedTestReferenceChange when setSelectedTestReference is called', () => {
-    const kfTestReference = LEGACY_TEST_CODE_TO_REFERENCE.KF;
+    const kfTestReference = TestHelpers.createKFReference();
     spyOn(component.selectedTestReferenceChange, 'emit');
     component.setSelectedTestReference(kfTestReference);
     expect(component.selectedTestReferenceChange.emit).toHaveBeenCalledWith(kfTestReference);
