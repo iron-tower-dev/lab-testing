@@ -198,25 +198,29 @@ export class BaseTestFormComponent implements OnInit, OnDestroy {
   }
 
   private processSampleData(): void {
-    // If sampleData is provided, use it to set sample and testType
+    // If sampleData is provided, use it to set sample and testType only if not already provided
     if (this.sampleData) {
-      // Convert SampleWithTestInfo to Sample format expected by BaseTestFormComponent
-      this.sample = {
-        sampleId: this.sampleData.sampleId,
-        sampleNumber: this.sampleData.sampleNumber,
-        description: this.sampleData.testName,
-        customerName: (this.sampleData.component || this.sampleData.location) || undefined,
-        dateReceived: new Date() // This should come from the actual sample data if available
-      };
+      // Only set sample if not already provided
+      if (!this.sample) {
+        this.sample = {
+          sampleId: this.sampleData.sampleId,
+          sampleNumber: this.sampleData.sampleNumber,
+          description: this.sampleData.description || this.sampleData.testName,
+          customerName: this.sampleData.customerName || this.sampleData.component || this.sampleData.location || undefined,
+          dateReceived: this.sampleData.dateReceived || undefined
+        };
+      }
       
-      // Convert TestReference to TestType format
-      this.testType = {
-        testId: this.sampleData.testReference.id,
-        testName: this.sampleData.testReference.name || 'Unknown Test',
-        testCode: this.sampleData.testReference.abbrev || 'UNK',
-        description: this.sampleData.testName,
-        isActive: true
-      };
+      // Only set testType if not already provided
+      if (!this.testType) {
+        this.testType = {
+          testId: this.sampleData.testReference?.id,
+          testName: this.sampleData.testReference?.name || 'Unknown Test',
+          testCode: this.sampleData.testReference?.abbrev || 'UNK',
+          description: this.sampleData.description || this.sampleData.testName,
+          isActive: true
+        };
+      }
     }
   }
 
