@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
 import { ApiService, ApiResponse } from './api.service';
 
 export interface TestStandard {
@@ -52,30 +53,17 @@ export class TestStandardsService {
    * Get standards formatted for dropdown options
    */
   getStandardOptions(testId: number): Observable<{value: string; label: string}[]> {
-    return new Observable(observer => {
-      this.getStandardsForTest(testId).subscribe({
-        next: (response) => {
-          if (response.success && response.data) {
-            const options = response.data.map(standard => ({
-              value: standard.standardCode,
-              label: standard.standardName
-            }));
-            observer.next(options);
-            observer.complete();
-          } else {
-            // Fallback to empty array if API fails
-            observer.next([]);
-            observer.complete();
-          }
-        },
-        error: (error) => {
-          console.warn('Failed to load test standards, using empty array:', error);
-          // Fallback to empty array on error
-          observer.next([]);
-          observer.complete();
-        }
-      });
-    });
+    return this.getStandardsForTest(testId).pipe(
+      map(response => 
+        response.success && response.data 
+          ? response.data.map(s => ({ 
+              value: s.standardCode, 
+              label: s.standardName 
+            }))
+          : []
+      ),
+      catchError(() => of([]))
+    );
   }
 
   /**
