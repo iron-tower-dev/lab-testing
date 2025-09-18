@@ -157,12 +157,21 @@ export const testStandardsTable = sqliteTable('test_standards_table', {
 // Test method configurations (procedures, parameters)
 export const testMethodConfigTable = sqliteTable('test_method_config_table', {
   id: int().primaryKey({ autoIncrement: true }),
-  testId: int().notNull(), // References testTable.id
+  testId: int().notNull().references(() => testTable.id), // References testTable.id with FK constraint
   configKey: text().notNull(), // e.g., "solvents", "indicators", "temperature_range"
   configValue: text().notNull(), // JSON string for complex values
   description: text(),
   active: int({ mode: 'boolean' }).default(true),
-});
+}, (table) => ({
+  // Unique index on (testId, configKey) to prevent duplicate config keys per test
+  testConfigUniqueIdx: uniqueIndex('test_method_config_test_key_idx').on(
+    table.testId,
+    table.configKey
+  ),
+  
+  // Regular index on active for faster lookups of active/inactive configs
+  activeIdx: index('test_method_config_active_idx').on(table.active),
+}));
 
 // Form data storage for test entries
 export const testFormDataTable = sqliteTable('test_form_data_table', {
