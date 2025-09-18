@@ -65,12 +65,7 @@ export class DebrisIdEntryForm implements OnInit, OnDestroy {
   formIsValid = computed(() => {
     if (!this.form) return false;
     
-    const requiredFields = ['analystInitials', 'testStandard', 'equipment'];
-    const allRequiredValid = requiredFields.every(field => 
-      this.form.get(field)?.valid
-    );
-    
-    return allRequiredValid && this.selectedObservationsCount() >= 1;
+    return this.form.valid && this.selectedObservationsCount() >= 1;
   });
   
   commentCharacterCount = computed(() => {
