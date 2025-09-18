@@ -1,4 +1,4 @@
-import { int, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
+import { int, real, sqliteTable, text, uniqueIndex, index, foreignKey } from 'drizzle-orm/sqlite-core';
 
 export const usersTable = sqliteTable('users_table', {
   id: int().primaryKey({ autoIncrement: true }),
@@ -133,7 +133,26 @@ export const testStandardsTable = sqliteTable('test_standards_table', {
   isDefault: int({ mode: 'boolean' }).default(false),
   active: int({ mode: 'boolean' }).default(true),
   sortOrder: int().default(0),
-});
+}, (table) => ({
+  // Foreign key constraint referencing testTable
+  testIdFk: foreignKey({
+    columns: [table.testId],
+    foreignColumns: [testTable.id],
+    name: 'test_standards_test_id_fk'
+  }).onDelete('cascade'),
+  
+  // Unique index on (testId, standardCode) to prevent duplicate standards for same test
+  testStandardUniqueIdx: uniqueIndex('test_standards_test_code_idx').on(
+    table.testId,
+    table.standardCode
+  ),
+  
+  // Non-unique index on testId for fast lookups
+  testIdIdx: index('test_standards_test_id_idx').on(table.testId),
+  
+  // Non-unique index on standardCode for fast lookups
+  standardCodeIdx: index('test_standards_standard_code_idx').on(table.standardCode),
+}));
 
 // Test method configurations (procedures, parameters)
 export const testMethodConfigTable = sqliteTable('test_method_config_table', {
