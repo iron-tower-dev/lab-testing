@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import { Observable, of, from } from 'rxjs';
+import { map, catchError, mergeMap, toArray } from 'rxjs/operators';
 import { ApiService, ApiResponse } from './api.service';
 
 export interface TestStandard {
@@ -93,17 +93,8 @@ export class TestStandardsService {
   createCommonStandardsForTest(testId: number, testName: string): Observable<ApiResponse<TestStandard>[]> {
     const commonStandards = this.getCommonStandardsForTestType(testName);
     
-    return new Observable(observer => {
-      const results: ApiResponse<TestStandard>[] = [];
-      let completed = 0;
-      
-      if (commonStandards.length === 0) {
-        observer.next([]);
-        observer.complete();
-        return;
-      }
-      
-      commonStandards.forEach((standard, index) => {
+    return from(commonStandards).pipe(
+      mergeMap((standard, index) => 
         this.createStandard({
           testId,
           standardCode: standard.code,
@@ -111,26 +102,16 @@ export class TestStandardsService {
           description: standard.description,
           isDefault: index === 0,
           sortOrder: index
-        }).subscribe({
-          next: (response) => {
-            results.push(response);
-            completed++;
-            if (completed === commonStandards.length) {
-              observer.next(results);
-              observer.complete();
-            }
-          },
-          error: (error) => {
-            console.error(`Failed to create standard ${standard.code}:`, error);
-            completed++;
-            if (completed === commonStandards.length) {
-              observer.next(results);
-              observer.complete();
-            }
-          }
-        });
-      });
-    });
+        }).pipe(
+          catchError(err => {
+            console.error(`Failed to create standard ${standard.code}:`, err);
+            return of({ error: err } as any);
+          })
+        ),
+        3 // Limit concurrency to 3 concurrent requests
+      ),
+      toArray()
+    );
   }
 
   /**
