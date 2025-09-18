@@ -205,9 +205,9 @@ export class BaseTestFormComponent implements OnInit, OnDestroy {
         this.sample = {
           sampleId: this.sampleData.sampleId,
           sampleNumber: this.sampleData.sampleNumber,
-          description: this.sampleData.description || this.sampleData.testName,
-          customerName: this.sampleData.customerName || this.sampleData.component || this.sampleData.location || undefined,
-          dateReceived: this.sampleData.dateReceived || undefined
+          description: this.sampleData.testName, // Use testName as description since SampleWithTestInfo doesn't have description
+          customerName: this.sampleData.component || this.sampleData.location || undefined, // Use available fields
+          // dateReceived is not available in SampleWithTestInfo, so omit it
         };
       }
       
@@ -217,7 +217,7 @@ export class BaseTestFormComponent implements OnInit, OnDestroy {
           testId: this.sampleData.testReference?.id,
           testName: this.sampleData.testReference?.name || 'Unknown Test',
           testCode: this.sampleData.testReference?.abbrev || 'UNK',
-          description: this.sampleData.description || this.sampleData.testName,
+          description: this.sampleData.testName, // Use testName since description property doesn't exist
           isActive: true
         };
       }
