@@ -6,7 +6,7 @@ import { SampleWithTestInfo } from '../../../../../enter-results.types';
   selector: 'app-d-inch-entry-form',
   imports: [SharedModule],
   templateUrl: './d-inch-entry-form.html',
-  styleUrl: './d-inch-entry-form.scss',
+  styleUrls: ['./d-inch-entry-form.scss'],
 })
 export class DInchEntryForm {
   sampleData = input<SampleWithTestInfo | null>(null);
