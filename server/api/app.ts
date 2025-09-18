@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
+import { authMiddleware, requireRead, requireWrite, requireDelete } from './middleware/auth';
 
 // Import route handlers
 import tests from './routes/tests';
@@ -25,6 +26,23 @@ app.use('*', cors({
   allowHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// Apply authentication to protected routes by HTTP method
+// Add global auth to write/delete operations (will be skipped if route already has auth)
+app.use('/api/*', (c, next) => {
+  // Skip OPTIONS requests (for CORS preflight)
+  if (c.req.method === 'OPTIONS') {
+    return next();
+  }
+  
+  // Only apply global auth to mutating operations
+  // Individual route handlers may override with their own auth requirements
+  if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(c.req.method)) {
+    return authMiddleware(c, next);
+  }
+  
+  return next();
+});
+
 // Health check endpoint
 app.get('/', (c) => {
   return c.json({
@@ -45,7 +63,7 @@ app.get('/', (c) => {
 });
 
 // API status endpoint
-app.get('/api/status', (c) => {
+app.get('/api/status', authMiddleware, (c) => {
   return c.json({
     success: true,
     status: 'healthy',

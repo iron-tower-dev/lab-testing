@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
 import { eq, and, desc } from 'drizzle-orm';
 import { db, schema } from '../db/connection';
+import { authMiddleware, requireRead, requireWrite, requireDelete } from '../middleware/auth';
 
 const testFormData = new Hono();
 
 // GET /api/test-form-data - Get test form data with optional filtering
-testFormData.get('/', async (c) => {
+testFormData.get('/', authMiddleware, requireRead, async (c) => {
   try {
     const { sampleId, testId, status } = c.req.query();
     
@@ -67,7 +68,7 @@ testFormData.get('/', async (c) => {
 });
 
 // GET /api/test-form-data/:sampleId/:testId - Get latest form data for a specific sample/test
-testFormData.get('/:sampleId/:testId', async (c) => {
+testFormData.get('/:sampleId/:testId', authMiddleware, requireRead, async (c) => {
   try {
     const sampleId = parseInt(c.req.param('sampleId'));
     const testId = parseInt(c.req.param('testId'));
@@ -121,7 +122,7 @@ testFormData.get('/:sampleId/:testId', async (c) => {
 });
 
 // POST /api/test-form-data - Create or update test form data
-testFormData.post('/', async (c) => {
+testFormData.post('/', authMiddleware, requireWrite, async (c) => {
   try {
     const body = await c.req.json();
     
@@ -159,32 +160,36 @@ testFormData.post('/', async (c) => {
       }, 400);
     }
     
-    // Check if there's already data for this sample/test (for versioning)
-    const existingEntry = await db.select()
-      .from(schema.testFormDataTable)
-      .where(and(
-        eq(schema.testFormDataTable.sampleId, body.sampleId),
-        eq(schema.testFormDataTable.testId, body.testId)
-      ))
-      .orderBy(desc(schema.testFormDataTable.version))
-      .get();
-    
-    const nextVersion = existingEntry ? existingEntry.version + 1 : 1;
-    const now = new Date();
-    
-    const newFormData = await db.insert(schema.testFormDataTable)
-      .values({
-        sampleId: body.sampleId,
-        testId: body.testId,
-        formData: formDataString,
-        status: body.status || 'draft',
-        createdBy: body.createdBy || 'system',
-        createdAt: now,
-        updatedAt: now,
-        version: nextVersion
-      })
-      .returning()
-      .get();
+    // Use transaction to prevent race conditions in versioning
+    const newFormData = await db.transaction(async (tx) => {
+      // Get the latest version within the transaction to ensure atomicity
+      const existingEntry = await tx.select()
+        .from(schema.testFormDataTable)
+        .where(and(
+          eq(schema.testFormDataTable.sampleId, body.sampleId),
+          eq(schema.testFormDataTable.testId, body.testId)
+        ))
+        .orderBy(desc(schema.testFormDataTable.version))
+        .get();
+      
+      const nextVersion = existingEntry ? existingEntry.version + 1 : 1;
+      const now = new Date();
+      
+      // Insert the new form data with the computed version
+      return await tx.insert(schema.testFormDataTable)
+        .values({
+          sampleId: body.sampleId,
+          testId: body.testId,
+          formData: formDataString,
+          status: body.status || 'draft',
+          createdBy: body.createdBy || 'system',
+          createdAt: now,
+          updatedAt: now,
+          version: nextVersion
+        })
+        .returning()
+        .get();
+    });
     
     return c.json({
       success: true,
@@ -195,6 +200,15 @@ testFormData.post('/', async (c) => {
       message: 'Test form data saved successfully'
     }, 201);
   } catch (error) {
+    // Handle unique constraint violations (race conditions)
+    if (error instanceof Error && error.message.includes('UNIQUE constraint failed')) {
+      return c.json({
+        success: false,
+        error: 'Concurrent modification detected',
+        message: 'Another process has already created this version. Please retry.'
+      }, 409);
+    }
+    
     return c.json({
       success: false,
       error: 'Failed to save test form data',
@@ -204,7 +218,7 @@ testFormData.post('/', async (c) => {
 });
 
 // PUT /api/test-form-data/:id - Update existing test form data
-testFormData.put('/:id', async (c) => {
+testFormData.put('/:id', authMiddleware, requireWrite, async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
     const body = await c.req.json();
@@ -280,7 +294,7 @@ testFormData.put('/:id', async (c) => {
 });
 
 // DELETE /api/test-form-data/:id - Delete test form data
-testFormData.delete('/:id', async (c) => {
+testFormData.delete('/:id', authMiddleware, requireDelete, async (c) => {
   try {
     const id = parseInt(c.req.param('id'));
     
@@ -322,7 +336,7 @@ testFormData.delete('/:id', async (c) => {
 });
 
 // GET /api/test-form-data/:sampleId/:testId/history - Get all versions of form data for a sample/test
-testFormData.get('/:sampleId/:testId/history', async (c) => {
+testFormData.get('/:sampleId/:testId/history', authMiddleware, requireRead, async (c) => {
   try {
     const sampleId = parseInt(c.req.param('sampleId'));
     const testId = parseInt(c.req.param('testId'));

@@ -1,4 +1,4 @@
-import { int, real, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { int, real, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 export const usersTable = sqliteTable('users_table', {
   id: int().primaryKey({ autoIncrement: true }),
@@ -156,4 +156,11 @@ export const testFormDataTable = sqliteTable('test_form_data_table', {
   createdAt: int({ mode: 'timestamp' }),
   updatedAt: int({ mode: 'timestamp' }),
   version: int().default(1),
-});
+}, (table) => ({
+  // Unique constraint on (sampleId, testId, version) to prevent race conditions
+  sampleTestVersionIdx: uniqueIndex('sample_test_version_idx').on(
+    table.sampleId,
+    table.testId, 
+    table.version
+  ),
+}));
