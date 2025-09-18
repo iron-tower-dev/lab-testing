@@ -55,7 +55,10 @@ export class DebrisIdEntryForm implements OnInit, OnDestroy {
   
   // Computed properties
   selectedObservationsCount = computed(() => {
-    const observations = this.observationsFormArray?.controls || [];
+    if (!this.observationsFormArray) {
+      return 0;
+    }
+    const observations = this.observationsFormArray.controls || [];
     return observations.filter(control => control.get('isSelected')?.value).length;
   });
   
