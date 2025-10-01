@@ -391,9 +391,8 @@ export class Vis100EntryForm implements OnInit {
       }
     }
     
-    // Determine new status
-    const context = this.actionContext();
-    context.isPartialSave = isPartialSave;
+    // Determine new status - create shallow clone to avoid mutating cached signal object
+    const context = { ...this.actionContext(), isPartialSave };
     const newStatus = this.statusWorkflow.determineEntryStatus(context);
     
     this.isSaving.set(true);
