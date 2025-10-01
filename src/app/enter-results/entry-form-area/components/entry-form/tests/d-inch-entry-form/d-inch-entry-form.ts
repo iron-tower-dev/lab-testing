@@ -1,8 +1,7 @@
 import { Component, OnInit, signal, computed, inject, input, effect } from '@angular/core';
 import { SharedModule } from '../../../../../../shared-module';
-import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
-import { TestReading } from '../../../../../../shared/models/test-reading.model';
-import { TestSampleInfo } from '../../../../../../../types';
+import { TestReadingsService, TestReading } from '../../../../../../shared/services/test-readings.service';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
 import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
 import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
 import { ActionButtons } from '../../../../../components/action-buttons/action-buttons';
@@ -22,7 +21,7 @@ export class DInchEntryForm implements OnInit {
   private statusTransitionService = inject(StatusTransitionService);
 
   // Input signals for test sample info and context
-  testSampleInfo = input<TestSampleInfo | null>(null);
+  testSampleInfo = input<SampleWithTestInfo | null>(null);
   sampleData = input<any>(null);
   context = input<'sample' | 'batch'>('sample');
 
@@ -69,7 +68,7 @@ export class DInchEntryForm implements OnInit {
 
   // Action context for status workflow
   actionContext = computed<ActionContext>(() => ({
-    testId: this.testSampleInfo()?.testId || 0,
+    testId: this.testSampleInfo()?.testReference?.id || 0,
     sampleId: this.testSampleInfo()?.sampleId || 0,
     currentStatus: this.currentStatus(),
     userQualification: 'Q', // TODO: Get from user context
@@ -196,11 +195,11 @@ export class DInchEntryForm implements OnInit {
 
     try {
       const status = await this.statusWorkflowService
-        .getCurrentStatus(info.sampleId, info.testId)
+        .getCurrentStatus(info.sampleId, info.testReference.id)
         .toPromise();
       
       if (status) {
-        this.currentStatus.set(status.status || 'draft');
+        this.currentStatus.set(status.status || TestStatus.AWAITING);
         this.enteredBy.set(status.enteredBy || '');
       }
     } catch (error) {
@@ -218,7 +217,7 @@ export class DInchEntryForm implements OnInit {
       }
 
       const existingReading = await this.testReadingsService
-        .getTestReading(info.sampleId, info.testId)
+        .getTestReading(info.sampleId, info.testReference.id, 1)
         .toPromise();
 
       if (existingReading) {
@@ -358,7 +357,8 @@ export class DInchEntryForm implements OnInit {
 
     const testReading: Partial<TestReading> = {
       sampleId: info.sampleId,
-      testId: info.testId,
+      testId: info.testReference.id,
+      trialNumber: 1, // D-inch test uses single trial record
       value1: this.trial1Measurement(),
       value2: this.trial2Measurement(),
       value3: this.trial3Measurement(),
@@ -367,7 +367,7 @@ export class DInchEntryForm implements OnInit {
       id2: this.testStandard(),
       id3: this.analystInitials(),
       mainComments: this.combineComments(),
-      complete: markComplete
+      trialComplete: markComplete
     };
 
     await this.testReadingsService.saveTestReading(testReading).toPromise();
@@ -391,11 +391,11 @@ export class DInchEntryForm implements OnInit {
           await this.saveTestData(true);
           await this.statusTransitionService.transitionTo(
             info.sampleId,
-            info.testId,
+            info.testReference.id,
             'entered',
             this.analystInitials()
           ).toPromise();
-          this.currentStatus.set('entered');
+          this.currentStatus.set(TestStatus.ENTRY_COMPLETE);
           this.saveMessage.set('Test data saved successfully!');
           break;
 
@@ -407,11 +407,11 @@ export class DInchEntryForm implements OnInit {
         case 'accept':
           await this.statusTransitionService.transitionTo(
             info.sampleId,
-            info.testId,
+            info.testReference.id,
             'accepted',
             this.analystInitials()
           ).toPromise();
-          this.currentStatus.set('accepted');
+          this.currentStatus.set(TestStatus.SAVED);
           this.saveMessage.set('Test results accepted!');
           break;
 
@@ -420,12 +420,12 @@ export class DInchEntryForm implements OnInit {
           if (!reason) return;
           await this.statusTransitionService.transitionTo(
             info.sampleId,
-            info.testId,
+            info.testReference.id,
             'rejected',
             this.analystInitials(),
             reason
           ).toPromise();
-          this.currentStatus.set('rejected');
+          this.currentStatus.set(TestStatus.AWAITING);
           this.saveMessage.set('Test results rejected');
           break;
 
@@ -433,10 +433,11 @@ export class DInchEntryForm implements OnInit {
           if (!confirm('Are you sure you want to delete this test data?')) return;
           await this.testReadingsService.deleteTestReading(
             info.sampleId,
-            info.testId
+            info.testReference.id,
+            1 // Trial number
           ).toPromise();
           this.clearForm();
-          this.currentStatus.set('draft');
+          this.currentStatus.set(TestStatus.AWAITING);
           this.saveMessage.set('Test data deleted');
           break;
 
@@ -447,11 +448,11 @@ export class DInchEntryForm implements OnInit {
         case 'media-ready':
           await this.statusTransitionService.transitionTo(
             info.sampleId,
-            info.testId,
+            info.testReference.id,
             'media-ready',
             this.analystInitials()
           ).toPromise();
-          this.currentStatus.set('media-ready');
+          this.currentStatus.set(TestStatus.PARTIAL);
           this.saveMessage.set('Test marked as media ready!');
           break;
       }
