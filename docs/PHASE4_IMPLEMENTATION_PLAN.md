@@ -87,7 +87,7 @@ Phase 4 extends the modern calculation architecture from Phase 3 (Viscosity @ 40
 9. **Deleterious** - Particle analysis
 10. **Particle Count** - NAS lookup
 
-### **Phase 4C: Low Priority Forms** (6 forms)
+### **Phase 4C: Low Priority Forms** (6 groups, 8 tests)
 11. **Spectroscopy - Standard** - Multiple elements
 12. **Spectroscopy - Large** - Multiple elements + file
 13. **Inspect Filter** - Complex multi-type
