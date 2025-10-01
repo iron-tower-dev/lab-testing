@@ -1,9 +1,10 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, input, effect } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
 import { TestReadingsService } from '../../../../../../core/services/test-readings.service';
 import { GreaseCalculationService } from '../../../../../../shared/services/grease-calculation.service';
 import { TestReadingRecord } from '../../../../../../core/models/test-reading.model';
 import { SharedModule } from '../../../../../../shared-module';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
 
 @Component({
   selector: 'app-gr-drop-pt-entry-form',
@@ -19,6 +20,9 @@ export class GrDropPtEntryForm implements OnInit {
   private testReadingsService = inject(TestReadingsService);
   private greaseCalc = inject(GreaseCalculationService);
 
+  // Input signals
+  sampleData = input<SampleWithTestInfo | null>(null);
+
   // State signals
   loading = signal(false);
   saving = signal(false);
@@ -27,10 +31,29 @@ export class GrDropPtEntryForm implements OnInit {
 
   // Form and sample data
   form!: FormGroup;
-  sampleId = signal<string>('');
-  testTypeId = signal<string>('');
   existingData = signal<TestReadingRecord | null>(null);
+
+  // Computed signals derived from sampleData
+  sampleId = computed(() => {
+    const data = this.sampleData();
+    return data?.sampleId?.toString() || '';
+  });
+
+  testTypeId = computed(() => {
+    const data = this.sampleData();
+    return data?.testReference?.id?.toString() || '';
+  });
   
+  constructor() {
+    // Watch for changes in sampleData and reload existing data when it changes
+    effect(() => {
+      const data = this.sampleData();
+      if (data?.sampleId && data?.testReference?.id) {
+        this.loadExistingData();
+      }
+    });
+  }
+
   ngOnInit(): void {
     this.initializeForm();
     this.loadExistingData();

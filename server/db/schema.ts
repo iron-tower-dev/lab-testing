@@ -119,7 +119,7 @@ export const testScheduleTestTable = sqliteTable('test_schedule_test_table', {
 });
 
 export const testStandTable = sqliteTable('test_stand_table', {
-  id: int().notNull(),
+  id: int().primaryKey({ autoIncrement: true }),
   name: text(),
 });
 

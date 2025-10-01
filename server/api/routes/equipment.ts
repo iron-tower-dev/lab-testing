@@ -449,6 +449,19 @@ equipment.post('/:id/calibration', async (c) => {
       }, 400);
     }
     
+    // Check if equipment exists
+    const existing = await db.select()
+      .from(equipmentTable)
+      .where(eq(equipmentTable.id, id))
+      .get();
+    
+    if (!existing) {
+      return c.json({
+        success: false,
+        error: 'Equipment not found'
+      }, 404);
+    }
+    
     const now = Date.now();
     
     const newCalibration = await db.insert(equipmentCalibrationHistoryTable)

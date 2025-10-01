@@ -231,20 +231,20 @@ samples.put('/:id', async (c) => {
     
     const updated = await db.update(schema.usedLubeSamplesTable)
       .set({
-        tagNumber: body.tagNumber ?? existing.tagNumber,
-        component: body.component ?? existing.component,
-        location: body.location ?? existing.location,
-        lubeType: body.lubeType ?? existing.lubeType,
-        newUsedFlag: body.newUsedFlag ?? existing.newUsedFlag,
-        sampleDate: body.sampleDate ?? existing.sampleDate,
-        status: body.status ?? existing.status,
-        returnedDate: body.returnedDate ?? existing.returnedDate,
-        priority: body.priority ?? existing.priority,
-        assignedDate: body.assignedDate ?? existing.assignedDate,
-        assignedTo: body.assignedTo ?? existing.assignedTo,
-        receivedDate: body.receivedDate ?? existing.receivedDate,
-        oilAdded: body.oilAdded ?? existing.oilAdded,
-        comments: body.comments ?? existing.comments
+        tagNumber: 'tagNumber' in body ? body.tagNumber : existing.tagNumber,
+        component: 'component' in body ? body.component : existing.component,
+        location: 'location' in body ? body.location : existing.location,
+        lubeType: 'lubeType' in body ? body.lubeType : existing.lubeType,
+        newUsedFlag: 'newUsedFlag' in body ? body.newUsedFlag : existing.newUsedFlag,
+        sampleDate: 'sampleDate' in body ? body.sampleDate : existing.sampleDate,
+        status: 'status' in body ? body.status : existing.status,
+        returnedDate: 'returnedDate' in body ? body.returnedDate : existing.returnedDate,
+        priority: 'priority' in body ? body.priority : existing.priority,
+        assignedDate: 'assignedDate' in body ? body.assignedDate : existing.assignedDate,
+        assignedTo: 'assignedTo' in body ? body.assignedTo : existing.assignedTo,
+        receivedDate: 'receivedDate' in body ? body.receivedDate : existing.receivedDate,
+        oilAdded: 'oilAdded' in body ? body.oilAdded : existing.oilAdded,
+        comments: 'comments' in body ? body.comments : existing.comments
       })
       .where(eq(schema.usedLubeSamplesTable.id, id))
       .returning()

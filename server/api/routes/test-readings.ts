@@ -340,21 +340,21 @@ testReadings.post('/bulk', async (c) => {
         sampleId,
         testId,
         trialNumber: trial.trialNumber,
-        value1: trial.value1 || null, // stopwatchTime
-        value2: trial.value2 || null, // unused for viscosity
-        value3: trial.value3 || null, // calculatedResult
-        trialCalc: trial.trialCalc || null,
-        id1: trial.id1 || null, // unused for viscosity
-        id2: trial.id2 || null, // tube equipment ID
-        id3: trial.id3 || null, // unused for viscosity
+        value1: trial.value1 ?? null, // stopwatchTime
+        value2: trial.value2 ?? null, // unused for viscosity
+        value3: trial.value3 ?? null, // calculatedResult
+        trialCalc: trial.trialCalc ?? null,
+        id1: trial.id1 ?? null, // unused for viscosity
+        id2: trial.id2 ?? null, // tube equipment ID
+        id3: trial.id3 ?? null, // unused for viscosity
         trialComplete: trial.trialComplete !== undefined ? trial.trialComplete : (trial.selected || false),
-        status: testStatus || null,
-        schedType: trial.schedType || null,
-        entryId: entryId || null,
-        validateId: trial.validateId || null,
+        status: testStatus ?? null,
+        schedType: trial.schedType ?? null,
+        entryId: entryId ?? null,
+        validateId: trial.validateId ?? null,
         entryDate: now,
         valiDate: trial.valiDate ? new Date(trial.valiDate) : null,
-        mainComments: trial.mainComments || null
+        mainComments: trial.mainComments ?? null
       };
       
       if (existing) {

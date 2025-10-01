@@ -155,14 +155,14 @@ GET    /api/locations
 
 ```bash
 # Apply migration
-sqlite3 db.sqlite < drizzle/0001_phase1_critical_tables.sql
+sqlite3 lab.db < drizzle/0001_phase1_critical_tables.sql
 
 # Seed lookup tables
 npm run seed
 
 # Verify
-sqlite3 db.sqlite "SELECT COUNT(*) FROM component_table;"  # Should be 10
-sqlite3 db.sqlite "SELECT COUNT(*) FROM location_table;"   # Should be 10
+sqlite3 lab.db "SELECT COUNT(*) FROM component_table;"  # Should be 10
+sqlite3 lab.db "SELECT COUNT(*) FROM location_table;"   # Should be 10
 ```
 
 ---

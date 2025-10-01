@@ -43,12 +43,12 @@
 }
 
 .save-message.success {
-  background: #4caf50;
+  background: #2e7d32;
   color: white;
 }
 
 .save-message.error {
-  background: #f44336;
+  background: #c62828;
   color: white;
 }
 
@@ -186,11 +186,11 @@
 }
 
 .validation-indicator span.valid {
-  color: #4caf50;
+  color: #1b5e20;
 }
 
 .validation-indicator span.warning {
-  color: #ff9800;
+  color: #a23c00;
 }
 
 /* ========================================

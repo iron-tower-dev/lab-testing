@@ -1,6 +1,7 @@
 import { Component, input, computed, inject } from '@angular/core';
 import { TestStatus } from '../../../shared/types/status-workflow.types';
 import { StatusWorkflowService } from '../../../shared/services/status-workflow.service';
+import { SharedModule } from '../../../shared-module';
 
 /**
  * Status Badge Component
@@ -8,7 +9,8 @@ import { StatusWorkflowService } from '../../../shared/services/status-workflow.
  */
 @Component({
   selector: 'app-status-badge',
-  imports: [],
+  standalone: true,
+  imports: [SharedModule],
   template: `
     @if (status()) {
       <div class="status-badge" [style.background-color]="statusInfo().color">

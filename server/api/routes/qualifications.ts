@@ -184,10 +184,33 @@ qualifications.post('/', async (c) => {
       )
       .get();
     
-    if (existing) {
+    // If an inactive qualification exists, reactivate it with new data
+    if (existing && existing.active === 0) {
+      const reactivated = await db.update(schema.lubeTechQualificationTable)
+        .set({
+          qualificationLevel: body.qualificationLevel,
+          certifiedDate: body.certifiedDate,
+          certifiedBy: body.certifiedBy || null,
+          expirationDate: body.expirationDate || null,
+          active: 1,
+          notes: body.notes || null
+        })
+        .where(eq(schema.lubeTechQualificationTable.id, existing.id))
+        .returning()
+        .get();
+      
+      return c.json({
+        success: true,
+        data: reactivated,
+        message: 'Qualification reactivated and updated successfully'
+      }, 200);
+    }
+    
+    // If an active qualification exists, return conflict
+    if (existing && existing.active === 1) {
       return c.json({
         success: false,
-        error: 'Qualification already exists for this employee and test stand',
+        error: 'Active qualification already exists for this employee and test stand',
         message: 'Use PUT to update existing qualification'
       }, 409);
     }

@@ -1,4 +1,4 @@
-import { Component, OnInit, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, signal, computed, inject, input } from '@angular/core';
 import { SharedModule } from '../../../../../../shared-module';
 import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
 import { TestReading } from '../../../../../../shared/models/test-reading.model';
@@ -16,7 +16,7 @@ export class DInchEntryForm implements OnInit {
   private testReadingsService = inject(TestReadingsService);
 
   // Input signals for test sample info
-  testSampleInfo = signal<TestSampleInfo | null>(null);
+  testSampleInfo = input<TestSampleInfo | null>(null);
 
   // Form input signals - Test Information
   testStandard = signal<string>('');
@@ -227,6 +227,14 @@ export class DInchEntryForm implements OnInit {
         case 3: this.trial3Result.set(result); break;
         case 4: this.trial4Result.set(result); break;
       }
+    } else {
+      // Clear result when measurement is null to avoid stale data
+      switch(trialNum) {
+        case 1: this.trial1Result.set(null); break;
+        case 2: this.trial2Result.set(null); break;
+        case 3: this.trial3Result.set(null); break;
+        case 4: this.trial4Result.set(null); break;
+      }
     }
   }
 
@@ -303,7 +311,7 @@ export class DInchEntryForm implements OnInit {
         id2: this.testStandard(),
         id3: this.analystInitials(),
         mainComments: this.combineComments(),
-        complete: complete
+        trialComplete: complete
       };
 
       await this.testReadingsService.saveTestReading(testReading).toPromise();

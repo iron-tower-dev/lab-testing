@@ -146,7 +146,8 @@ export class GrPen60EntryForm implements OnInit {
           penetrometerId: this.extractFromComments('equip', existingReading.mainComments || ''),
           lastCalibrationDate: this.extractFromComments('calibDate', existingReading.mainComments || ''),
           sampleAppearance: this.extractFromComments('appearance', existingReading.mainComments || ''),
-          testNotes: this.extractFromComments('notes', existingReading.mainComments || '')
+          testNotes: this.extractFromComments('notes', existingReading.mainComments || ''),
+          mainComments: this.extractFromComments('comments', existingReading.mainComments || '')
         });
       } else {
         // Set default values

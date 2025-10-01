@@ -1,4 +1,5 @@
-import { Component, input, effect, signal, computed, inject } from '@angular/core';
+import { Component, input, effect, signal, computed, inject, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntryForm } from './components/entry-form/entry-form';
 import { EntryFormHeader } from './components/entry-form-header/entry-form-header';
 import { ActionButtons } from '../components/action-buttons/action-buttons';
@@ -19,6 +20,7 @@ export class EntryFormArea {
   private readonly statusTransitionService = inject(StatusTransitionService);
   private readonly statusWorkflowService = inject(StatusWorkflowService);
   private readonly qualService = inject(QualificationService);
+  private readonly destroyRef = inject(DestroyRef);
   
   // Shared lab comments control for forms that support it
   labCommentsControl = new FormControl('');
@@ -78,12 +80,14 @@ export class EntryFormArea {
       }
     });
     
-    // Subscribe to status updates from the service
-    this.statusTransitionService.currentStatus$.subscribe(status => {
-      if (status) {
-        this.currentStatus.set(status);
-      }
-    });
+    // Subscribe to status updates from the service with proper cleanup
+    this.statusTransitionService.currentStatus$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(status => {
+        if (status) {
+          this.currentStatus.set(status);
+        }
+      });
   }
   
   handleAction(action: string) {

@@ -104,9 +104,9 @@ export async function seedSpecificTables(tables: string[], databasePath?: string
     'particle_type': seedParticleType,
     'particle_sub_type': seedParticleSubType,
     'test_readings': seedTestReadings,
-    'component': seedComponents,
-    'location': seedLocations,
-    'lube_tech_qualification': seedSampleQualifications,
+    'component_table': seedComponents,
+    'location_table': seedLocations,
+    'lube_tech_qualification_table': seedSampleQualifications,
   };
   
   try {

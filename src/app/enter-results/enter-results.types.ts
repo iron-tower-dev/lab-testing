@@ -204,70 +204,70 @@ export interface SampleTestResponse {
  */
 export const TestHelpers = {
   createTANReference(): TestReference {
-    return { id: 10, name: 'TAN by Color Indication', abbrev: 'TAN', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 10, name: 'TAN by Color Indication', abbrev: 'TAN', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createKFReference(): TestReference {
-    return { id: 20, name: 'Water Content by Karl Fischer', abbrev: 'KF', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 20, name: 'Water Content by Karl Fischer', abbrev: 'KF', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createSpecStdReference(): TestReference {
-    return { id: 30, name: 'Emission Spectroscopy - Standard', abbrev: 'SpecStd', shortAbbrev: null, groupName: 'Spectroscopy' };
+    return { id: 30, name: 'Emission Spectroscopy - Standard', abbrev: 'SpecStd', shortAbbrev: null, groupName: 'Spectroscopy', testStandId: null };
   },
   createSpecLrgReference(): TestReference {
-    return { id: 40, name: 'Emission Spectroscopy - Large', abbrev: 'SpecLrg', shortAbbrev: null, groupName: 'Spectroscopy' };
+    return { id: 40, name: 'Emission Spectroscopy - Large', abbrev: 'SpecLrg', shortAbbrev: null, groupName: 'Spectroscopy', testStandId: null };
   },
   createVis40Reference(): TestReference {
-    return { id: 50, name: 'Viscosity - 40°C', abbrev: 'Vis40', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 50, name: 'Viscosity - 40°C', abbrev: 'Vis40', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createVis100Reference(): TestReference {
-    return { id: 60, name: 'Viscosity - 100°C', abbrev: 'Vis100', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 60, name: 'Viscosity - 100°C', abbrev: 'Vis100', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createFlashPtReference(): TestReference {
-    return { id: 80, name: 'Flash Point', abbrev: 'FlashPt', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 80, name: 'Flash Point', abbrev: 'FlashPt', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createTBNReference(): TestReference {
-    return { id: 110, name: 'TBN by Auto Titration', abbrev: 'TBN', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 110, name: 'TBN by Auto Titration', abbrev: 'TBN', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createInspectFilterReference(): TestReference {
-    return { id: 120, name: 'Inspect Filter', abbrev: 'InspectFilter', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 120, name: 'Inspect Filter', abbrev: 'InspectFilter', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createGrPen60Reference(): TestReference {
-    return { id: 130, name: 'Grease Penetration - 60°C', abbrev: 'GrPen60', shortAbbrev: null, groupName: 'Grease' };
+    return { id: 130, name: 'Grease Penetration - 60°C', abbrev: 'GrPen60', shortAbbrev: null, groupName: 'Grease', testStandId: null };
   },
   createGrDropPtReference(): TestReference {
-    return { id: 140, name: 'Grease Drop Point', abbrev: 'GrDropPt', shortAbbrev: null, groupName: 'Grease' };
+    return { id: 140, name: 'Grease Drop Point', abbrev: 'GrDropPt', shortAbbrev: null, groupName: 'Grease', testStandId: null };
   },
   createPcntReference(): TestReference {
-    return { id: 160, name: 'Particle Count', abbrev: 'Pcnt', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 160, name: 'Particle Count', abbrev: 'Pcnt', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createRBOTReference(): TestReference {
-    return { id: 170, name: 'RBOT', abbrev: 'RBOT', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 170, name: 'RBOT', abbrev: 'RBOT', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createFerrographyReference(): TestReference {
-    return { id: 210, name: 'Ferrography', abbrev: 'Ferrography', shortAbbrev: null, groupName: 'Particle Analysis' };
+    return { id: 210, name: 'Ferrography', abbrev: 'Ferrography', shortAbbrev: null, groupName: 'Particle Analysis', testStandId: null };
   },
   createRustReference(): TestReference {
-    return { id: 220, name: 'Rust', abbrev: 'Rust', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 220, name: 'Rust', abbrev: 'Rust', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createTFOUTReference(): TestReference {
-    return { id: 230, name: 'TFOUT', abbrev: 'TFOUT', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 230, name: 'TFOUT', abbrev: 'TFOUT', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createDebrisIDReference(): TestReference {
-    return { id: 240, name: 'Debris Identification', abbrev: 'DebrisID', shortAbbrev: null, groupName: 'Particle Analysis' };
+    return { id: 240, name: 'Debris Identification', abbrev: 'DebrisID', shortAbbrev: null, groupName: 'Particle Analysis', testStandId: null };
   },
   createDeleteriousReference(): TestReference {
-    return { id: 250, name: 'Deleterious', abbrev: 'Deleterious', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 250, name: 'Deleterious', abbrev: 'Deleterious', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createRheometryReference(): TestReference {
-    return { id: 270, name: 'Rheometry', abbrev: 'Rheometry', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 270, name: 'Rheometry', abbrev: 'Rheometry', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createDInchReference(): TestReference {
-    return { id: 284, name: 'Diameter Inch', abbrev: 'DInch', shortAbbrev: null, groupName: 'Physical' };
+    return { id: 284, name: 'Diameter Inch', abbrev: 'DInch', shortAbbrev: null, groupName: 'Physical', testStandId: null };
   },
   createOilContentReference(): TestReference {
-    return { id: 285, name: 'Oil Content', abbrev: 'OilContent', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 285, name: 'Oil Content', abbrev: 'OilContent', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   },
   createVPRReference(): TestReference {
-    return { id: 286, name: 'Varnish Potential Rating', abbrev: 'VPR', shortAbbrev: null, groupName: 'Chemical' };
+    return { id: 286, name: 'Varnish Potential Rating', abbrev: 'VPR', shortAbbrev: null, groupName: 'Chemical', testStandId: null };
   }
 };
 
@@ -338,6 +338,7 @@ export interface TestReference {
   abbrev: string | null;
   shortAbbrev: string | null;
   groupName: string | null;
+  testStandId?: number | null; // Optional test stand ID for qualification checks
 }
 
 /**
@@ -443,7 +444,8 @@ export namespace TestIdentifierUtils {
       name: test.name,
       abbrev: test.abbrev,
       shortAbbrev: test.shortAbbrev,
-      groupName: test.groupName
+      groupName: test.groupName,
+      testStandId: test.testStandId
     };
   }
 

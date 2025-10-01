@@ -17,8 +17,6 @@ import { SharedModule } from '../../../shared-module';
           mat-raised-button
           [color]="getButtonColor(action.action)"
           class="action-button"
-          [class.primary]="action.action === 'save' || action.action === 'accept'"
-          [class.danger]="action.action === 'delete' || action.action === 'reject'"
           (click)="actionClicked.emit(action.action)">
           @if (action.icon) {
             <mat-icon>{{ action.icon }}</mat-icon>

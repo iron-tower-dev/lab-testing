@@ -118,7 +118,7 @@ flashPointResult = computed(() => {
 | `id1` | testMethod | `"ASTM-D92"` |
 | `id2` | labTemperature | `"22"` °C |
 | `id3` | sampleVolume | `"75"` mL |
-| `mainComments` | Metadata | `"flash:blue flame|notes:..."` |
+| `mainComments` | Metadata | `"flash:blue flame\|notes:..."` |
 | `entryId` | analystInitials | `"ABC"` |
 | `trialComplete` | Always true | `true` |
 | `status` | Entry status | `"E"` |

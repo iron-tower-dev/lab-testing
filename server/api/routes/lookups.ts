@@ -77,6 +77,19 @@ lookups.post('/components', async (c) => {
       }, 400);
     }
     
+    // Check for duplicate component code
+    const existing = await db.select()
+      .from(schema.componentTable)
+      .where(eq(schema.componentTable.code, body.code))
+      .get();
+    
+    if (existing) {
+      return c.json({
+        success: false,
+        error: 'Component code already exists'
+      }, 409);
+    }
+    
     const newComponent = await db.insert(schema.componentTable)
       .values({
         code: body.code,
@@ -263,6 +276,19 @@ lookups.post('/locations', async (c) => {
         success: false,
         error: 'code and name are required'
       }, 400);
+    }
+    
+    // Check for duplicate location code
+    const existing = await db.select()
+      .from(schema.locationTable)
+      .where(eq(schema.locationTable.code, body.code))
+      .get();
+    
+    if (existing) {
+      return c.json({
+        success: false,
+        error: 'Location code already exists'
+      }, 409);
     }
     
     const newLocation = await db.insert(schema.locationTable)

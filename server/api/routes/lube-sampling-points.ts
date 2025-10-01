@@ -47,10 +47,10 @@ lubeSamplingPoints.get('/', async (c) => {
       whereConditions.push(eq(schema.lubeSamplingPointTable.testScheduled, false));
     }
     
-    const query = db.select().from(schema.lubeSamplingPointTable);
+    let query = db.select().from(schema.lubeSamplingPointTable);
     
     if (whereConditions.length > 0) {
-      query.where(and(...whereConditions));
+      query = query.where(and(...whereConditions));
     }
     
     const samplingPoints = await query.all();

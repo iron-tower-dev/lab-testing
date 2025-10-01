@@ -274,6 +274,7 @@ All tests should pass with:
 ## Test Coverage Metrics
 
 ### Service Tests
+
 | Service | Source Lines | Test Lines | Test Cases | Coverage |
 |---------|--------------|------------|------------|----------|
 | CalculationService | 149 | 376 | 80+ | ~100% |

@@ -43,12 +43,12 @@
 }
 
 .save-message.success {
-  background: #4caf50;
+  background: #2e7d32; /* Darker green for 4.5:1 contrast */
   color: white;
 }
 
 .save-message.error {
-  background: #f44336;
+  background: #c62828; /* Darker red for 4.5:1 contrast */
   color: white;
 }
 
@@ -201,7 +201,7 @@
 
 .qc-warning span {
   font-size: 14px;
-  color: #e65100;
+  color: #b33c00; /* Darker orange for 4.5:1 contrast on #fff3e0 background */
 }
 
 /* ========================================
@@ -300,14 +300,14 @@
 
 .warning-item span {
   font-size: 14px;
-  color: #e65100;
+  color: #b33c00; /* Darker orange for 4.5:1 contrast on #fff3e0 background */
 }
 
 /* ========================================
    Classification Section
    ======================================== */
 .classification-section {
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+  background: linear-gradient(135deg, #d32f2f 0%, #c62828 100%); /* Darker red gradient for 4.5:1 contrast */
   color: white;
 }
 
@@ -352,7 +352,7 @@
 .drop-pt-large .value {
   font-size: 48px;
   font-weight: 800;
-  color: #ff6b6b;
+  color: #d32f2f; /* Darker red for better contrast on white card background */
   line-height: 1;
 }
 

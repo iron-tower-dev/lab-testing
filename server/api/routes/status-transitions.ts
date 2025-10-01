@@ -52,7 +52,7 @@ statusTransitions.post('/transition', async (c) => {
       case 'accept':
         // Accept results - mark as validated
         updateData.validateId = userId;
-        updateData.valiDate = Math.floor(Date.now() / 1000);
+        updateData.valiDate = new Date();
         break;
         
       case 'reject':
@@ -83,7 +83,7 @@ statusTransitions.post('/transition', async (c) => {
       case 'partial-save':
         // Save results - mark entry date and user
         updateData.entryId = userId;
-        updateData.entryDate = Math.floor(Date.now() / 1000);
+        updateData.entryDate = new Date();
         break;
         
       case 'media-ready':
