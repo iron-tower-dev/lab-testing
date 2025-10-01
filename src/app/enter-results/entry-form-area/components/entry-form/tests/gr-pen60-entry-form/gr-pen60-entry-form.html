@@ -1,5 +1,11 @@
+<!-- Form Header with Status Badge -->
+<div class="form-header">
+  <h2>Grease Penetration Test (60 Strokes)</h2>
+  <app-status-badge [status]="currentStatus()" />
+</div>
+
 <!-- Loading Overlay -->
-@if (loading()) {
+@if (isLoading()) {
   <div class="loading-overlay">
     <mat-spinner diameter="50"></mat-spinner>
     <p>Loading test data...</p>

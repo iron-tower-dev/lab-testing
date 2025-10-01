@@ -1,4 +1,10 @@
 <form [formGroup]="form" class="flash-point-form-content">
+  <!-- Form Header with Status Badge -->
+  <div class="form-header">
+    <h2>Flash Point Entry</h2>
+    <app-status-badge [status]="currentStatus()" />
+  </div>
+
   <!-- Loading indicator -->
   @if (isLoading()) {
     <div class="loading-overlay">
@@ -9,9 +15,9 @@
 
   <!-- Save message -->
   @if (saveMessage()) {
-    <div class="save-message" [class.success]="saveMessage()?.includes('success')" [class.error]="saveMessage()?.includes('Failed')">
-      <mat-icon>{{ saveMessage()?.includes('success') ? 'check_circle' : 'error' }}</mat-icon>
-      <span>{{ saveMessage() }}</span>
+    <div class="save-message" [class.success]="saveMessage()?.type === 'success'" [class.error]="saveMessage()?.type === 'error'">
+      <mat-icon>{{ saveMessage()?.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+      <span>{{ saveMessage()?.text }}</span>
     </div>
   }
   <!-- Test Conditions Section -->
@@ -189,26 +195,10 @@
   </div>
 
   <!-- Action Buttons -->
-  <div class="form-actions">
-    <button mat-raised-button color="primary" 
-            type="button"
-            (click)="saveResults()" 
-            [disabled]="!form.valid || isSaving() || isLoading()">
-      @if (isSaving()) {
-        <mat-spinner diameter="20"></mat-spinner>
-        <span>Saving...</span>
-      } @else {
-        <mat-icon>save</mat-icon>
-        <span>Save Results</span>
-      }
-    </button>
-    
-    <button mat-raised-button 
-            type="button"
-            (click)="clearForm()" 
-            [disabled]="isSaving() || isLoading()">
-      <mat-icon>clear</mat-icon>
-      <span>Clear Form</span>
-    </button>
-  </div>
+  <app-action-buttons
+    [context]="actionContext()"
+    [isFormValid]="form.valid"
+    [isSaving]="isSaving()"
+    (action)="onAction($event)"
+  />
 </form>

@@ -5,28 +5,37 @@ import { SampleWithTestInfo } from '../../../../../enter-results.types';
 import { TANCalculationService } from '../../../../../../shared/services/tan-calculation.service';
 import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
 import { CalculationResult } from '../../../../../../shared/services/calculation.service';
+import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
+import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
+import { TestStatus, ActionContext } from '../../../../../../shared/types/status-workflow.types';
+import { ActionButtons } from '../../../../../components/action-buttons/action-buttons';
 
 /**
  * TAN (Total Acid Number) Entry Form Component
  * 
- * Modernized with Angular signals, TANCalculationService, and data persistence.
- * Follows the Vis40 pattern for consistency.
+ * Modernized with Angular signals, TANCalculationService, status workflow, and data persistence.
+ * Phase 2 Integration: Status workflow system with dynamic action buttons and review mode.
  */
 @Component({
   standalone: true,
   selector: 'app-tan-entry-form',
   templateUrl: './tan-entry-form.html',
   styleUrls: ['./tan-entry-form.css'],
-  imports: [SharedModule]
+  imports: [SharedModule, ActionButtons]
 })
 export class TanEntryForm implements OnInit {
   private fb = inject(FormBuilder);
   private tanCalc = inject(TANCalculationService);
   private testReadingsService = inject(TestReadingsService);
+  private statusWorkflow = inject(StatusWorkflowService);
+  private statusTransition = inject(StatusTransitionService);
   
   // Inputs
   sampleData = input<SampleWithTestInfo | null>(null);
   errorMessage = input<string | null>(null);
+  mode = input<'entry' | 'review' | 'view'>('entry');
+  userQualification = input<string | null>('Q'); // TODO: Get from auth service
+  currentUser = input<string>('current_user'); // TODO: Get from auth service
   
   // Form
   form!: FormGroup;
@@ -34,7 +43,9 @@ export class TanEntryForm implements OnInit {
   // State signals
   isLoading = signal(false);
   isSaving = signal(false);
-  saveMessage = signal<string | null>(null);
+  saveMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  currentStatus = signal<TestStatus>(TestStatus.AWAITING);
+  enteredBy = signal<string | null>(null);
   
   // Computed signals
   netBuretVolume = computed(() => {
@@ -56,11 +67,28 @@ export class TanEntryForm implements OnInit {
     return this.tanCalc.calculateTAN(final, initial, normality, weight);
   });
   
+  // Action context for workflow
+  actionContext = computed<ActionContext>(() => {
+    const sample = this.sampleData();
+    return {
+      testId: sample?.testReference?.id || 10,
+      sampleId: sample?.sampleId || 0,
+      currentStatus: this.currentStatus(),
+      userQualification: this.userQualification(),
+      enteredBy: this.enteredBy(),
+      currentUser: this.currentUser(),
+      mode: this.mode(),
+      isPartialSave: false,
+      isTraining: this.userQualification() === 'TRAIN'
+    };
+  });
+  
   // UI state
   showCalculationDetails = signal(true);
   
   ngOnInit(): void {
     this.initializeForm();
+    this.loadCurrentStatus();
     this.loadExistingData();
   }
   
@@ -87,6 +115,31 @@ export class TanEntryForm implements OnInit {
   }
   
   /**
+   * Load current status from API
+   */
+  private loadCurrentStatus(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      return;
+    }
+    
+    this.statusTransition
+      .getCurrentStatus(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.status) {
+            this.currentStatus.set(response.status as TestStatus);
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load status:', error);
+          // Default to AWAITING if no status found
+          this.currentStatus.set(TestStatus.AWAITING);
+        }
+      });
+  }
+  
+  /**
    * Load existing data from database if available
    */
   private loadExistingData(): void {
@@ -104,6 +157,12 @@ export class TanEntryForm implements OnInit {
           if (trials.length > 0) {
             // TAN test typically has one trial with all data
             const trial = trials[0];
+            
+            // Store who entered the data
+            if (trial.entryId) {
+              this.enteredBy.set(trial.entryId);
+            }
+            
             this.form.patchValue({
               initialBuret: trial.value1 || 0,
               finalBuret: trial.value2 || 0,
@@ -138,28 +197,61 @@ export class TanEntryForm implements OnInit {
   }
   
   /**
+   * Handle action button clicks
+   */
+  onAction(action: string): void {
+    switch (action) {
+      case 'save':
+        this.saveResults(false);
+        break;
+      case 'partial-save':
+        this.saveResults(true);
+        break;
+      case 'accept':
+        this.acceptResults();
+        break;
+      case 'reject':
+        this.rejectResults();
+        break;
+      case 'delete':
+        this.deleteResults();
+        break;
+      case 'clear':
+        this.clearForm();
+        break;
+      case 'media-ready':
+        this.markMediaReady();
+        break;
+    }
+  }
+  
+  /**
    * Save TAN results to database
    */
-  saveResults(): void {
-    if (!this.form.valid) {
-      this.saveMessage.set('Please fill in all required fields');
-      setTimeout(() => this.saveMessage.set(null), 3000);
+  private saveResults(isPartialSave: boolean = false): void {
+    if (!this.form.valid && !isPartialSave) {
+      this.showSaveMessage('Please fill in all required fields', 'error');
       return;
     }
     
     const result = this.tanResult();
     if (!result || !result.isValid) {
-      this.saveMessage.set('Invalid calculation - please check your inputs');
-      setTimeout(() => this.saveMessage.set(null), 3000);
-      return;
+      if (!isPartialSave) {
+        this.showSaveMessage('Invalid calculation - please check your inputs', 'error');
+        return;
+      }
     }
     
     const sampleInfo = this.sampleData();
     if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
-      this.saveMessage.set('No sample selected');
-      setTimeout(() => this.saveMessage.set(null), 3000);
+      this.showSaveMessage('No sample selected', 'error');
       return;
     }
+    
+    // Determine new status based on context
+    const context = this.actionContext();
+    context.isPartialSave = isPartialSave;
+    const newStatus = this.statusWorkflow.determineEntryStatus(context);
     
     this.isSaving.set(true);
     
@@ -173,13 +265,13 @@ export class TanEntryForm implements OnInit {
       trialNumber: 1,
       value1: this.form.get('initialBuret')?.value, // Initial buret
       value2: this.form.get('finalBuret')?.value, // Final buret
-      value3: result.result, // TAN result
+      value3: result?.result || 0, // TAN result
       id1: this.form.get('testMethod')?.value, // Test method
       id2: this.form.get('sampleWeight')?.value?.toString(), // Sample weight
       id3: this.form.get('kohNormality')?.value?.toString(), // KOH normality
       trialCalc: this.form.get('temperature')?.value, // Temperature
-      trialComplete: true,
-      status: 'E',
+      trialComplete: !isPartialSave,
+      status: newStatus,
       entryId: this.form.get('analystInitials')?.value,
       entryDate: Date.now(),
       mainComments: comments
@@ -187,24 +279,162 @@ export class TanEntryForm implements OnInit {
     
     this.testReadingsService.bulkSaveTrials([trial]).subscribe({
       next: () => {
+        // Update status
+        this.currentStatus.set(newStatus);
         this.isSaving.set(false);
-        this.saveMessage.set('TAN results saved successfully');
+        
+        const message = isPartialSave 
+          ? 'TAN results partially saved' 
+          : 'TAN results saved successfully';
+        this.showSaveMessage(message, 'success');
         
         // Save analyst initials for future use
         const initials = this.form.get('analystInitials')?.value;
         if (initials) {
           localStorage.setItem('analystInitials', initials);
+          this.enteredBy.set(initials);
         }
-        
-        setTimeout(() => this.saveMessage.set(null), 3000);
       },
       error: (error) => {
         console.error('Failed to save TAN results:', error);
         this.isSaving.set(false);
-        this.saveMessage.set('Failed to save results. Please try again.');
-        setTimeout(() => this.saveMessage.set(null), 5000);
+        this.showSaveMessage('Failed to save results. Please try again.', 'error');
       }
     });
+  }
+  
+  /**
+   * Accept results (reviewer action)
+   */
+  private acceptResults(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    const context = this.actionContext();
+    const newStatus = this.statusWorkflow.determineReviewStatus(context, 'accept');
+    
+    this.statusTransition
+      .acceptResults(sampleInfo.sampleId, sampleInfo.testReference.id, newStatus, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.showSaveMessage('Results accepted', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Accept error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to accept results', 'error');
+        }
+      });
+  }
+  
+  /**
+   * Reject results (reviewer action)
+   */
+  private rejectResults(): void {
+    if (!confirm('Are you sure you want to reject these results? All data will be deleted.')) {
+      return;
+    }
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    this.statusTransition
+      .rejectResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.form.reset({
+              initialBuret: 0,
+              kohNormality: 0.1000,
+              temperature: 22,
+              testMethod: 'ASTM-D664',
+              solvent: 'Isopropanol/Toluene',
+              indicator: 'P-Naphtholbenzein'
+            });
+            this.showSaveMessage('Results rejected and reset', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Reject error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to reject results', 'error');
+        }
+      });
+  }
+  
+  /**
+   * Delete results (admin action)
+   */
+  private deleteResults(): void {
+    if (!confirm('Are you sure you want to delete these results?')) {
+      return;
+    }
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    this.statusTransition
+      .deleteResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.form.reset({
+              initialBuret: 0,
+              kohNormality: 0.1000,
+              temperature: 22,
+              testMethod: 'ASTM-D664',
+              solvent: 'Isopropanol/Toluene',
+              indicator: 'P-Naphtholbenzein'
+            });
+            this.showSaveMessage('Results deleted', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Delete error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to delete results', 'error');
+        }
+      });
+  }
+  
+  /**
+   * Mark media ready for microscopy (not applicable to TAN, but included for consistency)
+   */
+  private markMediaReady(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    this.statusTransition
+      .markMediaReady(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.showSaveMessage('Media marked as ready', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Media ready error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to mark media ready', 'error');
+        }
+      });
   }
   
   /**
@@ -246,6 +476,14 @@ export class TanEntryForm implements OnInit {
     }
   }
   
+  /**
+   * Show save message with auto-hide
+   */
+  private showSaveMessage(text: string, type: 'success' | 'error'): void {
+    this.saveMessage.set({ text, type });
+    setTimeout(() => this.saveMessage.set(null), 3000);
+  }
+  
   // Quality control methods
   showQualityControlChecks(): boolean {
     const result = this.tanResult();
@@ -261,4 +499,3 @@ export class TanEntryForm implements OnInit {
     return result?.warnings || [];
   }
 }
-

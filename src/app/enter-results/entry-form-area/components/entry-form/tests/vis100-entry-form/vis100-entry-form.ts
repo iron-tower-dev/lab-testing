@@ -5,6 +5,10 @@ import { SampleWithTestInfo } from '../../../../../enter-results.types';
 import { ViscosityCalculationService, RepeatabilityResult } from '../../../../../../shared/services/viscosity-calculation.service';
 import { EquipmentService, TubeOption } from '../../../../../../shared/services/equipment.service';
 import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
+import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
+import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
+import { TestStatus, ActionContext } from '../../../../../../shared/types/status-workflow.types';
+import { ActionButtons } from '../../../../../components/action-buttons/action-buttons';
 
 interface ViscosityTrial {
   trialNumber: number;
@@ -19,38 +23,73 @@ interface ViscosityTrial {
   selector: 'app-vis100-entry-form',
   templateUrl: './vis100-entry-form.html',
   styleUrls: ['./vis100-entry-form.css'],
-  imports: [SharedModule]
+  imports: [SharedModule, ActionButtons]
 })
 export class Vis100EntryForm implements OnInit {
   private fb = inject(FormBuilder);
   private viscosityCalc = inject(ViscosityCalculationService);
   private equipmentService = inject(EquipmentService);
   private testReadingsService = inject(TestReadingsService);
+  private statusWorkflow = inject(StatusWorkflowService);
+  private statusTransition = inject(StatusTransitionService);
   
   sampleData = input<SampleWithTestInfo | null>(null);
   errorMessage = input<string | null>(null);
+  mode = input<'entry' | 'review' | 'view'>('entry');
+  userQualification = input<string | null>('Q');
+  currentUser = input<string>('current_user');
   
   form!: FormGroup;
-  isLoading = signal(false);
+  
+  // Separate loading signals for each independent operation
+  isLoadingTubes = signal(false);
+  isLoadingTrials = signal(false);
+  isLoadingStatus = signal(false);
+  
+  // Derived loading signal - true when any individual loading is active
+  isLoading = computed(() => 
+    this.isLoadingTubes() || this.isLoadingTrials() || this.isLoadingStatus()
+  );
+  
   isSaving = signal(false);
   saveMessage = signal<string | null>(null);
   tubeOptions = signal<TubeOption[]>([{ value: '', label: 'Select Tube' }]);
+  
+  // Status workflow
+  currentStatus = signal<TestStatus>(TestStatus.AWAITING);
+  enteredBy = signal<string | null>(null);
   
   // Repeatability result signal
   repeatabilityResult = signal<RepeatabilityResult | null>(null);
   
   // Computed: get selected trial results for repeatability check
   selectedResults = computed(() => {
-    const trials = this.trialsArray?.value || [];
+    // Use getRawValue() to include disabled calculatedResult field
+    const trials = this.trialsArray?.getRawValue() || [];
     return trials
       .filter((t: ViscosityTrial) => t.selected && t.calculatedResult > 0)
       .map((t: ViscosityTrial) => t.calculatedResult);
   });
   
+  // Action context for workflow
+  actionContext = computed<ActionContext>(() => ({
+    testId: this.sampleData()?.testReference?.id || 15,
+    sampleId: this.sampleData()?.sampleId || 0,
+    currentStatus: this.currentStatus(),
+    userQualification: this.userQualification(),
+    enteredBy: this.enteredBy(),
+    currentUser: this.currentUser(),
+    mode: this.mode(),
+    isPartialSave: false,
+    isTraining: this.userQualification() === 'TRAIN'
+  }));
+  
   ngOnInit(): void {
     this.initializeForm();
+    this.loadCurrentStatus();
     this.loadTubeCalibrations();
-    this.loadExistingTrials();
+    // Load existing trials after tube calibrations are loaded
+    // This ensures tubeOptions are available for resolving tube values
   }
   
   private initializeForm(): void {
@@ -74,19 +113,23 @@ export class Vis100EntryForm implements OnInit {
       return;
     }
     
-    this.isLoading.set(true);
+    this.isLoadingTubes.set(true);
     
     this.equipmentService.getViscosityTubesForTest(sampleInfo.testReference.id)
       .subscribe({
         next: (options) => {
           this.tubeOptions.set(options);
-          this.isLoading.set(false);
+          this.isLoadingTubes.set(false);
+          // Load existing trials after tube options are available
+          this.loadExistingTrials();
         },
         error: (error) => {
           console.error('Failed to load tube calibrations:', error);
-          this.isLoading.set(false);
+          this.isLoadingTubes.set(false);
           // Fallback to empty list with just the placeholder
           this.tubeOptions.set([{ value: '', label: 'Select Tube' }]);
+          // Still try to load existing trials even if tube calibrations failed
+          this.loadExistingTrials();
         }
       });
   }
@@ -208,6 +251,34 @@ export class Vis100EntryForm implements OnInit {
   }
   
   /**
+   * Load current status from API
+   */
+  private loadCurrentStatus(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      return;
+    }
+    
+    this.isLoadingStatus.set(true);
+    
+    this.statusTransition
+      .getCurrentStatus(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.status) {
+            this.currentStatus.set(response.status as TestStatus);
+          }
+          this.isLoadingStatus.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load status:', error);
+          this.currentStatus.set(TestStatus.AWAITING);
+          this.isLoadingStatus.set(false);
+        }
+      });
+  }
+  
+  /**
    * Load existing trials from database
    */
   private loadExistingTrials(): void {
@@ -216,7 +287,7 @@ export class Vis100EntryForm implements OnInit {
       return;
     }
     
-    this.isLoading.set(true);
+    this.isLoadingTrials.set(true);
     
     this.testReadingsService.loadTrials(sampleInfo.sampleId, sampleInfo.testReference.id)
       .subscribe({
@@ -226,34 +297,79 @@ export class Vis100EntryForm implements OnInit {
             response.data.forEach((reading, index) => {
               if (index < this.trialsArray.length) {
                 const trial = this.getTrialGroup(index);
+                
+                // Resolve tube calibration to match mat-select format
+                let tubeCalibrationValue = '';
+                if (reading.id2 && reading.value2) {
+                  // If we have both equipmentId and calibration value, use them
+                  tubeCalibrationValue = `${reading.id2}|${reading.value2}`;
+                } else if (reading.id2) {
+                  // Find matching tube option by equipmentId
+                  const matchingTube = this.tubeOptions().find(option => 
+                    option.value && option.value.startsWith(`${reading.id2}|`)
+                  );
+                  tubeCalibrationValue = matchingTube?.value || '';
+                }
+                
                 trial.patchValue({
                   trialNumber: reading.trialNumber,
                   selected: reading.trialComplete || false,
                   stopwatchTime: reading.value1 || '',
-                  tubeCalibration: reading.id2 || '',
+                  tubeCalibration: tubeCalibrationValue,
                   calculatedResult: reading.value3 || 0
                 });
+                
+                // Capture who entered the data
+                if (reading.entryId && !this.enteredBy()) {
+                  this.enteredBy.set(reading.entryId);
+                }
               }
             });
             
             // Recalculate repeatability
             this.checkRepeatability();
           }
-          this.isLoading.set(false);
+          this.isLoadingTrials.set(false);
         },
         error: (error) => {
           console.error('Failed to load existing trials:', error);
-          this.isLoading.set(false);
+          this.isLoadingTrials.set(false);
         }
       });
   }
   
   /**
+   * Handle action button clicks
+   */
+  onAction(action: string): void {
+    switch (action) {
+      case 'save':
+        this.saveForm(false);
+        break;
+      case 'partial-save':
+        this.saveForm(true);
+        break;
+      case 'accept':
+        this.acceptResults();
+        break;
+      case 'reject':
+        this.rejectResults();
+        break;
+      case 'delete':
+        this.deleteResults();
+        break;
+      case 'clear':
+        this.clearForm();
+        break;
+    }
+  }
+  
+  /**
    * Save form data to database
    */
-  saveForm(): void {
-    // Validate form
-    if (!this.form.valid) {
+  saveForm(isPartialSave: boolean = false): void {
+    // Validate form (allow partial save with incomplete data)
+    if (!isPartialSave && !this.form.valid) {
       this.saveMessage.set('⚠️ Please fill in all required fields');
       setTimeout(() => this.saveMessage.set(null), 3000);
       return;
@@ -266,15 +382,19 @@ export class Vis100EntryForm implements OnInit {
       return;
     }
     
-    // Check repeatability for Q/QAG users
-    const repeatability = this.repeatabilityResult();
-    if (repeatability && !repeatability.isWithinLimit) {
-      // TODO: Check user qualification level from auth service
-      // For now, just warn all users
-      if (!confirm(`${repeatability.warning}\n\nDo you want to continue saving?`)) {
-        return;
+    // Check repeatability (skip for partial save)
+    if (!isPartialSave) {
+      const repeatability = this.repeatabilityResult();
+      if (repeatability && !repeatability.isWithinLimit) {
+        if (!confirm(`${repeatability.warning}\n\nDo you want to continue saving?`)) {
+          return;
+        }
       }
     }
+    
+    // Determine new status - create shallow clone to avoid mutating cached signal object
+    const context = { ...this.actionContext(), isPartialSave };
+    const newStatus = this.statusWorkflow.determineEntryStatus(context);
     
     this.isSaving.set(true);
     this.saveMessage.set(null);
@@ -283,11 +403,14 @@ export class Vis100EntryForm implements OnInit {
     const formData = this.form.getRawValue();
     const trials = formData.trials.map((trial: any) => ({
       trialNumber: trial.trialNumber,
-      value1: trial.stopwatchTime || null, // stopwatch time in seconds
-      value3: trial.calculatedResult || null, // calculated viscosity result
-      id2: trial.tubeCalibration ? trial.tubeCalibration.split('|')[0] : null, // extract tube ID
+      value1: trial.stopwatchTime || null,
+      value3: trial.calculatedResult || null,
+      id2: trial.tubeCalibration ? trial.tubeCalibration.split('|')[0] : null,
       trialComplete: trial.selected || false,
-      selected: trial.selected || false
+      selected: trial.selected || false,
+      status: newStatus,
+      entryId: this.currentUser(),
+      entryDate: Date.now()
     }));
     
     // Save to database
@@ -295,18 +418,20 @@ export class Vis100EntryForm implements OnInit {
       sampleInfo.sampleId,
       sampleInfo.testReference.id,
       trials,
-      undefined, // entryId - can be set to current user ID
-      'E' // status: E = Entered
+      this.currentUser(),
+      newStatus
     ).subscribe({
       next: (response) => {
         this.isSaving.set(false);
         if (response.success) {
-          this.saveMessage.set(`✅ Successfully saved ${response.count} trial(s)`);
-          setTimeout(() => this.saveMessage.set(null), 5000);
-          console.log('Viscosity @ 100°C data saved:', response.data);
+          this.currentStatus.set(newStatus);
+          this.enteredBy.set(this.currentUser());
           
-          // TODO: Update sample status workflow
-          // TODO: Emit event to parent component
+          const message = isPartialSave 
+            ? `✅ Partially saved ${response.count} trial(s)` 
+            : `✅ Successfully saved ${response.count} trial(s)`;
+          this.saveMessage.set(message);
+          setTimeout(() => this.saveMessage.set(null), 5000);
         } else {
           this.saveMessage.set('❌ Failed to save data');
           setTimeout(() => this.saveMessage.set(null), 5000);
@@ -319,5 +444,85 @@ export class Vis100EntryForm implements OnInit {
         setTimeout(() => this.saveMessage.set(null), 5000);
       }
     });
+  }
+  
+  private acceptResults(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    const context = this.actionContext();
+    const newStatus = this.statusWorkflow.determineReviewStatus(context, 'accept');
+    
+    this.statusTransition
+      .acceptResults(sampleInfo.sampleId, sampleInfo.testReference.id, newStatus, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.saveMessage.set('✅ Results accepted');
+            setTimeout(() => this.saveMessage.set(null), 3000);
+          }
+          this.isSaving.set(false);
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.saveMessage.set('❌ Failed to accept results');
+          setTimeout(() => this.saveMessage.set(null), 3000);
+        }
+      });
+  }
+  
+  private rejectResults(): void {
+    if (!confirm('Are you sure you want to reject these results?')) return;
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    this.statusTransition
+      .rejectResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.clearForm();
+            this.saveMessage.set('✅ Results rejected');
+            setTimeout(() => this.saveMessage.set(null), 3000);
+          }
+          this.isSaving.set(false);
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.saveMessage.set('❌ Failed to reject results');
+          setTimeout(() => this.saveMessage.set(null), 3000);
+        }
+      });
+  }
+  
+  private deleteResults(): void {
+    if (!confirm('Are you sure you want to delete these results?')) return;
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    this.statusTransition
+      .deleteResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.clearForm();
+            this.saveMessage.set('✅ Results deleted');
+            setTimeout(() => this.saveMessage.set(null), 3000);
+          }
+          this.isSaving.set(false);
+        },
+        error: () => {
+          this.isSaving.set(false);
+          this.saveMessage.set('❌ Failed to delete results');
+          setTimeout(() => this.saveMessage.set(null), 3000);
+        }
+      });
   }
 }

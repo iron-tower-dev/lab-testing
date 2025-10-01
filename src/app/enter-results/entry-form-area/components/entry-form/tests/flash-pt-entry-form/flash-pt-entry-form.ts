@@ -1,31 +1,40 @@
-import { Component, OnInit, input, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, input, signal, computed, inject, effect } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../../../shared-module';
 import { SampleWithTestInfo } from '../../../../../enter-results.types';
 import { FlashPointCalculationService } from '../../../../../../shared/services/flash-point-calculation.service';
 import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
+import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
+import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
+import { TestStatus, ActionContext } from '../../../../../../shared/types/status-workflow.types';
+import { ActionButtons } from '../../../../../components/action-buttons/action-buttons';
 
 /**
  * Flash Point Entry Form Component
  * 
- * Modernized with Angular signals, FlashPointCalculationService, and data persistence.
- * Follows the Vis40/TAN pattern for consistency.
+ * Modernized with Angular signals, FlashPointCalculationService, status workflow, and data persistence.
+ * Phase 2 Integration: Status workflow system with dynamic action buttons and review mode.
  */
 @Component({
   standalone: true,
   selector: 'app-flash-pt-entry-form',
   templateUrl: './flash-pt-entry-form.html',
   styleUrls: ['./flash-pt-entry-form.css'],
-  imports: [SharedModule]
+  imports: [SharedModule, ActionButtons]
 })
 export class FlashPtEntryForm implements OnInit {
   private fb = inject(FormBuilder);
   private flashCalc = inject(FlashPointCalculationService);
   private testReadingsService = inject(TestReadingsService);
+  private statusWorkflow = inject(StatusWorkflowService);
+  private statusTransition = inject(StatusTransitionService);
   
   // Inputs
   sampleData = input<SampleWithTestInfo | null>(null);
   errorMessage = input<string | null>(null);
+  mode = input<'entry' | 'review' | 'view'>('entry');
+  userQualification = input<string | null>('Q'); // TODO: Get from auth service
+  currentUser = input<string>('current_user'); // TODO: Get from auth service
   
   // Form
   form!: FormGroup;
@@ -33,7 +42,9 @@ export class FlashPtEntryForm implements OnInit {
   // State signals
   isLoading = signal(false);
   isSaving = signal(false);
-  saveMessage = signal<string | null>(null);
+  saveMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  currentStatus = signal<TestStatus>(TestStatus.AWAITING);
+  enteredBy = signal<string | null>(null);
   showCalculationDetails = signal(true);
 
   
@@ -72,9 +83,35 @@ export class FlashPtEntryForm implements OnInit {
     return this.flashCalc.calculateFlashPoint(temps, pressure);
   });
   
+  // Action context for workflow
+  actionContext = computed<ActionContext>(() => {
+    const sample = this.sampleData();
+    return {
+      testId: sample?.testReference?.id || 0, // Flash Point test ID
+      sampleId: sample?.sampleId || 0,
+      currentStatus: this.currentStatus(),
+      userQualification: this.userQualification(),
+      enteredBy: this.enteredBy(),
+      currentUser: this.currentUser(),
+      mode: this.mode(),
+      isPartialSave: false,
+      isTraining: this.userQualification() === 'TRAIN'
+    };
+  });
+  
+  constructor() {
+    // Reactively load existing data when sampleData changes
+    effect(() => {
+      const sampleInfo = this.sampleData();
+      if (sampleInfo?.sampleId && sampleInfo?.testReference?.id) {
+        this.loadExistingData();
+      }
+    });
+  }
+  
   ngOnInit(): void {
     this.initializeForm();
-    this.loadExistingData();
+    this.loadCurrentStatus();
   }
   
   private initializeForm(): void {
@@ -99,6 +136,31 @@ export class FlashPtEntryForm implements OnInit {
   }
   
   /**
+   * Load current status from API
+   */
+  private loadCurrentStatus(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      return;
+    }
+    
+    this.statusTransition
+      .getCurrentStatus(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.status) {
+            this.currentStatus.set(response.status as TestStatus);
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load status:', error);
+          // Default to AWAITING if no status found
+          this.currentStatus.set(TestStatus.AWAITING);
+        }
+      });
+  }
+  
+  /**
    * Load existing data from database if available
    */
   private loadExistingData(): void {
@@ -115,6 +177,12 @@ export class FlashPtEntryForm implements OnInit {
         next: (trials) => {
           if (trials.length > 0) {
             const trial = trials[0];
+            
+            // Store who entered the data
+            if (trial.entryId) {
+              this.enteredBy.set(trial.entryId);
+            }
+            
             this.form.patchValue({
               pressure: trial.value1 || 760,
               trial1Temp: trial.value2 || '',
@@ -148,28 +216,61 @@ export class FlashPtEntryForm implements OnInit {
   }
   
   /**
+   * Handle action button clicks
+   */
+  onAction(action: string): void {
+    switch (action) {
+      case 'save':
+        this.saveResults(false);
+        break;
+      case 'partial-save':
+        this.saveResults(true);
+        break;
+      case 'accept':
+        this.acceptResults();
+        break;
+      case 'reject':
+        this.rejectResults();
+        break;
+      case 'delete':
+        this.deleteResults();
+        break;
+      case 'clear':
+        this.clearForm();
+        break;
+      case 'media-ready':
+        this.markMediaReady();
+        break;
+    }
+  }
+  
+  /**
    * Save Flash Point results to database
    */
-  saveResults(): void {
-    if (!this.form.valid) {
-      this.saveMessage.set('Please fill in all required fields');
-      setTimeout(() => this.saveMessage.set(null), 3000);
+  private saveResults(isPartialSave: boolean = false): void {
+    if (!this.form.valid && !isPartialSave) {
+      this.showSaveMessage('Please fill in all required fields', 'error');
       return;
     }
     
     const result = this.flashPointResult();
     if (!result || !result.isValid) {
-      this.saveMessage.set('Invalid calculation - please check your inputs');
-      setTimeout(() => this.saveMessage.set(null), 3000);
-      return;
+      if (!isPartialSave) {
+        this.showSaveMessage('Invalid calculation - please check your inputs', 'error');
+        return;
+      }
     }
     
     const sampleInfo = this.sampleData();
     if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
-      this.saveMessage.set('No sample selected');
-      setTimeout(() => this.saveMessage.set(null), 3000);
+      this.showSaveMessage('No sample selected', 'error');
       return;
     }
+    
+    // Determine new status based on context
+    const context = this.actionContext();
+    context.isPartialSave = isPartialSave;
+    const newStatus = this.statusWorkflow.determineEntryStatus(context);
     
     this.isSaving.set(true);
     
@@ -188,8 +289,8 @@ export class FlashPtEntryForm implements OnInit {
       id1: this.form.get('testMethod')?.value, // Test method
       id2: this.form.get('labTemperature')?.value?.toString(), // Lab temperature
       id3: this.form.get('sampleVolume')?.value?.toString(), // Sample volume
-      trialComplete: true,
-      status: 'E',
+      trialComplete: !isPartialSave,
+      status: newStatus,
       entryId: this.form.get('analystInitials')?.value,
       entryDate: Date.now(),
       mainComments: comments
@@ -197,24 +298,159 @@ export class FlashPtEntryForm implements OnInit {
     
     this.testReadingsService.bulkSaveTrials([trial]).subscribe({
       next: () => {
+        // Update status
+        this.currentStatus.set(newStatus);
         this.isSaving.set(false);
-        this.saveMessage.set('Flash Point results saved successfully');
+        
+        const message = isPartialSave 
+          ? 'Flash Point results partially saved' 
+          : 'Flash Point results saved successfully';
+        this.showSaveMessage(message, 'success');
         
         // Save analyst initials for future use
         const initials = this.form.get('analystInitials')?.value;
         if (initials) {
           localStorage.setItem('analystInitials', initials);
+          this.enteredBy.set(initials);
         }
-        
-        setTimeout(() => this.saveMessage.set(null), 3000);
       },
       error: (error) => {
         console.error('Failed to save Flash Point results:', error);
         this.isSaving.set(false);
-        this.saveMessage.set('Failed to save results. Please try again.');
-        setTimeout(() => this.saveMessage.set(null), 5000);
+        this.showSaveMessage('Failed to save results. Please try again.', 'error');
       }
     });
+  }
+  
+  /**
+   * Accept results (reviewer action)
+   */
+  private acceptResults(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    const context = this.actionContext();
+    const newStatus = this.statusWorkflow.determineReviewStatus(context, 'accept');
+    
+    this.statusTransition
+      .acceptResults(sampleInfo.sampleId, sampleInfo.testReference.id, newStatus, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.showSaveMessage('Results accepted', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Accept error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to accept results', 'error');
+        }
+      });
+  }
+  
+  /**
+   * Reject results (reviewer action)
+   */
+  private rejectResults(): void {
+    if (!confirm('Are you sure you want to reject these results? All data will be deleted.')) {
+      return;
+    }
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    this.statusTransition
+      .rejectResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.form.reset({
+              pressure: 760,
+              testMethod: 'ASTM-D92',
+              labTemperature: 22,
+              sampleVolume: 75
+            });
+            this.showSaveMessage('Results rejected and reset', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Reject error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to reject results', 'error');
+        }
+      });
+  }
+  
+  /**
+   * Delete results (admin action)
+   */
+  private deleteResults(): void {
+    if (!confirm('Are you sure you want to delete these results?')) {
+      return;
+    }
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    this.statusTransition
+      .deleteResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.form.reset({
+              pressure: 760,
+              testMethod: 'ASTM-D92',
+              labTemperature: 22,
+              sampleVolume: 75
+            });
+            this.currentStatus.set(TestStatus.AWAITING);
+            this.showSaveMessage('Results deleted', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Delete error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to delete results', 'error');
+        }
+      });
+  }
+  
+  /**
+   * Mark as media ready
+   */
+  private markMediaReady(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    
+    this.isSaving.set(true);
+    
+    this.statusTransition
+      .markMediaReady(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.showSaveMessage('Marked as media ready', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Media ready error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to mark media ready', 'error');
+        }
+      });
   }
   
   /**
@@ -233,9 +469,17 @@ export class FlashPtEntryForm implements OnInit {
   }
   
   /**
+   * Helper to show save messages
+   */
+  private showSaveMessage(text: string, type: 'success' | 'error'): void {
+    this.saveMessage.set({ text, type });
+    setTimeout(() => this.saveMessage.set(null), type === 'error' ? 5000 : 3000);
+  }
+  
+  /**
    * Clear all form data
    */
-  clearForm(): void {
+  private clearForm(): void {
     if (confirm('Are you sure you want to clear all data?')) {
       this.form.reset({
         pressure: 760,

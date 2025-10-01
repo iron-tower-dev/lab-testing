@@ -1,4 +1,15 @@
 <div class="rbot-entry-form">
+  <!-- Form Header with Status -->
+  <div class="form-header">
+    <div class="form-title-section">
+      <h2>RBOT (Rotating Bomb Oxidation Test) Entry Form</h2>
+      <p class="form-subtitle">ASTM D2272 - Oxidation Stability Testing</p>
+    </div>
+    <div class="status-badge" [attr.data-status]="currentStatus()">
+      {{ currentStatus() }}
+    </div>
+  </div>
+
   <!-- Loading Overlay -->
   @if (loading()) {
     <div class="loading-overlay">
@@ -15,8 +26,6 @@
   }
 
   <div class="form-container">
-    <h2>RBOT (Rotating Bomb Oxidation Test) Entry Form</h2>
-    <p class="form-subtitle">ASTM D2272 - Oxidation Stability Testing</p>
 
     <!-- Test Parameters Section -->
     <div class="form-section">
@@ -411,29 +420,12 @@
 
     <!-- Action Buttons -->
     <div class="form-actions">
-      <button 
-        class="btn btn-secondary" 
-        (click)="clearForm()"
-        [disabled]="saving()"
-      >
-        Clear Form
-      </button>
-      
-      <button 
-        class="btn btn-primary" 
-        (click)="save(false)"
-        [disabled]="!isFormValid() || saving()"
-      >
-        {{ saving() ? 'Saving...' : 'Save Progress' }}
-      </button>
-      
-      <button 
-        class="btn btn-success" 
-        (click)="save(true)"
-        [disabled]="!isFormValid() || saving()"
-      >
-        {{ saving() ? 'Saving...' : 'Complete Test' }}
-      </button>
+      <app-action-buttons
+        [context]="actionContext()"
+        [saving]="saving()"
+        [isFormValid]="isFormValid()"
+        (action)="onAction($event)"
+      ></app-action-buttons>
     </div>
   </div>
 </div>

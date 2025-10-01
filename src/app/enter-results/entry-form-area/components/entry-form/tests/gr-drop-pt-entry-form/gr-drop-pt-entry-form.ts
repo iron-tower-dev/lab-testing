@@ -1,51 +1,53 @@
 import { Component, OnInit, inject, signal, computed, input, effect } from '@angular/core';
 import { FormBuilder, Validators, FormGroup } from '@angular/forms';
-import { TestReadingsService } from '../../../../../../core/services/test-readings.service';
+import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
 import { GreaseCalculationService } from '../../../../../../shared/services/grease-calculation.service';
-import { TestReadingRecord } from '../../../../../../core/models/test-reading.model';
 import { SharedModule } from '../../../../../../shared-module';
 import { SampleWithTestInfo } from '../../../../../enter-results.types';
+import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
+import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
+import { TestStatus, ActionContext } from '../../../../../../shared/types/status-workflow.types';
+import { ActionButtons } from '../../../../../components/action-buttons/action-buttons';
 
+/**
+ * Grease Drop Point Entry Form Component
+ * 
+ * Modernized with Angular signals, status workflow, and data persistence.
+ * Phase 2 Integration: Status workflow system with dynamic action buttons and review mode.
+ */
 @Component({
   selector: 'app-gr-drop-pt-entry-form',
   standalone: true,
   templateUrl: './gr-drop-pt-entry-form.html',
   styleUrl: './gr-drop-pt-entry-form.css',
-  imports: [
-    SharedModule
-  ]
+  imports: [SharedModule, ActionButtons]
 })
 export class GrDropPtEntryForm implements OnInit {
   private fb = inject(FormBuilder);
   private testReadingsService = inject(TestReadingsService);
   private greaseCalc = inject(GreaseCalculationService);
+  private statusWorkflow = inject(StatusWorkflowService);
+  private statusTransition = inject(StatusTransitionService);
 
   // Input signals
   sampleData = input<SampleWithTestInfo | null>(null);
+  errorMessage = input<string | null>(null);
+  mode = input<'entry' | 'review' | 'view'>('entry');
+  userQualification = input<string | null>('Q');
+  currentUser = input<string>('current_user');
+
+  // Form
+  form!: FormGroup;
 
   // State signals
-  loading = signal(false);
-  saving = signal(false);
+  isLoading = signal(false);
+  isSaving = signal(false);
   saveMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  currentStatus = signal<TestStatus>(TestStatus.AWAITING);
+  enteredBy = signal<string | null>(null);
   showCalculationDetails = signal(true);
-
-  // Form and sample data
-  form!: FormGroup;
-  existingData = signal<TestReadingRecord | null>(null);
-
-  // Computed signals derived from sampleData
-  sampleId = computed(() => {
-    const data = this.sampleData();
-    return data?.sampleId?.toString() || '';
-  });
-
-  testTypeId = computed(() => {
-    const data = this.sampleData();
-    return data?.testReference?.id?.toString() || '';
-  });
   
   constructor() {
-    // Watch for changes in sampleData and reload existing data when it changes
     effect(() => {
       const data = this.sampleData();
       if (data?.sampleId && data?.testReference?.id) {
@@ -56,7 +58,7 @@ export class GrDropPtEntryForm implements OnInit {
 
   ngOnInit(): void {
     this.initializeForm();
-    this.loadExistingData();
+    this.loadCurrentStatus();
   }
 
   private initializeForm(): void {
@@ -169,15 +171,45 @@ export class GrDropPtEntryForm implements OnInit {
     if (dropPoint >= 150) return 'Moderate high-temperature stability';
     return 'Limited high-temperature stability';
   });
-
-
-  private async loadExistingData(): Promise<void> {
-    // TODO: Get sampleId and testTypeId from parent component or service
-    const sampleId = this.sampleId();
-    const testTypeId = this.testTypeId();
+  
+  actionContext = computed<ActionContext>(() => {
+    const sample = this.sampleData();
+    return {
+      testId: sample?.testReference?.id || 0,
+      sampleId: sample?.sampleId || 0,
+      currentStatus: this.currentStatus(),
+      userQualification: this.userQualification(),
+      enteredBy: this.enteredBy(),
+      currentUser: this.currentUser(),
+      mode: this.mode(),
+      isPartialSave: false,
+      isTraining: this.userQualification() === 'TRAIN'
+    };
+  });
+  
+  private loadCurrentStatus(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
     
-    if (!sampleId || !testTypeId) {
-      // Set default values
+    this.statusTransition
+      .getCurrentStatus(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.status) {
+            this.currentStatus.set(response.status as TestStatus);
+          }
+        },
+        error: (error) => {
+          console.error('Failed to load status:', error);
+          this.currentStatus.set(TestStatus.AWAITING);
+        }
+      });
+  }
+
+
+  private loadExistingData(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
       this.form.patchValue({
         analystInitials: localStorage.getItem('analystInitials') || '',
         apparatusType: 'ASTM D566',
@@ -188,60 +220,48 @@ export class GrDropPtEntryForm implements OnInit {
       return;
     }
 
-    this.loading.set(true);
+    this.isLoading.set(true);
     
-    try {
-      const existingReading = await this.testReadingsService.getTestReading(sampleId, testTypeId);
-      
-      if (existingReading) {
-        this.existingData.set(existingReading);
-        this.form.patchValue({
-          droppingPointTemp: existingReading.value1,
-          blockTemp: existingReading.value2,
-          sampleAmount: existingReading.value3,
-          apparatusType: existingReading.id1 || 'ASTM D566',
-          heatingRate: existingReading.id2 || '2',
-          analystInitials: existingReading.id3,
-          observationNotes: this.extractFromComments('observation', existingReading.mainComments || ''),
-          testNotes: this.extractFromComments('notes', existingReading.mainComments || '')
-        });
-      } else {
-        // Set default values
-        this.form.patchValue({
-          analystInitials: localStorage.getItem('analystInitials') || '',
-          apparatusType: 'ASTM D566',
-          cupType: 'Standard metal cup',
-          heatingRate: '2',
-          draftConditions: 'None'
-        });
-      }
-    } catch (error) {
-      console.error('Error loading existing Grease Dropping Point test data:', error);
-      this.showSaveMessage('Error loading existing data', 'error');
-    } finally {
-      this.loading.set(false);
-    }
+    this.testReadingsService
+      .loadTrials(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (trials) => {
+          if (trials.length > 0) {
+            const trial = trials[0];
+            
+            if (trial.entryId) {
+              this.enteredBy.set(trial.entryId);
+            }
+            
+            this.form.patchValue({
+              droppingPointTemp: trial.value1,
+              blockTemp: trial.value2,
+              sampleAmount: trial.value3,
+              apparatusType: trial.id1 || 'ASTM D566',
+              heatingRate: trial.id2 || '2',
+              analystInitials: trial.id3 || trial.entryId,
+              observationNotes: this.extractFromComments('observation', trial.mainComments || ''),
+              testNotes: this.extractFromComments('notes', trial.mainComments || '')
+            });
+          } else {
+            this.form.patchValue({
+              analystInitials: localStorage.getItem('analystInitials') || '',
+              apparatusType: 'ASTM D566',
+              cupType: 'Standard metal cup',
+              heatingRate: '2',
+              draftConditions: 'None'
+            });
+          }
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Error loading existing Grease Dropping Point test data:', error);
+          this.showSaveMessage('Error loading existing data', 'error');
+          this.isLoading.set(false);
+        }
+      });
   }
 
-  private createTestReading(): TestReadingRecord {
-    const result = this.droppingPointResult();
-    
-    return {
-      sampleId: this.sampleId(),
-      testTypeId: this.testTypeId(),
-      value1: this.form.get('droppingPointTemp')?.value || null,
-      value2: this.form.get('blockTemp')?.value || null,
-      value3: this.form.get('sampleAmount')?.value || null,
-      trialCalc: result?.result || null,
-      id1: this.form.get('apparatusType')?.value,
-      id2: this.form.get('heatingRate')?.value,
-      id3: this.form.get('analystInitials')?.value,
-      mainComments: this.combineComments(),
-      trialComplete: true,
-      status: 'E', // Entry status
-      entryId: this.form.get('analystInitials')?.value || ''
-    };
-  }
 
   private extractFromComments(section: string, comments: string): string {
     if (!comments) return '';
@@ -295,42 +315,201 @@ export class GrDropPtEntryForm implements OnInit {
     return parts.join(' | ');
   }
 
-  async onSave(): Promise<void> {
-    if (!this.form.valid) {
+  onAction(action: string): void {
+    switch (action) {
+      case 'save':
+        this.saveResults(false);
+        break;
+      case 'partial-save':
+        this.saveResults(true);
+        break;
+      case 'accept':
+        this.acceptResults();
+        break;
+      case 'reject':
+        this.rejectResults();
+        break;
+      case 'delete':
+        this.deleteResults();
+        break;
+      case 'clear':
+        this.clearForm();
+        break;
+      case 'media-ready':
+        this.markMediaReady();
+        break;
+    }
+  }
+
+  private saveResults(isPartialSave: boolean = false): void {
+    if (!this.form.valid && !isPartialSave) {
       this.form.markAllAsTouched();
       this.showSaveMessage('Please correct form errors before saving', 'error');
       return;
     }
 
     const result = this.droppingPointResult();
-    if (!result?.isValid) {
+    if (!result?.isValid && !isPartialSave) {
       this.showSaveMessage('Please enter valid dropping point and block temperatures', 'error');
       return;
     }
 
-    this.saving.set(true);
-    
-    try {
-      const testReading = this.createTestReading();
-      await this.testReadingsService.saveTestReading(testReading);
-      
-      // Save analyst initials for future use
-      const initials = this.form.get('analystInitials')?.value;
-      if (initials) {
-        localStorage.setItem('analystInitials', initials);
-      }
-      
-      this.showSaveMessage('Grease dropping point test results saved successfully', 'success');
-      
-    } catch (error) {
-      console.error('Error saving grease dropping point test results:', error);
-      this.showSaveMessage('Error saving test results. Please try again.', 'error');
-    } finally {
-      this.saving.set(false);
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      this.showSaveMessage('No sample selected', 'error');
+      return;
     }
+
+    const context = this.actionContext();
+    context.isPartialSave = isPartialSave;
+    const newStatus = this.statusWorkflow.determineEntryStatus(context);
+
+    this.isSaving.set(true);
+    const comments = this.combineComments();
+
+    const trial = {
+      sampleId: sampleInfo.sampleId,
+      testId: sampleInfo.testReference.id,
+      trialNumber: 1,
+      value1: this.form.get('droppingPointTemp')?.value || null,
+      value2: this.form.get('blockTemp')?.value || null,
+      value3: this.form.get('sampleAmount')?.value || null,
+      trialCalc: result?.result || null,
+      id1: this.form.get('apparatusType')?.value,
+      id2: this.form.get('heatingRate')?.value,
+      id3: this.form.get('analystInitials')?.value,
+      trialComplete: !isPartialSave,
+      status: newStatus,
+      entryId: this.form.get('analystInitials')?.value,
+      entryDate: Date.now(),
+      mainComments: comments
+    };
+
+    this.testReadingsService.bulkSaveTrials([trial]).subscribe({
+      next: () => {
+        this.currentStatus.set(newStatus);
+        this.isSaving.set(false);
+        const message = isPartialSave
+          ? 'Grease dropping point results partially saved'
+          : 'Grease dropping point results saved successfully';
+        this.showSaveMessage(message, 'success');
+        const initials = this.form.get('analystInitials')?.value;
+        if (initials) {
+          localStorage.setItem('analystInitials', initials);
+          this.enteredBy.set(initials);
+        }
+      },
+      error: (error) => {
+        console.error('Error saving grease dropping point results:', error);
+        this.isSaving.set(false);
+        this.showSaveMessage('Error saving results. Please try again.', 'error');
+      }
+    });
   }
 
-  onClear(): void {
+  private acceptResults(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    this.isSaving.set(true);
+    const context = this.actionContext();
+    const newStatus = this.statusWorkflow.determineReviewStatus(context, 'accept');
+    this.statusTransition.acceptResults(sampleInfo.sampleId, sampleInfo.testReference.id, newStatus, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.showSaveMessage('Results accepted', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Accept error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to accept results', 'error');
+        }
+      });
+  }
+
+  private rejectResults(): void {
+    if (!confirm('Are you sure you want to reject these results? All data will be deleted.')) return;
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    this.isSaving.set(true);
+    this.statusTransition.rejectResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.form.reset({
+              apparatusType: 'ASTM D566',
+              cupType: 'Standard metal cup',
+              heatingRate: '2',
+              draftConditions: 'None',
+              analystInitials: localStorage.getItem('analystInitials') || ''
+            });
+            this.showSaveMessage('Results rejected and reset', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Reject error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to reject results', 'error');
+        }
+      });
+  }
+
+  private deleteResults(): void {
+    if (!confirm('Are you sure you want to delete these results?')) return;
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    this.isSaving.set(true);
+    this.statusTransition.deleteResults(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.form.reset({
+              apparatusType: 'ASTM D566',
+              cupType: 'Standard metal cup',
+              heatingRate: '2',
+              draftConditions: 'None',
+              analystInitials: localStorage.getItem('analystInitials') || ''
+            });
+            this.currentStatus.set(TestStatus.AWAITING);
+            this.showSaveMessage('Results deleted', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Delete error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to delete results', 'error');
+        }
+      });
+  }
+
+  private markMediaReady(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) return;
+    this.isSaving.set(true);
+    this.statusTransition.markMediaReady(sampleInfo.sampleId, sampleInfo.testReference.id, this.currentUser())
+      .subscribe({
+        next: (result) => {
+          if (result.success) {
+            this.currentStatus.set(result.newStatus);
+            this.showSaveMessage('Marked as media ready', 'success');
+          }
+          this.isSaving.set(false);
+        },
+        error: (error) => {
+          console.error('Media ready error:', error);
+          this.isSaving.set(false);
+          this.showSaveMessage('Failed to mark media ready', 'error');
+        }
+      });
+  }
+
+  private clearForm(): void {
     if (confirm('Are you sure you want to clear all entered data? This cannot be undone.')) {
       this.form.reset({
         apparatusType: 'ASTM D566',
@@ -339,7 +518,7 @@ export class GrDropPtEntryForm implements OnInit {
         draftConditions: 'None',
         analystInitials: localStorage.getItem('analystInitials') || ''
       });
-      this.showSaveMessage('Form cleared', 'success');
+      this.saveMessage.set(null);
     }
   }
 
@@ -349,12 +528,6 @@ export class GrDropPtEntryForm implements OnInit {
 
   private showSaveMessage(text: string, type: 'success' | 'error'): void {
     this.saveMessage.set({ text, type });
-    
-    // Auto-hide success messages after 3 seconds
-    if (type === 'success') {
-      setTimeout(() => {
-        this.saveMessage.set(null);
-      }, 3000);
-    }
+    setTimeout(() => this.saveMessage.set(null), type === 'error' ? 5000 : 3000);
   }
 }

@@ -1,0 +1,113 @@
+<div class="vis40-entry-form">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Viscosity @ 40°C Test Entry</mat-card-title>
+      <mat-card-subtitle>
+        Sample: {{ sampleData()?.sampleNumber || 'No sample selected' }}
+</mat-card-subtitle>
+</mat-card-header>
+
+<mat-card-content>
+<form [formGroup]="form">
+<div class="trials-table">
+<table mat-table [dataSource]="trialsArray.controls" class="mat-elevation-z2">
+<ng-container matColumnDef="trial">
+<th mat-header-cell *matHeaderCellDef>Trial</th>
+<td mat-cell *matCellDef="let trial; let i = index">Trial {{ i + 1 }}</td>
+</ng-container>
+
+<ng-container matColumnDef="select">
+<th mat-header-cell *matHeaderCellDef>Select</th>
+<td mat-cell *matCellDef="let trial; let i = index">
+<mat-checkbox [formControl]="getTrialGroup(i).get('selected')" (change)="onTrialSelectionChange()"></mat-checkbox>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="time">
+<th mat-header-cell *matHeaderCellDef>Stopwatch Time (sec)</th>
+<td mat-cell *matCellDef="let trial; let i = index">
+<mat-form-field appearance="outline" class="time-field">
+<mat-label>Time</mat-label>
+<input matInput type="text" [formControl]="getTrialGroup(i).get('stopwatchTime')" (blur)="onStopwatchTimeBlur(i)" placeholder="MM.SS.HH or decimal">
+<mat-hint>Format: MM.SS.HH or decimal seconds</mat-hint>
+</mat-form-field>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="tube">
+<th mat-header-cell *matHeaderCellDef>Tube Calibration</th>
+<td mat-cell *matCellDef="let trial; let i = index">
+<mat-form-field appearance="outline" class="tube-field">
+<mat-label>Tube</mat-label>
+<mat-select [formControl]="getTrialGroup(i).get('tubeCalibration')" (selectionChange)="onTubeChange(i)">
+@for (option of tubeOptions(); track option.value) {
+<mat-option [value]="option.value">{{ option.label }}</mat-option>
+}
+</mat-select>
+</mat-form-field>
+</td>
+</ng-container>
+
+<ng-container matColumnDef="result">
+<th mat-header-cell *matHeaderCellDef>Result (cSt)</th>
+<td mat-cell *matCellDef="let trial; let i = index">
+<mat-form-field appearance="outline" class="result-field">
+<mat-label>Result</mat-label>
+<input matInput type="number" [formControl]="getTrialGroup(i).get('calculatedResult')" readonly>
+</mat-form-field>
+</td>
+</ng-container>
+
+<tr mat-header-row *matHeaderRowDef="['trial', 'select', 'time', 'tube', 'result']"></tr>
+<tr mat-row *matRowDef="let row; columns: ['trial', 'select', 'time', 'tube', 'result']"></tr>
+</table>
+</div>
+
+@if (repeatabilityResult()) {
+<div class="repeatability-section">
+<mat-card class="repeatability-card" [class.warn-card]="!repeatabilityResult()!.isWithinLimit">
+<mat-card-content>
+<div class="repeatability-content">
+<mat-icon [color]="repeatabilityResult()!.isWithinLimit ? 'primary' : 'warn'">
+                    {{ repeatabilityResult()!.isWithinLimit ? 'check_circle' : 'warning' }}
+                  </mat-icon>
+                  <div class="repeatability-text">
+                    <strong>Repeatability Check:</strong>
+                    <span>{{ repeatabilityResult()!.percentDifference }}% difference</span>
+                    <span class="limit">(Limit: {{ repeatabilityResult()!.limit }}%)</span>
+                    @if (repeatabilityResult()!.warning) {
+                      <div class="warning-message">⚠️ {{ repeatabilityResult()!.warning }}</div>
+                    }
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+        }
+      </form>
+    </mat-card-content>
+
+    @if (saveMessage()) {
+      <mat-card-content>
+        <div class="save-message" [class.success]="saveMessage()!.includes('✅')" [class.error]="saveMessage()!.includes('❌')">
+          {{ saveMessage() }}
+        </div>
+      </mat-card-content>
+    }
+
+    <mat-card-actions align="end">
+      <button mat-button (click)="clearForm()" color="warn" [disabled]="isLoading() || isSaving()">
+        <mat-icon>clear</mat-icon>
+        Clear
+      </button>
+      <button mat-raised-button (click)="saveForm()" color="primary" [disabled]="isLoading() || isSaving()">
+        @if (isSaving()) {
+          <mat-icon class="spinning">sync</mat-icon>
+        } @else {
+          <mat-icon>save</mat-icon>
+        }
+        {{ isSaving() ? 'Saving...' : 'Save Results' }}
+      </button>
+    </mat-card-actions>
+  </mat-card>
+</div>
