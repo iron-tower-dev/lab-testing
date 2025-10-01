@@ -265,73 +265,54 @@ describe('CalculationService', () => {
   });
 
   describe('validateRequiredValues', () => {
-    it('should return empty array when all values are valid', () => {
-      const errors = service.validateRequiredValues({
-        field1: 'value1',
-        field2: 'value2',
-        field3: 123
-      });
-      expect(errors).toEqual([]);
+    it('should return true when all values are valid numbers', () => {
+      const result = service.validateRequiredValues([1, 2, 3, 4, 5]);
+      expect(result).toBe(true);
     });
 
-    it('should return errors for empty string values', () => {
-      const errors = service.validateRequiredValues({
-        field1: '',
-        field2: 'value2'
-      });
-      expect(errors).toContain('field1');
-      expect(errors).not.toContain('field2');
+    it('should return true for array with single valid value', () => {
+      const result = service.validateRequiredValues([123]);
+      expect(result).toBe(true);
     });
 
-    it('should return errors for null values', () => {
-      const errors = service.validateRequiredValues({
-        field1: null,
-        field2: 'value2'
-      });
-      expect(errors).toContain('field1');
+    it('should return false when array contains null', () => {
+      const result = service.validateRequiredValues([1, 2, null, 4]);
+      expect(result).toBe(false);
     });
 
-    it('should return errors for undefined values', () => {
-      const errors = service.validateRequiredValues({
-        field1: undefined,
-        field2: 'value2'
-      });
-      expect(errors).toContain('field1');
+    it('should return false when array contains undefined', () => {
+      const result = service.validateRequiredValues([1, 2, undefined, 4]);
+      expect(result).toBe(false);
+    });
+
+    it('should return false when array contains NaN', () => {
+      const result = service.validateRequiredValues([1, 2, NaN, 4]);
+      expect(result).toBe(false);
     });
 
     it('should allow zero as valid value', () => {
-      const errors = service.validateRequiredValues({
-        field1: 0,
-        field2: 'value2'
-      });
-      expect(errors).not.toContain('field1');
+      const result = service.validateRequiredValues([0, 1, 2]);
+      expect(result).toBe(true);
     });
 
-    it('should allow false as valid value', () => {
-      const errors = service.validateRequiredValues({
-        field1: false,
-        field2: 'value2'
-      });
-      expect(errors).not.toContain('field1');
+    it('should allow negative numbers as valid values', () => {
+      const result = service.validateRequiredValues([-5, -10, -15]);
+      expect(result).toBe(true);
     });
 
-    it('should handle empty object', () => {
-      const errors = service.validateRequiredValues({});
-      expect(errors).toEqual([]);
+    it('should handle empty array as valid', () => {
+      const result = service.validateRequiredValues([]);
+      expect(result).toBe(true);
     });
 
-    it('should return all invalid field names', () => {
-      const errors = service.validateRequiredValues({
-        field1: '',
-        field2: null,
-        field3: undefined,
-        field4: 'valid'
-      });
-      expect(errors).toContain('field1');
-      expect(errors).toContain('field2');
-      expect(errors).toContain('field3');
-      expect(errors).not.toContain('field4');
-      expect(errors.length).toBe(3);
+    it('should return false when all values are invalid', () => {
+      const result = service.validateRequiredValues([null, undefined, NaN]);
+      expect(result).toBe(false);
+    });
+
+    it('should handle decimal values', () => {
+      const result = service.validateRequiredValues([1.5, 2.7, 3.9]);
+      expect(result).toBe(true);
     });
   });
 
