@@ -1,4 +1,4 @@
-import { Component, OnInit, input, signal, computed, inject } from '@angular/core';
+import { Component, OnInit, input, signal, computed, inject, effect } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../../../shared-module';
 import { SampleWithTestInfo } from '../../../../../enter-results.types';
@@ -72,9 +72,18 @@ export class FlashPtEntryForm implements OnInit {
     return this.flashCalc.calculateFlashPoint(temps, pressure);
   });
   
+  constructor() {
+    // Reactively load existing data when sampleData changes
+    effect(() => {
+      const sampleInfo = this.sampleData();
+      if (sampleInfo?.sampleId && sampleInfo?.testReference?.id) {
+        this.loadExistingData();
+      }
+    });
+  }
+  
   ngOnInit(): void {
     this.initializeForm();
-    this.loadExistingData();
   }
   
   private initializeForm(): void {
