@@ -45,35 +45,41 @@ equipment.get('/', async (c) => {
       query = query.where(and(...conditions));
     }
     
-    let equipmentResults = await query.orderBy(equipmentTable.name).all();
-    
-    // If testId is provided, filter by test association
+    // If testId is provided, push an EXISTS predicate into the SQL WHERE
     if (testId) {
-      const testIdNum = parseInt(testId);
-      if (!isNaN(testIdNum)) {
-        const associations = await db.select()
-          .from(equipmentTestAssociationTable)
-          .where(
-            and(
-              eq(equipmentTestAssociationTable.testId, testIdNum),
-              eq(equipmentTestAssociationTable.active, true)
-            )
+      const testIdNum = Number(testId);
+      if (!Number.isNaN(testIdNum)) {
+        conditions.push(
+          exists(
+            db.select({ one: sql`1` })
+              .from(equipmentTestAssociationTable)
+              .where(
+                and(
+                  eq(equipmentTestAssociationTable.equipmentId, equipmentTable.id),
+                  eq(equipmentTestAssociationTable.testId, testIdNum),
+                  eq(equipmentTestAssociationTable.active, true),
+                ),
+              )
           )
-          .all();
-        
-        const equipmentIds = new Set(associations.map(a => a.equipmentId));
-        equipmentResults = equipmentResults.filter(e => equipmentIds.has(e.id));
+        );
       }
     }
-    
-    // Filter by active calibration status if requested
+
+    // If active calibration only, push status + dueDate predicates into SQL
     if (active === 'true') {
-      const now = Date.now();
-      equipmentResults = equipmentResults.filter(e => {
-        return e.status === 'active' && 
-               e.calibrationDueDate && 
-               e.calibrationDueDate > now;
-      });
+      const now = new Date();
+      conditions.push(
+        and(
+          eq(equipmentTable.status, 'active'),
+          gt(equipmentTable.calibrationDueDate, now),
+        )
+      );
+    }
+
+    // Finally, execute the query with all predicates applied
+    const equipmentResults = await query
+      .orderBy(equipmentTable.name)
+      .all();
     }
     
     return c.json({
