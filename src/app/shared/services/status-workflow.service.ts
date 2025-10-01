@@ -436,9 +436,14 @@ export class StatusWorkflowService {
       }
     } else {
       // Regular tests
-      if (!(context.testId === 50 || context.testId === 60) || 
-          context.userQualification !== 'TRAIN' || 
-          context.currentStatus !== TestStatus.TRAINING) {
+      // Note: At this point, userQualification is guaranteed to be Q, QAG, or MicrE
+      // because of the early return check above (lines 368-372)
+      // Viscosity tests (50, 60) in TRAINING status are handled differently
+      const isViscosityTest = context.testId === 50 || context.testId === 60;
+      const isTrainingStatus = context.currentStatus === TestStatus.TRAINING;
+      
+      // Show accept/reject for most cases, except viscosity tests in training status
+      if (!isViscosityTest || !isTrainingStatus) {
         actions.push({
           action: 'accept',
           label: 'Accept',

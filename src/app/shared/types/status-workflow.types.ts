@@ -56,13 +56,18 @@ export interface StatusAction {
 }
 
 /**
+ * User qualification levels for test authorization
+ */
+export type UserQualification = 'TRAIN' | 'Q' | 'QAG' | 'MicrE';
+
+/**
  * Context for determining available actions
  */
 export interface ActionContext {
   testId: number;
   sampleId: number;
   currentStatus: TestStatus;
-  userQualification: string | null;
+  userQualification: UserQualification | string | null;  // string for compatibility with legacy values
   enteredBy: string | null;
   currentUser: string;
   mode: 'entry' | 'review' | 'view';
