@@ -1,11 +1,16 @@
 <div class="vis40-entry-form">
   <mat-card>
     <mat-card-header>
-      <mat-card-title>Viscosity @ 40°C Test Entry</mat-card-title>
-      <mat-card-subtitle>
-        Sample: {{ sampleData()?.sampleNumber || 'No sample selected' }}
-</mat-card-subtitle>
-</mat-card-header>
+      <div class="form-header">
+        <div class="header-content">
+          <mat-card-title>Viscosity @ 40°C Test Entry</mat-card-title>
+          <mat-card-subtitle>
+            Sample: {{ sampleData()?.sampleNumber || 'No sample selected' }}
+          </mat-card-subtitle>
+        </div>
+        <app-status-badge [status]="currentStatus()" [showDescription]="false" />
+      </div>
+    </mat-card-header>
 
 <mat-card-content>
 <form [formGroup]="form">
@@ -96,18 +101,9 @@
     }
 
     <mat-card-actions align="end">
-      <button mat-button (click)="clearForm()" color="warn" [disabled]="isLoading() || isSaving()">
-        <mat-icon>clear</mat-icon>
-        Clear
-      </button>
-      <button mat-raised-button (click)="saveForm()" color="primary" [disabled]="isLoading() || isSaving()">
-        @if (isSaving()) {
-          <mat-icon class="spinning">sync</mat-icon>
-        } @else {
-          <mat-icon>save</mat-icon>
-        }
-        {{ isSaving() ? 'Saving...' : 'Save Results' }}
-      </button>
+      <app-action-buttons 
+        [context]="actionContext()"
+        (actionClicked)="onAction($event)" />
     </mat-card-actions>
   </mat-card>
 </div>

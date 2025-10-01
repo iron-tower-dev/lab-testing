@@ -1,4 +1,10 @@
-@if (loading()) {
+<!-- Form Header with Status Badge -->
+<div class="form-header">
+  <h2>Total Base Number (TBN) Test</h2>
+  <app-status-badge [status]="currentStatus()" />
+</div>
+
+@if (isLoading()) {
   <div class="loading-overlay">
     <mat-spinner diameter="50"></mat-spinner>
     <p>Loading...</p>
@@ -268,19 +274,11 @@
     </div>
   }
 
-  <!-- Form Actions -->
-  <div class="form-actions">
-    <button mat-raised-button color="primary" type="button" 
-            (click)="onSave()" [disabled]="!form.valid || saving() || loading()">
-      @if (saving()) {
-        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-      }
-      {{ saving() ? 'Saving...' : 'Save Results' }}
-    </button>
-    <button mat-stroked-button type="button" 
-            (click)="onClear()" [disabled]="saving() || loading()">
-      <mat-icon>clear</mat-icon>
-      Clear
-    </button>
-  </div>
+  <!-- Action Buttons -->
+  <app-action-buttons
+    [context]="actionContext()"
+    [isFormValid]="form.valid"
+    [isSaving]="isSaving()"
+    (action)="onAction($event)"
+  />
 </div>

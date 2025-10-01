@@ -1,1 +1,13 @@
 /* vis100-entry-form styles */
+
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: 1rem;
+}
+
+.header-content {
+  flex: 1;
+}

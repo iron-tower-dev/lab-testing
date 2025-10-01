@@ -1,6 +1,25 @@
 /* KF Entry Form Styles */
 
 /* ========================================
+   Form Header
+   ======================================== */
+.form-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.form-header h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+/* ========================================
    Loading Overlay
    ======================================== */
 .loading-overlay {

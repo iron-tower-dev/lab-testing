@@ -1,5 +1,11 @@
+<!-- Form Header with Status Badge -->
+<div class="form-header">
+  <h2>Karl Fischer Water Content Test</h2>
+  <app-status-badge [status]="currentStatus()" />
+</div>
+
 <!-- Loading Overlay -->
-@if (loading()) {
+@if (isLoading()) {
   <div class="loading-overlay">
     <mat-spinner diameter="50"></mat-spinner>
     <p>Loading test data...</p>
@@ -18,7 +24,7 @@
 <form [formGroup]="form" class="kf-form-content">
   <!-- Test Conditions Section -->
   <div class="test-conditions-section">
-    <h3>Karl Fischer Water Content Test</h3>
+    <h3>Test Conditions & Setup</h3>
     <div class="form-row">
       <mat-form-field class="third-width">
         <mat-label>Test Temperature</mat-label>
@@ -193,23 +199,12 @@
     </div>
   </div>
 
-  <!-- Form Actions -->
-  <div class="form-actions">
-    <button mat-raised-button color="primary" type="button" 
-            (click)="onSave()" 
-            [disabled]="!form.valid || saving() || loading()">
-      @if (saving()) {
-        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
-      }
-      {{ saving() ? 'Saving...' : 'Save Results' }}
-    </button>
-    
-    <button mat-stroked-button type="button" 
-            (click)="onClear()" 
-            [disabled]="saving() || loading()">
-      <mat-icon>clear</mat-icon>
-      Clear Form
-    </button>
-  </div>
+  <!-- Action Buttons -->
+  <app-action-buttons
+    [context]="actionContext()"
+    [isFormValid]="form.valid"
+    [isSaving]="isSaving()"
+    (action)="onAction($event)"
+  />
 </form>
 
