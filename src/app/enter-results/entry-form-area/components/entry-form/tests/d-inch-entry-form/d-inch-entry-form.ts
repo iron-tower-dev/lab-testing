@@ -194,13 +194,13 @@ export class DInchEntryForm implements OnInit {
     if (!info) return;
 
     try {
-      const status = await this.statusWorkflowService
+      const response = await this.statusTransitionService
         .getCurrentStatus(info.sampleId, info.testReference.id)
         .toPromise();
       
-      if (status) {
-        this.currentStatus.set(status.status || TestStatus.AWAITING);
-        this.enteredBy.set(status.enteredBy || '');
+      if (response && response.success && response.status) {
+        this.currentStatus.set(response.status);
+        this.enteredBy.set(response.entryId || '');
       }
     } catch (error) {
       console.error('Error loading status:', error);
@@ -216,12 +216,12 @@ export class DInchEntryForm implements OnInit {
         return;
       }
 
-      const existingReading = await this.testReadingsService
+      const response = await this.testReadingsService
         .getTestReading(info.sampleId, info.testReference.id, 1)
         .toPromise();
 
-      if (existingReading) {
-        this.loadFromExistingReading(existingReading);
+      if (response && response.success && response.data) {
+        this.loadFromExistingReading(response.data);
       } else {
         this.setDefaultValues();
       }
@@ -355,7 +355,7 @@ export class DInchEntryForm implements OnInit {
       this.enteredBy.set(initials);
     }
 
-    const testReading: Partial<TestReading> = {
+    const testReadingData = {
       sampleId: info.sampleId,
       testId: info.testReference.id,
       trialNumber: 1, // D-inch test uses single trial record
@@ -370,7 +370,22 @@ export class DInchEntryForm implements OnInit {
       trialComplete: markComplete
     };
 
-    await this.testReadingsService.saveTestReading(testReading).toPromise();
+    // Try to update existing reading, if not found, create new one
+    try {
+      await this.testReadingsService.updateTestReading(
+        info.sampleId,
+        info.testReference.id,
+        1,
+        testReadingData
+      ).toPromise();
+    } catch (error: any) {
+      // If update fails (reading doesn't exist), create new one
+      if (error.status === 404) {
+        await this.testReadingsService.createTestReading(testReadingData).toPromise();
+      } else {
+        throw error;
+      }
+    }
   }
 
   async onAction(action: string): Promise<void> {
@@ -389,13 +404,15 @@ export class DInchEntryForm implements OnInit {
             return;
           }
           await this.saveTestData(true);
-          await this.statusTransitionService.transitionTo(
+          const result = await this.statusTransitionService.saveResults(
             info.sampleId,
             info.testReference.id,
-            'entered',
+            TestStatus.ENTRY_COMPLETE,
             this.analystInitials()
           ).toPromise();
-          this.currentStatus.set(TestStatus.ENTRY_COMPLETE);
+          if (result && result.success) {
+            this.currentStatus.set(result.newStatus);
+          }
           this.saveMessage.set('Test data saved successfully!');
           break;
 
@@ -405,27 +422,29 @@ export class DInchEntryForm implements OnInit {
           break;
 
         case 'accept':
-          await this.statusTransitionService.transitionTo(
+          const acceptResult = await this.statusTransitionService.acceptResults(
             info.sampleId,
             info.testReference.id,
-            'accepted',
+            TestStatus.SAVED,
             this.analystInitials()
           ).toPromise();
-          this.currentStatus.set(TestStatus.SAVED);
+          if (acceptResult && acceptResult.success) {
+            this.currentStatus.set(acceptResult.newStatus);
+          }
           this.saveMessage.set('Test results accepted!');
           break;
 
         case 'reject':
           const reason = prompt('Please provide a reason for rejection:');
           if (!reason) return;
-          await this.statusTransitionService.transitionTo(
+          const rejectResult = await this.statusTransitionService.rejectResults(
             info.sampleId,
             info.testReference.id,
-            'rejected',
-            this.analystInitials(),
-            reason
+            this.analystInitials()
           ).toPromise();
-          this.currentStatus.set(TestStatus.AWAITING);
+          if (rejectResult && rejectResult.success) {
+            this.currentStatus.set(rejectResult.newStatus);
+          }
           this.saveMessage.set('Test results rejected');
           break;
 
@@ -436,8 +455,15 @@ export class DInchEntryForm implements OnInit {
             info.testReference.id,
             1 // Trial number
           ).toPromise();
+          const deleteResult = await this.statusTransitionService.deleteResults(
+            info.sampleId,
+            info.testReference.id,
+            this.analystInitials()
+          ).toPromise();
           this.clearForm();
-          this.currentStatus.set(TestStatus.AWAITING);
+          if (deleteResult && deleteResult.success) {
+            this.currentStatus.set(deleteResult.newStatus);
+          }
           this.saveMessage.set('Test data deleted');
           break;
 
@@ -446,13 +472,14 @@ export class DInchEntryForm implements OnInit {
           break;
 
         case 'media-ready':
-          await this.statusTransitionService.transitionTo(
+          const mediaResult = await this.statusTransitionService.markMediaReady(
             info.sampleId,
             info.testReference.id,
-            'media-ready',
             this.analystInitials()
           ).toPromise();
-          this.currentStatus.set(TestStatus.PARTIAL);
+          if (mediaResult && mediaResult.success) {
+            this.currentStatus.set(mediaResult.newStatus);
+          }
           this.saveMessage.set('Test marked as media ready!');
           break;
       }
