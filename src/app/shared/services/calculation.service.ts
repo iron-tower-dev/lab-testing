@@ -1,6 +1,17 @@
 import { Injectable } from '@angular/core';
 
 /**
+ * Result of a calculation with validation
+ */
+export interface CalculationResult {
+  result: number;
+  isValid: boolean;
+  errors?: string[];
+  warnings?: string[];
+  metadata?: { [key: string]: any };
+}
+
+/**
  * Calculation Service
  * Phase 3: Test-Specific Calculations
  * 
@@ -18,6 +29,13 @@ export class CalculationService {
   round(value: number, decimals: number = 2): number {
     const multiplier = Math.pow(10, decimals);
     return Math.round(value * multiplier) / multiplier;
+  }
+
+  /**
+   * Alias for round() - round a number to specified decimal places
+   */
+  roundTo(value: number, decimals: number = 2): number {
+    return this.round(value, decimals);
   }
 
   /**

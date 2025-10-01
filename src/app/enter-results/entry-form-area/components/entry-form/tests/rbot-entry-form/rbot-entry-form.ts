@@ -1,8 +1,8 @@
 import { Component, OnInit, signal, computed, effect, inject, input } from '@angular/core';
 import { SharedModule } from '../../../../../../shared-module';
 import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
-import { TestReading } from '../../../../../../shared/models/test-reading.model';
-import { TestSampleInfo } from '../../../../../../../types';
+import { TestReading } from '../../../../../../shared/services/test-readings.service';
+import { SampleWithTestInfo } from '../../../../enter-results.types';
 import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
 import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
 import { ActionButtonsComponent } from '../../../../../../shared/action-buttons/action-buttons.component';
@@ -22,7 +22,7 @@ export class RbotEntryForm implements OnInit {
   private statusTransitionService = inject(StatusTransitionService);
 
   // Input signals for test sample info and context
-  testSampleInfo = input<TestSampleInfo | null>(null);
+  testSampleInfo = input<SampleWithTestInfo | null>(null);
   sampleData = input<any>(null);
   context = input<'sample' | 'batch'>('sample');
 
