@@ -139,20 +139,19 @@ isVariationAcceptable = computed(() => {
 
 ### **Field Mapping:**
 
-| Database Field | Form Field | Example |
-|----------------|------------|---------|
-| `value1` | cone1 | `268` mm/10 |
-| `value2` | cone2 | `272` mm/10 |
-| `value3` | cone3 | `270` mm/10 |
-| `trialCalc` | averagePenetration | `270` mm/10 |
-| `id1` | testTemperature | `"25"` °C |
-| `id2` | penetrationTime | `"5"` seconds |
-| `id3` | analystInitials | `"ABC"` |
-| `mainComments` | Metadata | `"worked:true|equip:P-01|calibDate:2025-09-15|..."` |
-| `entryId` | analystInitials | `"ABC"` |
-| `trialComplete` | Always true | `true` |
-| `status` | Entry status | `"E"` |
-
+| Database Field    | Form Field            | Example                                         |
+|-------------------|-----------------------|-------------------------------------------------|
+| `value1`          | cone1                 | `268` mm/10                                     |
+| `value2`          | cone2                 | `272` mm/10                                     |
+| `value3`          | cone3                 | `270` mm/10                                     |
+| `trialCalc`       | averagePenetration    | `270` mm/10                                     |
+| `id1`             | testTemperature       | `"25"` °C                                       |
+| `id2`             | penetrationTime       | `"5"` seconds                                   |
+| `id3`             | analystInitials       | `"ABC"`                                         |
+| `mainComments`    | Metadata              | `"worked:true\|equip:P-01\|calibDate:2025-09-15\|..."` |
+| `entryId`         | analystInitials       | `"ABC"`                                         |
+| `trialComplete`   | Always true           | `true`                                          |
+| `status`          | Entry status          | `"E"`                                           |
 ---
 
 ## 📊 **Code Statistics**
