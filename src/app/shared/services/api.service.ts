@@ -85,6 +85,17 @@ export class ApiService {
   }
 
   /**
+   * Generic PATCH request (partial update)
+   */
+  patch<T>(endpoint: string, data: any): Observable<ApiResponse<T>> {
+    const url = `${this.baseUrl}/${endpoint}`;
+    
+    return this.http.patch<ApiResponse<T>>(url, data).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  /**
    * Generic DELETE request
    */
   delete<T>(endpoint: string): Observable<ApiResponse<T>> {
