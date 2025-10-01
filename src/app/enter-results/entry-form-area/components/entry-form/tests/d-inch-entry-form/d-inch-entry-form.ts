@@ -237,6 +237,10 @@ export class DInchEntryForm implements OnInit {
   private setDefaultValues(): void {
     const savedInitials = localStorage.getItem('analystInitials') || '';
     this.analystInitials.set(savedInitials);
+    // Update enteredBy signal if we have saved initials
+    if (savedInitials) {
+      this.enteredBy.set(savedInitials);
+    }
     this.testTemperature.set(25);
   }
 
@@ -249,6 +253,10 @@ export class DInchEntryForm implements OnInit {
     this.equipmentId.set(reading.id1 || '');
     this.testStandard.set(reading.id2 || '');
     this.analystInitials.set(reading.id3 || '');
+    // Update enteredBy signal to match loaded analyst initials
+    if (reading.id3) {
+      this.enteredBy.set(reading.id3);
+    }
     
     if (reading.mainComments) {
       this.labComments.set(this.extractFromComments(reading.mainComments, 'lab'));
@@ -344,6 +352,8 @@ export class DInchEntryForm implements OnInit {
     const initials = this.analystInitials();
     if (initials) {
       localStorage.setItem('analystInitials', initials);
+      // Update enteredBy signal so UI reflects the new user immediately
+      this.enteredBy.set(initials);
     }
 
     const testReading: Partial<TestReading> = {
