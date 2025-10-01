@@ -54,7 +54,8 @@ export class Vis40EntryForm implements OnInit {
   
   // Computed: get selected trial results for repeatability check
   selectedResults = computed(() => {
-    const trials = this.trialsArray?.value || [];
+    // Use getRawValue() to include disabled calculatedResult field
+    const trials = this.trialsArray?.getRawValue() || [];
     return trials
       .filter((t: ViscosityTrial) => t.selected && t.calculatedResult > 0)
       .map((t: ViscosityTrial) => t.calculatedResult);
