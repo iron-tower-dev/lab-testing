@@ -17,11 +17,14 @@ import { SharedModule } from '../../../shared-module';
           mat-raised-button
           [color]="getButtonColor(action.action)"
           class="action-button"
+          [disabled]="isButtonDisabled(action.action)"
           (click)="actionClicked.emit(action.action)">
-          @if (action.icon) {
+          @if (saving() && isSaveAction(action.action)) {
+            <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+          } @else if (action.icon) {
             <mat-icon>{{ action.icon }}</mat-icon>
           }
-          {{ action.label }}
+          {{ getButtonLabel(action) }}
         </button>
       }
     </div>
@@ -51,6 +54,8 @@ export class ActionButtons {
   private statusService = inject(StatusWorkflowService);
   
   context = input.required<ActionContext>();
+  saving = input<boolean>(false);
+  isFormValid = input<boolean>(false);
   actionClicked = output<string>();
   
   availableActions = computed(() => 
@@ -71,5 +76,30 @@ export class ActionButtons {
       default:
         return undefined;
     }
+  }
+  
+  isButtonDisabled(action: string): boolean {
+    // Disable all buttons when saving
+    if (this.saving()) {
+      return true;
+    }
+    
+    // Disable save actions when form is invalid
+    if (this.isSaveAction(action) && !this.isFormValid()) {
+      return true;
+    }
+    
+    return false;
+  }
+  
+  isSaveAction(action: string): boolean {
+    return ['save', 'partial-save'].includes(action);
+  }
+  
+  getButtonLabel(action: any): string {
+    if (this.saving() && this.isSaveAction(action.action)) {
+      return action.action === 'partial-save' ? 'Saving...' : 'Saving...';
+    }
+    return action.label;
   }
 }

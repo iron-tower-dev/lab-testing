@@ -37,9 +37,7 @@ fi
 echo ""
 echo -e "${BLUE}Step 2: Running Status Workflow Service Tests${NC}"
 echo "-----------------------------------------------"
-ng test --include='**/status-workflow.service.spec.ts' --watch=false --browsers=ChromeHeadless
-
-if [ $? -eq 0 ]; then
+if ng test --include='**/status-workflow.service.spec.ts' --watch=false --browsers=ChromeHeadless; then
     echo -e "${GREEN}✓ Status workflow service tests passed${NC}"
 else
     echo -e "${YELLOW}⚠ Status workflow service tests failed (may not exist yet)${NC}"
@@ -48,9 +46,7 @@ fi
 echo ""
 echo -e "${BLUE}Step 3: Running Status Transition Service Tests${NC}"
 echo "-------------------------------------------------"
-ng test --include='**/status-transition.service.spec.ts' --watch=false --browsers=ChromeHeadless
-
-if [ $? -eq 0 ]; then
+if ng test --include='**/status-transition.service.spec.ts' --watch=false --browsers=ChromeHeadless; then
     echo -e "${GREEN}✓ Status transition service tests passed${NC}"
 else
     echo -e "${YELLOW}⚠ Status transition service tests failed (may not exist yet)${NC}"

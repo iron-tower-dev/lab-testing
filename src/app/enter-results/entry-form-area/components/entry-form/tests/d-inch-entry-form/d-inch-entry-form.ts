@@ -5,13 +5,13 @@ import { TestReading } from '../../../../../../shared/models/test-reading.model'
 import { TestSampleInfo } from '../../../../../../../types';
 import { StatusWorkflowService } from '../../../../../../shared/services/status-workflow.service';
 import { StatusTransitionService } from '../../../../../../shared/services/status-transition.service';
-import { ActionButtonsComponent } from '../../../../../../shared/action-buttons/action-buttons.component';
-import { ActionContext } from '../../../../../../shared/models/action-context.model';
+import { ActionButtons } from '../../../../../components/action-buttons/action-buttons';
+import { ActionContext, TestStatus } from '../../../../../../shared/types/status-workflow.types';
 
 @Component({
   selector: 'app-d-inch-entry-form',
   standalone: true,
-  imports: [SharedModule, ActionButtonsComponent],
+  imports: [SharedModule, ActionButtons],
   templateUrl: './d-inch-entry-form.html',
   styleUrls: ['./d-inch-entry-form.scss'],
 })
@@ -27,7 +27,7 @@ export class DInchEntryForm implements OnInit {
   context = input<'sample' | 'batch'>('sample');
 
   // Status workflow signals
-  currentStatus = signal<string>('draft');
+  currentStatus = signal<TestStatus>(TestStatus.AWAITING);
   enteredBy = signal<string>('');
 
   // Form input signals - Test Information
@@ -69,13 +69,15 @@ export class DInchEntryForm implements OnInit {
 
   // Action context for status workflow
   actionContext = computed<ActionContext>(() => ({
-    testId: 'D-Inch',
+    testId: this.testSampleInfo()?.testId || 0,
     sampleId: this.testSampleInfo()?.sampleId || 0,
     currentStatus: this.currentStatus(),
-    context: this.context(),
-    canEdit: !this.saving(),
-    hasData: this.validTrials().length > 0,
-    enteredBy: this.enteredBy()
+    userQualification: 'Q', // TODO: Get from user context
+    enteredBy: this.enteredBy(),
+    currentUser: 'current_user', // TODO: Get from user context
+    mode: 'entry' as const,
+    isPartialSave: false,
+    isTraining: false
   }));
 
   // Test standard options
