@@ -40,7 +40,17 @@ export class Vis100EntryForm implements OnInit {
   currentUser = input<string>('current_user');
   
   form!: FormGroup;
-  isLoading = signal(false);
+  
+  // Separate loading signals for each independent operation
+  isLoadingTubes = signal(false);
+  isLoadingTrials = signal(false);
+  isLoadingStatus = signal(false);
+  
+  // Derived loading signal - true when any individual loading is active
+  isLoading = computed(() => 
+    this.isLoadingTubes() || this.isLoadingTrials() || this.isLoadingStatus()
+  );
+  
   isSaving = signal(false);
   saveMessage = signal<string | null>(null);
   tubeOptions = signal<TubeOption[]>([{ value: '', label: 'Select Tube' }]);
@@ -77,7 +87,8 @@ export class Vis100EntryForm implements OnInit {
     this.initializeForm();
     this.loadCurrentStatus();
     this.loadTubeCalibrations();
-    this.loadExistingTrials();
+    // Load existing trials after tube calibrations are loaded
+    // This ensures tubeOptions are available for resolving tube values
   }
   
   private initializeForm(): void {
@@ -101,19 +112,23 @@ export class Vis100EntryForm implements OnInit {
       return;
     }
     
-    this.isLoading.set(true);
+    this.isLoadingTubes.set(true);
     
     this.equipmentService.getViscosityTubesForTest(sampleInfo.testReference.id)
       .subscribe({
         next: (options) => {
           this.tubeOptions.set(options);
-          this.isLoading.set(false);
+          this.isLoadingTubes.set(false);
+          // Load existing trials after tube options are available
+          this.loadExistingTrials();
         },
         error: (error) => {
           console.error('Failed to load tube calibrations:', error);
-          this.isLoading.set(false);
+          this.isLoadingTubes.set(false);
           // Fallback to empty list with just the placeholder
           this.tubeOptions.set([{ value: '', label: 'Select Tube' }]);
+          // Still try to load existing trials even if tube calibrations failed
+          this.loadExistingTrials();
         }
       });
   }
@@ -243,6 +258,8 @@ export class Vis100EntryForm implements OnInit {
       return;
     }
     
+    this.isLoadingStatus.set(true);
+    
     this.statusTransition
       .getCurrentStatus(sampleInfo.sampleId, sampleInfo.testReference.id)
       .subscribe({
@@ -250,10 +267,12 @@ export class Vis100EntryForm implements OnInit {
           if (response.success && response.status) {
             this.currentStatus.set(response.status as TestStatus);
           }
+          this.isLoadingStatus.set(false);
         },
         error: (error) => {
           console.error('Failed to load status:', error);
           this.currentStatus.set(TestStatus.AWAITING);
+          this.isLoadingStatus.set(false);
         }
       });
   }
@@ -267,7 +286,7 @@ export class Vis100EntryForm implements OnInit {
       return;
     }
     
-    this.isLoading.set(true);
+    this.isLoadingTrials.set(true);
     
     this.testReadingsService.loadTrials(sampleInfo.sampleId, sampleInfo.testReference.id)
       .subscribe({
@@ -277,11 +296,25 @@ export class Vis100EntryForm implements OnInit {
             response.data.forEach((reading, index) => {
               if (index < this.trialsArray.length) {
                 const trial = this.getTrialGroup(index);
+                
+                // Resolve tube calibration to match mat-select format
+                let tubeCalibrationValue = '';
+                if (reading.id2 && reading.value2) {
+                  // If we have both equipmentId and calibration value, use them
+                  tubeCalibrationValue = `${reading.id2}|${reading.value2}`;
+                } else if (reading.id2) {
+                  // Find matching tube option by equipmentId
+                  const matchingTube = this.tubeOptions().find(option => 
+                    option.value && option.value.startsWith(`${reading.id2}|`)
+                  );
+                  tubeCalibrationValue = matchingTube?.value || '';
+                }
+                
                 trial.patchValue({
                   trialNumber: reading.trialNumber,
                   selected: reading.trialComplete || false,
                   stopwatchTime: reading.value1 || '',
-                  tubeCalibration: reading.id2 || '',
+                  tubeCalibration: tubeCalibrationValue,
                   calculatedResult: reading.value3 || 0
                 });
                 
@@ -295,11 +328,11 @@ export class Vis100EntryForm implements OnInit {
             // Recalculate repeatability
             this.checkRepeatability();
           }
-          this.isLoading.set(false);
+          this.isLoadingTrials.set(false);
         },
         error: (error) => {
           console.error('Failed to load existing trials:', error);
-          this.isLoading.set(false);
+          this.isLoadingTrials.set(false);
         }
       });
   }

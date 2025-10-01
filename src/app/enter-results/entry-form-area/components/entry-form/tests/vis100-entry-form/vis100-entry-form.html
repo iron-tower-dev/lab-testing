@@ -1,4 +1,11 @@
 <div class="vis100-entry-form">
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <mat-progress-spinner mode="indeterminate" diameter="50"></mat-progress-spinner>
+      <span>Loading...</span>
+    </div>
+  }
+  
   <mat-card>
     <mat-card-header>
       <mat-card-title>Viscosity @ 100°C Test Entry</mat-card-title>
@@ -88,13 +95,17 @@
     </mat-card-content>
 
     <mat-card-actions align="end">
-      <button mat-button (click)="clearForm()" color="warn">
+      <button mat-button (click)="clearForm()" color="warn" [disabled]="isLoading() || isSaving()">
         <mat-icon>clear</mat-icon>
         Clear
       </button>
-      <button mat-raised-button (click)="saveForm()" color="primary">
-        <mat-icon>save</mat-icon>
-        Save Results
+      <button mat-raised-button (click)="saveForm()" color="primary" [disabled]="isLoading() || isSaving()">
+        @if (isSaving()) {
+          <mat-progress-spinner diameter="20" mode="indeterminate"></mat-progress-spinner>
+        } @else {
+          <mat-icon>save</mat-icon>
+        }
+        {{ isSaving() ? 'Saving...' : 'Save Results' }}
       </button>
     </mat-card-actions>
   </mat-card>

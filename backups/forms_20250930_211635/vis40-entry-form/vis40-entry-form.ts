@@ -50,7 +50,8 @@ export class Vis40EntryForm implements OnInit {
   ngOnInit(): void {
     this.initializeForm();
     this.loadTubeCalibrations();
-    this.loadExistingTrials();
+    // Load existing trials after tube calibrations are loaded
+    // This ensures tubeOptions are available for resolving tube values
   }
   
   private initializeForm(): void {
@@ -81,12 +82,16 @@ export class Vis40EntryForm implements OnInit {
         next: (options) => {
           this.tubeOptions.set(options);
           this.isLoading.set(false);
+          // Load existing trials after tube options are available
+          this.loadExistingTrials();
         },
         error: (error) => {
           console.error('Failed to load tube calibrations:', error);
           this.isLoading.set(false);
           // Fallback to empty list with just the placeholder
           this.tubeOptions.set([{ value: '', label: 'Select Tube' }]);
+          // Still try to load existing trials even if tube calibrations failed
+          this.loadExistingTrials();
         }
       });
   }
@@ -226,11 +231,25 @@ export class Vis40EntryForm implements OnInit {
             response.data.forEach((reading, index) => {
               if (index < this.trialsArray.length) {
                 const trial = this.getTrialGroup(index);
+                
+                // Resolve tube calibration to match mat-select format
+                let tubeCalibrationValue = '';
+                if (reading.id2 && reading.value2) {
+                  // If we have both equipmentId and calibration value, use them
+                  tubeCalibrationValue = `${reading.id2}|${reading.value2}`;
+                } else if (reading.id2) {
+                  // Find matching tube option by equipmentId
+                  const matchingTube = this.tubeOptions().find(option => 
+                    option.value && option.value.startsWith(`${reading.id2}|`)
+                  );
+                  tubeCalibrationValue = matchingTube?.value || '';
+                }
+                
                 trial.patchValue({
                   trialNumber: reading.trialNumber,
                   selected: reading.trialComplete || false,
                   stopwatchTime: reading.value1 || '',
-                  tubeCalibration: reading.id2 || '',
+                  tubeCalibration: tubeCalibrationValue,
                   calculatedResult: reading.value3 || 0
                 });
               }
