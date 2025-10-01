@@ -91,6 +91,12 @@ These files already had the correct imports using `SampleWithTestInfo` from the 
 - `src/app/shared/services/calculation.service.ts` (added interface and method)
 - `src/app/enter-results/entry-form-area/components/entry-form/tests/rust-entry-form/rust-entry-form.ts` (fixed imports)
 - `src/app/enter-results/entry-form-area/components/entry-form/tests/rbot-entry-form/rbot-entry-form.ts` (fixed imports)
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/tbn-entry-form/tbn-entry-form.ts` (fixed bulkSaveTrials call)
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/kf-entry-form/kf-entry-form.ts` (fixed bulkSaveTrials call)
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/gr-drop-pt-entry-form/gr-drop-pt-entry-form.ts` (fixed bulkSaveTrials call)
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/gr-pen60-entry-form/gr-pen60-entry-form.ts` (fixed bulkSaveTrials call)
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/tan-entry-form/tan-entry-form.ts` (fixed bulkSaveTrials call)
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/flash-pt-entry-form/flash-pt-entry-form.ts` (fixed bulkSaveTrials call)
 
 ### Build Status
 All TypeScript type errors have been resolved. The application should now compile without missing type or missing function errors.
@@ -106,8 +112,50 @@ All TypeScript type errors have been resolved. The application should now compil
 - See `src/app/enter-results/entry-form-area/components/entry-form/tests/d-inch-entry-form/TYPE_FIXES.md` for detailed information about the D-Inch entry form fixes (similar pattern)
 - See `src/app/shared/services/calculation.service.ts` for the base calculation service interface
 
+## 4. Missing Arguments in `bulkSaveTrials` Method Calls
+**Files Fixed:**
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/tbn-entry-form/tbn-entry-form.ts`
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/kf-entry-form/kf-entry-form.ts`
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/gr-drop-pt-entry-form/gr-drop-pt-entry-form.ts`
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/gr-pen60-entry-form/gr-pen60-entry-form.ts`
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/tan-entry-form/tan-entry-form.ts`
+- `src/app/enter-results/entry-form-area/components/entry-form/tests/flash-pt-entry-form/flash-pt-entry-form.ts`
+
+**Problem:**
+- These files were calling `bulkSaveTrials([trial])` with only the trials array
+- The method signature requires: `bulkSaveTrials(sampleId, testId, trials, entryId?, status?)`
+- Missing the required `sampleId` and `testId` parameters caused compilation errors
+
+**Solution:**
+- Updated all calls to include the required parameters in the correct order
+- Added `sampleId` from `sampleInfo.sampleId`
+- Added `testId` from `sampleInfo.testReference.id`
+- Included optional `entryId` and `status` parameters for consistency
+
+**Before:**
+```typescript
+this.testReadingsService.bulkSaveTrials([trial]).subscribe({
+  // ...
+});
+```
+
+**After:**
+```typescript
+this.testReadingsService.bulkSaveTrials(
+  sampleInfo.sampleId,
+  sampleInfo.testReference.id,
+  [trial],
+  this.form.get('analystInitials')?.value,
+  newStatus
+).subscribe({
+  // ...
+});
+```
+
 ## Notes
 - The `TestSampleInfo` type never existed in the codebase - it was likely a mistaken reference
 - `SampleWithTestInfo` is defined in `enter-results.types.ts` and includes both `Sample` and `TestReference` information
 - `TestReading` should always be imported from `test-readings.service.ts`, not from a separate model file
 - The `CalculationResult` interface is generic enough to be used by all test-specific calculation services
+- The `bulkSaveTrials` method signature is: `bulkSaveTrials(sampleId: number, testId: number, trials: Array<...>, entryId?: string, status?: string)`
+- Files like `vis40-entry-form.ts` and `vis100-entry-form.ts` already had correct usage of `bulkSaveTrials`

@@ -277,7 +277,13 @@ export class TanEntryForm implements OnInit {
       mainComments: comments
     };
     
-    this.testReadingsService.bulkSaveTrials([trial]).subscribe({
+    this.testReadingsService.bulkSaveTrials(
+      sampleInfo.sampleId,
+      sampleInfo.testReference.id,
+      [trial],
+      this.form.get('analystInitials')?.value,
+      newStatus
+    ).subscribe({
       next: () => {
         // Update status
         this.currentStatus.set(newStatus);
