@@ -357,28 +357,79 @@ testReadings.post('/bulk', async (c) => {
         mainComments: trial.mainComments ?? null
       };
       
-      if (existing) {
-        // Update existing trial
-        const updated = await db.update(schema.testReadingsTable)
-          .set(trialData)
-          .where(
-            and(
-              eq(schema.testReadingsTable.sampleId, sampleId),
-              eq(schema.testReadingsTable.testId, testId),
-              eq(schema.testReadingsTable.trialNumber, trial.trialNumber)
-            )
-          )
-          .returning()
-          .get();
-        results.push(updated);
-      } else {
-        // Create new trial
-        const created = await db.insert(schema.testReadingsTable)
-          .values(trialData)
-          .returning()
-          .get();
-        results.push(created);
-      }
+// Prepare data for insert (new trials)
+const insertData = {
+  sampleId: sampleId,
+  testId: testId,
+  trialNumber: trial.trialNumber,
+  value1: trial.value1,
+  value2: trial.value2,
+  value3: trial.value3,
+  trialCalc: trial.trialCalc,
+  id1: trial.id1,
+  id2: trial.id2,
+  id3: trial.id3,
+  trialComplete: trial.trialComplete,
+  status: testStatus,
+  schedType: trial.schedType,
+  entryId: entryId,
+  validateId: trial.validateId,
+  entryDate: new Date(),
+  valiDate: trial.valiDate ? new Date(trial.valiDate) : undefined,
+  mainComments: trial.mainComments,
+};
+
+if (existing) {
+  // Update only the fields explicitly set by the caller,
+  // merging in existing values for everything else.
+  const updateData = {
+    value1: trial.value1 ?? existing.value1,
+    value2: trial.value2 ?? existing.value2,
+    value3: trial.value3 ?? existing.value3,
+    trialCalc: trial.trialCalc ?? existing.trialCalc,
+    id1: trial.id1 ?? existing.id1,
+    id2: trial.id2 ?? existing.id2,
+    id3: trial.id3 ?? existing.id3,
+    trialComplete:
+      trial.trialComplete ??
+      (trial.selected ?? existing.trialComplete),
+    status: testStatus ?? existing.status,
+    schedType: trial.schedType ?? existing.schedType,
+    entryId: entryId ?? existing.entryId,
+    validateId: trial.validateId ?? existing.validateId,
+    // Preserve the original entryDate if not explicitly changed
+    entryDate: existing.entryDate,
+    valiDate: trial.valiDate
+      ? new Date(trial.valiDate)
+      : existing.valiDate,
+    mainComments: trial.mainComments ?? existing.mainComments,
+  };
+
+  const updated = await db
+    .update(schema.testReadingsTable)
+    .set(updateData)
+    .where(
+      and(
+        eq(schema.testReadingsTable.sampleId, sampleId),
+        eq(schema.testReadingsTable.testId, testId),
+        eq(
+          schema.testReadingsTable.trialNumber,
+          trial.trialNumber
+        )
+      )
+    )
+    .returning()
+    .get();
+  results.push(updated);
+} else {
+  // Insert a brand-new trial
+  const created = await db
+    .insert(schema.testReadingsTable)
+    .values(insertData)
+    .returning()
+    .get();
+  results.push(created);
+}
     }
     
     return c.json({
