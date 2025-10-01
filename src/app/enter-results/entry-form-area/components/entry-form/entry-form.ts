@@ -1,5 +1,6 @@
 import { Component, input, computed } from '@angular/core';
 import { TestReference, SampleWithTestInfo } from '../../../enter-results.types';
+import { TestStatus } from '../../../../shared/types/status-workflow.types';
 import { FerrographyEntryForm } from './tests/ferrography-entry-form/ferrography-entry-form';
 import { SpectroscopyEntryForm } from './tests/spectroscopy-entry-form/spectroscopy-entry-form';
 import { TanEntryForm } from './tests/tan-entry-form/tan-entry-form';
@@ -54,6 +55,7 @@ export class EntryForm {
   testReference = input<TestReference | null>(null);
   sampleId = input<string | null>(null);
   labCommentsControl = input<any | null>(null);
+  currentStatus = input<TestStatus | null>(null);
 
   // Computed property to determine test code from test reference
   testCode = computed(() => {

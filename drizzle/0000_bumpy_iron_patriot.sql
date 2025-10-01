@@ -93,7 +93,7 @@ CREATE TABLE `test_schedule_test_table` (
 );
 --> statement-breakpoint
 CREATE TABLE `test_stand_table` (
-	`id` integer NOT NULL,
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
 	`name` text
 );
 --> statement-breakpoint

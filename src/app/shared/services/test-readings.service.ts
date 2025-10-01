@@ -128,6 +128,33 @@ export class TestReadingsService {
   }
 
   /**
+   * Bulk save/update trials for a test (e.g., viscosity with 4 trials)
+   * Creates new records or updates existing ones
+   */
+  bulkSaveTrials(
+    sampleId: number,
+    testId: number,
+    trials: Array<Partial<TestReadingCreate> & { trialNumber: number }>,
+    entryId?: string,
+    status?: string
+  ): Observable<ApiResponse<TestReading[]>> {
+    return this.apiService.post<TestReading[]>('test-readings/bulk', {
+      sampleId,
+      testId,
+      trials,
+      entryId,
+      status
+    });
+  }
+
+  /**
+   * Load all trials for a specific sample and test
+   */
+  loadTrials(sampleId: number, testId: number): Observable<ApiResponse<TestReading[]>> {
+    return this.apiService.get<TestReading[]>(`test-readings/sample/${sampleId}/test/${testId}`);
+  }
+
+  /**
    * Mark test reading as complete
    */
   markComplete(sampleId: number, testId: number, trialNumber: number): Observable<ApiResponse<TestReading>> {

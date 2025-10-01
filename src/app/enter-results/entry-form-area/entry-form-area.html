@@ -1,8 +1,19 @@
 <div class="entry-form-area">
-<app-entry-form-header [selectedSample]="selectedSample()" [labCommentsControl]="labCommentsControl"></app-entry-form-header>
+<app-entry-form-header 
+  [selectedSample]="selectedSample()" 
+  [labCommentsControl]="labCommentsControl"
+  [currentStatus]="currentStatus()"></app-entry-form-header>
+
+<div class="action-buttons-container">
+  <app-action-buttons 
+    [context]="actionContext()" 
+    (actionClicked)="handleAction($event)" />
+</div>
+
 <app-entry-form
   [testReference]="selectedSample()?.testReference ?? null"
   [sampleId]="selectedSample()?.sampleId ?? null"
-  [labCommentsControl]="labCommentsControl">
+  [labCommentsControl]="labCommentsControl"
+  [currentStatus]="currentStatus()">
   </app-entry-form>
 </div>

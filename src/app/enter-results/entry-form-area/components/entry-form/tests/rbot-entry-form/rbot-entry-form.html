@@ -1,1 +1,439 @@
-<p>Rheology - Brookfield entry form</p>
+<div class="rbot-entry-form">
+  <!-- Loading Overlay -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading RBOT data...</p>
+    </div>
+  }
+
+  <!-- Save Message -->
+  @if (saveMessage()) {
+    <div class="save-message" [class.error]="saveMessage().includes('Error')">
+      {{ saveMessage() }}
+    </div>
+  }
+
+  <div class="form-container">
+    <h2>RBOT (Rotating Bomb Oxidation Test) Entry Form</h2>
+    <p class="form-subtitle">ASTM D2272 - Oxidation Stability Testing</p>
+
+    <!-- Test Parameters Section -->
+    <div class="form-section">
+      <h3>Test Parameters</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="testTemperature">Test Temperature (°C) *</label>
+          <input
+            type="number"
+            id="testTemperature"
+            [value]="testTemperature()"
+            (input)="testTemperature.set(+$any($event.target).value)"
+            step="0.1"
+            min="149"
+            max="151"
+            [class.invalid]="testTemperature() < 149 || testTemperature() > 151"
+          />
+          <span class="field-hint">Standard: 150.0 ± 0.5°C</span>
+        </div>
+
+        <div class="form-group">
+          <label for="oxygenPressure">Oxygen Pressure (kPa) *</label>
+          <input
+            type="number"
+            id="oxygenPressure"
+            [value]="oxygenPressure()"
+            (input)="oxygenPressure.set(+$any($event.target).value)"
+            step="1"
+            min="610"
+            max="630"
+            [class.invalid]="oxygenPressure() < 610 || oxygenPressure() > 630"
+          />
+          <span class="field-hint">Standard: 620 ± 10 kPa</span>
+        </div>
+
+        <div class="form-group">
+          <label for="sampleVolume">Sample Volume (mL) *</label>
+          <input
+            type="number"
+            id="sampleVolume"
+            [value]="sampleVolume()"
+            (input)="sampleVolume.set(+$any($event.target).value)"
+            step="0.1"
+            min="45"
+            max="55"
+            [class.invalid]="sampleVolume() < 45 || sampleVolume() > 55"
+          />
+          <span class="field-hint">Standard: 50 ± 5 mL</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Catalyst Information Section -->
+    <div class="form-section">
+      <h3>Catalyst Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="catalystType">Catalyst Type *</label>
+          <select
+            id="catalystType"
+            [value]="catalystType()"
+            (change)="catalystType.set($any($event.target).value)"
+          >
+            <option value="Soluble copper">Soluble Copper</option>
+            <option value="Copper wire">Copper Wire</option>
+            <option value="Iron wire">Iron Wire</option>
+            <option value="None">None (Inhibited Oil)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="catalystAmount">Catalyst Amount (mg or cm) *</label>
+          <input
+            type="number"
+            id="catalystAmount"
+            [value]="catalystAmount()"
+            (input)="catalystAmount.set(+$any($event.target).value)"
+            step="0.01"
+            min="0.1"
+            max="2.0"
+            [class.invalid]="catalystAmount() === null || catalystAmount()! < 0.1 || catalystAmount()! > 2.0"
+          />
+          <span class="field-hint">mg for soluble, cm for wire</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Time Measurements Section -->
+    <div class="form-section">
+      <h3>Time Measurements</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="initialTime">Initial Time *</label>
+          <input
+            type="time"
+            id="initialTime"
+            [value]="initialTime()"
+            (change)="initialTime.set($any($event.target).value)"
+            [class.invalid]="initialTime() === ''"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="endTime">End Time *</label>
+          <input
+            type="time"
+            id="endTime"
+            [value]="endTime()"
+            (change)="endTime.set($any($event.target).value)"
+            [class.invalid]="endTime() === ''"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="totalMinutes">Total Time (minutes) *</label>
+          <input
+            type="number"
+            id="totalMinutes"
+            [value]="totalMinutes()"
+            (input)="totalMinutes.set(+$any($event.target).value)"
+            step="1"
+            min="1"
+            max="2000"
+            [class.invalid]="totalMinutes() === null || totalMinutes()! < 1 || totalMinutes()! > 2000"
+            readonly
+          />
+          <span class="field-hint">Auto-calculated from times</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pressure Readings Section -->
+    <div class="form-section">
+      <h3>Pressure Readings</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="initialPressure">Initial Pressure (kPa) *</label>
+          <input
+            type="number"
+            id="initialPressure"
+            [value]="initialPressure()"
+            (input)="initialPressure.set(+$any($event.target).value)"
+            step="1"
+            min="600"
+            max="650"
+            [class.invalid]="initialPressure() === null || initialPressure()! < 600 || initialPressure()! > 650"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="finalPressure">Final Pressure (kPa) *</label>
+          <input
+            type="number"
+            id="finalPressure"
+            [value]="finalPressure()"
+            (input)="finalPressure.set(+$any($event.target).value)"
+            step="1"
+            min="400"
+            max="650"
+            [class.invalid]="finalPressure() === null || finalPressure()! < 400 || finalPressure()! > 650"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="pressureDrop">Pressure Drop (kPa) *</label>
+          <input
+            type="number"
+            id="pressureDrop"
+            [value]="pressureDrop()"
+            (input)="pressureDrop.set(+$any($event.target).value)"
+            step="0.1"
+            min="10"
+            max="250"
+            [class.invalid]="pressureDrop() === null || pressureDrop()! < 10 || pressureDrop()! > 250"
+            readonly
+          />
+          <span class="field-hint">Auto-calculated from readings</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Equipment Information Section -->
+    <div class="form-section">
+      <h3>Equipment Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="bombId">Bomb ID *</label>
+          <input
+            type="text"
+            id="bombId"
+            [value]="bombId()"
+            (input)="bombId.set($any($event.target).value)"
+            [class.invalid]="bombId().trim() === ''"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="lastCalibrationDate">Last Calibration Date</label>
+          <input
+            type="date"
+            id="lastCalibrationDate"
+            [value]="lastCalibrationDate()"
+            (change)="lastCalibrationDate.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Environmental Conditions Section -->
+    <div class="form-section">
+      <h3>Environmental Conditions (Optional)</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="roomTemperature">Room Temperature (°C)</label>
+          <input
+            type="number"
+            id="roomTemperature"
+            [value]="roomTemperature()"
+            (input)="roomTemperature.set(+$any($event.target).value || null)"
+            step="0.1"
+            min="20"
+            max="30"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="barometricPressure">Barometric Pressure (mmHg)</label>
+          <input
+            type="number"
+            id="barometricPressure"
+            [value]="barometricPressure()"
+            (input)="barometricPressure.set(+$any($event.target).value || null)"
+            step="1"
+            min="700"
+            max="800"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Control Section -->
+    <div class="form-section">
+      <h3>Quality Control</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="temperatureStability">Temperature Stability (°C)</label>
+          <input
+            type="number"
+            id="temperatureStability"
+            [value]="temperatureStability()"
+            (input)="temperatureStability.set(+$any($event.target).value || null)"
+            step="0.1"
+            min="-1"
+            max="1"
+          />
+          <span class="field-hint">Deviation from 150°C</span>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [checked]="leakCheck()"
+              (change)="leakCheck.set($any($event.target).checked)"
+            />
+            Leak Check Passed
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results and Calculations Section -->
+    @if (showCalculationDetails()) {
+      <div class="calculation-section">
+        <h3>Results & Calculations</h3>
+        
+        <div class="results-grid">
+          <div class="result-card primary">
+            <div class="result-label">Oxidation Life (RBOT)</div>
+            <div class="result-value">{{ oxidationLife() }} min</div>
+          </div>
+
+          <div class="result-card">
+            <div class="result-label">Remaining Life</div>
+            <div class="result-value">{{ remainingLife() }}%</div>
+          </div>
+
+          <div class="result-card" [ngClass]="{
+            'excellent': oilCondition() === 'Excellent',
+            'good': oilCondition() === 'Good',
+            'fair': oilCondition() === 'Fair',
+            'poor': oilCondition() === 'Poor',
+            'critical': oilCondition() === 'Critical'
+          }">
+            <div class="result-label">Oil Condition</div>
+            <div class="result-value">{{ oilCondition() }}</div>
+          </div>
+
+          <div class="result-card">
+            <div class="result-label">Recommendation</div>
+            <div class="result-value recommendation">{{ recommendation() }}</div>
+          </div>
+        </div>
+
+        <!-- Quality Control Checks -->
+        @if (showQualityControlChecks()) {
+          <div class="quality-control-warning">
+            <strong>⚠️ Quality Control Alert:</strong>
+            <p>{{ qualityControlMessage() }}</p>
+          </div>
+        }
+
+        <!-- Interpretation Guidelines -->
+        <div class="interpretation-guide">
+          <h4>Result Interpretation</h4>
+          <div class="guide-content">
+            <div class="guide-item">
+              <strong>Excellent (≥1000 min):</strong> Oil in excellent condition, continue normal service
+            </div>
+            <div class="guide-item">
+              <strong>Good (700-999 min):</strong> Oil performing well, monitor at regular intervals
+            </div>
+            <div class="guide-item">
+              <strong>Fair (400-699 min):</strong> Oxidation resistance declining, increase monitoring frequency
+            </div>
+            <div class="guide-item">
+              <strong>Poor (200-399 min):</strong> Significant oxidation, plan oil change
+            </div>
+            <div class="guide-item">
+              <strong>Critical (&lt;200 min):</strong> Severe oxidation, change oil immediately
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Analyst Information Section -->
+    <div class="form-section">
+      <h3>Analyst Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="analystInitials">Analyst Initials *</label>
+          <input
+            type="text"
+            id="analystInitials"
+            [value]="analystInitials()"
+            (input)="analystInitials.set($any($event.target).value)"
+            maxlength="5"
+            [class.invalid]="analystInitials().trim() === '' || analystInitials().length > 5"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="form-section">
+      <h3>Notes & Comments</h3>
+      
+      <div class="form-group">
+        <label for="observationNotes">Observation Notes</label>
+        <textarea
+          id="observationNotes"
+          [value]="observationNotes()"
+          (input)="observationNotes.set($any($event.target).value)"
+          rows="2"
+          placeholder="e.g., Sample appearance, odor, any unusual observations..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="testNotes">Test Notes</label>
+        <textarea
+          id="testNotes"
+          [value]="testNotes()"
+          (input)="testNotes.set($any($event.target).value)"
+          rows="2"
+          placeholder="e.g., Equipment notes, test conditions, deviations from procedure..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="mainComments">Additional Comments</label>
+        <textarea
+          id="mainComments"
+          [value]="mainComments()"
+          (input)="mainComments.set($any($event.target).value)"
+          rows="3"
+          placeholder="Any other relevant information..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button 
+        class="btn btn-secondary" 
+        (click)="clearForm()"
+        [disabled]="saving()"
+      >
+        Clear Form
+      </button>
+      
+      <button 
+        class="btn btn-primary" 
+        (click)="save(false)"
+        [disabled]="!isFormValid() || saving()"
+      >
+        {{ saving() ? 'Saving...' : 'Save Progress' }}
+      </button>
+      
+      <button 
+        class="btn btn-success" 
+        (click)="save(true)"
+        [disabled]="!isFormValid() || saving()"
+      >
+        {{ saving() ? 'Saving...' : 'Complete Test' }}
+      </button>
+    </div>
+  </div>
+</div>

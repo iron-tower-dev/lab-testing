@@ -1,181 +1,263 @@
-import { Component, OnInit } from '@angular/core';
-import { Validators } from '@angular/forms';
-import { BaseTestFormComponent } from '../../../../../../shared/components/base-test-form/base-test-form.component';
+import { Component, OnInit, input, signal, computed, inject } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../../../shared-module';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
+import { FlashPointCalculationService } from '../../../../../../shared/services/flash-point-calculation.service';
+import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
 
+/**
+ * Flash Point Entry Form Component
+ * 
+ * Modernized with Angular signals, FlashPointCalculationService, and data persistence.
+ * Follows the Vis40/TAN pattern for consistency.
+ */
 @Component({
+  standalone: true,
   selector: 'app-flash-pt-entry-form',
   templateUrl: './flash-pt-entry-form.html',
-  styleUrl: './flash-pt-entry-form.css',
-  standalone: true,
-  imports: [
-    SharedModule
-  ]
+  styleUrls: ['./flash-pt-entry-form.css'],
+  imports: [SharedModule]
 })
-export class FlashPtEntryForm extends BaseTestFormComponent implements OnInit {
-  averageTemperature = 0;
-  pressureCorrection = 0;
-  showCalculationDetails = true;
+export class FlashPtEntryForm implements OnInit {
+  private fb = inject(FormBuilder);
+  private flashCalc = inject(FlashPointCalculationService);
+  private testReadingsService = inject(TestReadingsService);
+  
+  // Inputs
+  sampleData = input<SampleWithTestInfo | null>(null);
+  errorMessage = input<string | null>(null);
+  
+  // Form
+  form!: FormGroup;
+  
+  // State signals
+  isLoading = signal(false);
+  isSaving = signal(false);
+  saveMessage = signal<string | null>(null);
+  showCalculationDetails = signal(true);
 
-  override ngOnInit(): void {
-    super.ngOnInit();
+  
+  // Computed signals
+  averageTemperature = computed(() => {
+    const trial1 = this.form?.get('trial1Temp')?.value;
+    const trial2 = this.form?.get('trial2Temp')?.value;
+    const trial3 = this.form?.get('trial3Temp')?.value;
+    
+    const temps = [trial1, trial2, trial3]
+      .filter(t => t !== null && t !== undefined && t !== '')
+      .map(t => parseFloat(t));
+    
+    if (temps.length === 0) return 0;
+    return this.flashCalc.calculateAverageTemperature(temps);
+  });
+  
+  pressureCorrection = computed(() => {
+    const pressure = this.form?.get('pressure')?.value;
+    if (!pressure) return 0;
+    return this.flashCalc.calculatePressureCorrection(pressure);
+  });
+  
+  flashPointResult = computed(() => {
+    const trial1 = this.form?.get('trial1Temp')?.value;
+    const trial2 = this.form?.get('trial2Temp')?.value;
+    const trial3 = this.form?.get('trial3Temp')?.value;
+    const pressure = this.form?.get('pressure')?.value;
+    
+    const temps = [trial1, trial2, trial3]
+      .filter(t => t !== null && t !== undefined && t !== '')
+      .map(t => parseFloat(t));
+    
+    if (temps.length < 2 || !pressure) return null;
+    
+    return this.flashCalc.calculateFlashPoint(temps, pressure);
+  });
+  
+  ngOnInit(): void {
+    this.initializeForm();
+    this.loadExistingData();
   }
-
-  protected override initializeForm(): void {
+  
+  private initializeForm(): void {
     this.form = this.fb.group({
-      pressure: ['', [Validators.required, Validators.min(700), Validators.max(800)]],
-      testMethod: ['', Validators.required],
-      labTemperature: ['', [Validators.min(15), Validators.max(35)]],
-      sampleVolume: ['', [Validators.min(50), Validators.max(100)]],
+      pressure: [760, [Validators.required, Validators.min(600), Validators.max(800)]],
+      testMethod: ['ASTM-D92', Validators.required],
+      labTemperature: [22, [Validators.min(15), Validators.max(35)]],
+      sampleVolume: [75, [Validators.min(50), Validators.max(100)]],
       analystInitials: ['', [Validators.required, Validators.maxLength(5)]],
       trial1Temp: ['', [Validators.required, Validators.min(0), Validators.max(400)]],
       trial2Temp: ['', [Validators.required, Validators.min(0), Validators.max(400)]],
       trial3Temp: ['', [Validators.min(0), Validators.max(400)]],
       flashObservation: [''],
-      testNotes: [''],
-      mainComments: ['']
+      testNotes: ['']
     });
-  }
-
-  protected override setupCalculationWatchers(): void {
-    this.form.valueChanges.subscribe(() => {
-      this.calculateAverageTemperature();
-      this.calculatePressureCorrection();
-      this.performCalculation();
-    });
-  }
-
-  private calculateAverageTemperature(): void {
-    const trial1 = this.form.get('trial1Temp')?.value;
-    const trial2 = this.form.get('trial2Temp')?.value;
-    const trial3 = this.form.get('trial3Temp')?.value;
-
-    const validTemps = [trial1, trial2, trial3].filter(temp => 
-      temp !== null && temp !== undefined && temp !== ''
-    );
-
-    if (validTemps.length >= 2) {
-      const sum = validTemps.reduce((acc, temp) => acc + parseFloat(temp), 0);
-      this.averageTemperature = Math.round((sum / validTemps.length) * 10) / 10;
-    } else {
-      this.averageTemperature = 0;
-    }
-  }
-
-  private calculatePressureCorrection(): void {
-    const pressure = this.form.get('pressure')?.value;
-    if (pressure) {
-      this.pressureCorrection = Math.round((0.06 * (760 - pressure)) * 10) / 10;
-    } else {
-      this.pressureCorrection = 0;
-    }
-  }
-
-  protected override extractCalculationValues(): Record<string, number> {
-    return {
-      pressure: this.form.get('pressure')?.value || 760,
-      temperature: this.averageTemperature
-    };
-  }
-
-  protected override loadExistingData(): void {
-    super.loadExistingData();
     
-    if (this.existingReading) {
-      this.form.patchValue({
-        pressure: this.existingReading.value1,
-        trial1Temp: this.existingReading.value2,
-        trial2Temp: this.existingReading.value3,
-        trial3Temp: this.existingReading.trialCalc,
-        testMethod: this.existingReading.id1,
-        labTemperature: this.existingReading.id2,
-        analystInitials: this.existingReading.id3,
-        flashObservation: this.extractFromComments('flash'),
-        testNotes: this.extractFromComments('notes')
+    // Load analyst initials from localStorage
+    const savedInitials = localStorage.getItem('analystInitials');
+    if (savedInitials) {
+      this.form.patchValue({ analystInitials: savedInitials });
+    }
+  }
+  
+  /**
+   * Load existing data from database if available
+   */
+  private loadExistingData(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      return;
+    }
+    
+    this.isLoading.set(true);
+    
+    this.testReadingsService
+      .loadTrials(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (trials) => {
+          if (trials.length > 0) {
+            const trial = trials[0];
+            this.form.patchValue({
+              pressure: trial.value1 || 760,
+              trial1Temp: trial.value2 || '',
+              trial2Temp: trial.value3 || '',
+              trial3Temp: trial.trialCalc || '',
+              testMethod: trial.id1 || 'ASTM-D92',
+              labTemperature: parseFloat(trial.id2 || '22') || 22,
+              sampleVolume: parseFloat(trial.id3 || '75') || 75,
+              flashObservation: this.extractFromComments(trial.mainComments, 'flash'),
+              testNotes: this.extractFromComments(trial.mainComments, 'notes'),
+              analystInitials: trial.entryId || ''
+            });
+          }
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load existing Flash Point data:', error);
+          this.isLoading.set(false);
+        }
       });
-    } else {
-      // Set default values
-      this.form.patchValue({
+  }
+
+  /**
+   * Extract specific field from comments string
+   */
+  private extractFromComments(comments: string | null, field: string): string {
+    if (!comments) return '';
+    const regex = new RegExp(`${field}:([^|]+)`, 'i');
+    const match = comments.match(regex);
+    return match ? match[1].trim() : '';
+  }
+  
+  /**
+   * Save Flash Point results to database
+   */
+  saveResults(): void {
+    if (!this.form.valid) {
+      this.saveMessage.set('Please fill in all required fields');
+      setTimeout(() => this.saveMessage.set(null), 3000);
+      return;
+    }
+    
+    const result = this.flashPointResult();
+    if (!result || !result.isValid) {
+      this.saveMessage.set('Invalid calculation - please check your inputs');
+      setTimeout(() => this.saveMessage.set(null), 3000);
+      return;
+    }
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      this.saveMessage.set('No sample selected');
+      setTimeout(() => this.saveMessage.set(null), 3000);
+      return;
+    }
+    
+    this.isSaving.set(true);
+    
+    // Create comments string
+    const comments = this.buildCommentsString();
+    
+    // Create trial record
+    const trial = {
+      sampleId: sampleInfo.sampleId,
+      testId: sampleInfo.testReference.id,
+      trialNumber: 1,
+      value1: this.form.get('pressure')?.value, // Atmospheric pressure
+      value2: this.form.get('trial1Temp')?.value, // Trial 1 temp
+      value3: this.form.get('trial2Temp')?.value, // Trial 2 temp
+      trialCalc: this.form.get('trial3Temp')?.value || null, // Trial 3 temp
+      id1: this.form.get('testMethod')?.value, // Test method
+      id2: this.form.get('labTemperature')?.value?.toString(), // Lab temperature
+      id3: this.form.get('sampleVolume')?.value?.toString(), // Sample volume
+      trialComplete: true,
+      status: 'E',
+      entryId: this.form.get('analystInitials')?.value,
+      entryDate: Date.now(),
+      mainComments: comments
+    };
+    
+    this.testReadingsService.bulkSaveTrials([trial]).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.saveMessage.set('Flash Point results saved successfully');
+        
+        // Save analyst initials for future use
+        const initials = this.form.get('analystInitials')?.value;
+        if (initials) {
+          localStorage.setItem('analystInitials', initials);
+        }
+        
+        setTimeout(() => this.saveMessage.set(null), 3000);
+      },
+      error: (error) => {
+        console.error('Failed to save Flash Point results:', error);
+        this.isSaving.set(false);
+        this.saveMessage.set('Failed to save results. Please try again.');
+        setTimeout(() => this.saveMessage.set(null), 5000);
+      }
+    });
+  }
+  
+  /**
+   * Build comments string from form fields
+   */
+  private buildCommentsString(): string {
+    const parts: string[] = [];
+    
+    const flash = this.form.get('flashObservation')?.value;
+    if (flash) parts.push(`flash:${flash}`);
+    
+    const notes = this.form.get('testNotes')?.value;
+    if (notes) parts.push(`notes:${notes}`);
+    
+    return parts.join('|');
+  }
+  
+  /**
+   * Clear all form data
+   */
+  clearForm(): void {
+    if (confirm('Are you sure you want to clear all data?')) {
+      this.form.reset({
         pressure: 760,
         testMethod: 'ASTM-D92',
         labTemperature: 22,
         sampleVolume: 75,
         analystInitials: localStorage.getItem('analystInitials') || ''
       });
+      this.saveMessage.set(null);
     }
   }
 
-  protected override createTestReading(isComplete: boolean = false) {
-    const baseReading = super.createTestReading(isComplete);
-    
-    return {
-      ...baseReading,
-      value1: this.form.get('pressure')?.value,
-      value2: this.form.get('trial1Temp')?.value,
-      value3: this.form.get('trial2Temp')?.value,
-      trialCalc: this.form.get('trial3Temp')?.value || null,
-      id1: this.form.get('testMethod')?.value,
-      id2: this.form.get('labTemperature')?.value?.toString(),
-      id3: this.form.get('analystInitials')?.value,
-      mainComments: this.combineComments()
-    };
-  }
-
-  private extractFromComments(section: string): string {
-    if (!this.existingReading?.mainComments) return '';
-    
-    const regex = new RegExp(`${section}:(.+?)(?:\\||$)`, 'i');
-    const match = this.existingReading.mainComments.match(regex);
-    return match ? match[1].trim() : '';
-  }
-
-  private combineComments(): string {
-    const flash = this.form.get('flashObservation')?.value;
-    const notes = this.form.get('testNotes')?.value;
-    const main = this.form.get('mainComments')?.value;
-    
-    const parts = [];
-    if (flash) parts.push(`Flash: ${flash}`);
-    if (notes) parts.push(`Notes: ${notes}`);
-    if (main) parts.push(`Comments: ${main}`);
-    
-    return parts.join(' | ');
-  }
-
+  
   // Quality control methods
   showQualityControlChecks(): boolean {
-    return this.hasLargePressureDeviation() || 
-           this.hasHighTemperatureVariation() || 
-           this.hasUnusualFlashPoint();
+    const result = this.flashPointResult();
+    return !!(result && result.warnings && result.warnings.length > 0);
   }
-
-  hasLargePressureDeviation(): boolean {
-    const pressure = this.form.get('pressure')?.value;
-    return pressure && Math.abs(pressure - 760) > 50;
-  }
-
-  hasHighTemperatureVariation(): boolean {
-    const trial1 = this.form.get('trial1Temp')?.value;
-    const trial2 = this.form.get('trial2Temp')?.value;
-    
-    if (!trial1 || !trial2) return false;
-    
-    return Math.abs(trial1 - trial2) > 5;
-  }
-
-  hasUnusualFlashPoint(): boolean {
-    const result = this.calculationResult?.result;
-    return !!(result && (result < 30 || result > 350));
-  }
-
-  override onSave(complete: boolean = false): void {
-    // Save analyst initials for future use
-    const initials = this.form.get('analystInitials')?.value;
-    if (initials) {
-      localStorage.setItem('analystInitials', initials);
-    }
-
-    super.onSave(complete);
+  
+  getQualityControlWarnings(): string[] {
+    const result = this.flashPointResult();
+    return result?.warnings || [];
   }
 }
 

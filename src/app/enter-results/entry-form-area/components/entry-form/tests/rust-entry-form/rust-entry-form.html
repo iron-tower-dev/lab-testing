@@ -1,1 +1,516 @@
-<p>Rust entry form</p>
+<div class="rust-entry-form">
+  <!-- Loading Overlay -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading Rust test data...</p>
+    </div>
+  }
+
+  <!-- Save Message -->
+  @if (saveMessage()) {
+    <div class="save-message" [class.error]="saveMessage().includes('Error')">
+      {{ saveMessage() }}
+    </div>
+  }
+
+  <div class="form-container">
+    <h2>Rust Prevention Test Entry Form</h2>
+    <p class="form-subtitle">ASTM D665 - Rust-Preventing Characteristics of Inhibited Mineral Oil</p>
+
+    <!-- Test Parameters Section -->
+    <div class="form-section">
+      <h3>Test Parameters</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="testTemperature">Test Temperature (°C) *</label>
+          <input
+            type="number"
+            id="testTemperature"
+            [value]="testTemperature()"
+            (input)="testTemperature.set(+$any($event.target).value)"
+            step="0.1"
+            min="59"
+            max="61"
+            [class.invalid]="testTemperature() < 59 || testTemperature() > 61"
+          />
+          <span class="field-hint">Standard: 60 ± 1°C</span>
+        </div>
+
+        <div class="form-group">
+          <label for="testDuration">Test Duration (hours) *</label>
+          <input
+            type="number"
+            id="testDuration"
+            [value]="testDuration()"
+            (input)="testDuration.set(+$any($event.target).value)"
+            step="1"
+            min="4"
+            max="72"
+            [class.invalid]="testDuration() < 4 || testDuration() > 72"
+          />
+          <span class="field-hint">Typical: 24 hours</span>
+        </div>
+
+        <div class="form-group">
+          <label for="waterVolume">Water Volume (mL) *</label>
+          <input
+            type="number"
+            id="waterVolume"
+            [value]="waterVolume()"
+            (input)="waterVolume.set(+$any($event.target).value)"
+            step="10"
+            min="200"
+            max="400"
+            [class.invalid]="waterVolume() < 200 || waterVolume() > 400"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="oilVolume">Oil Volume (mL) *</label>
+          <input
+            type="number"
+            id="oilVolume"
+            [value]="oilVolume()"
+            (input)="oilVolume.set(+$any($event.target).value)"
+            step="10"
+            min="200"
+            max="400"
+            [class.invalid]="oilVolume() < 200 || oilVolume() > 400"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Rod Information Section -->
+    <div class="form-section">
+      <h3>Test Rod Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rodMaterial">Rod Material *</label>
+          <select
+            id="rodMaterial"
+            [value]="rodMaterial()"
+            (change)="rodMaterial.set($any($event.target).value)"
+          >
+            <option value="Polished steel">Polished Steel</option>
+            <option value="Ground steel">Ground Steel</option>
+            <option value="Stainless steel">Stainless Steel</option>
+            <option value="Cast iron">Cast Iron</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="rodDiameter">Rod Diameter (mm)</label>
+          <input
+            type="number"
+            id="rodDiameter"
+            [value]="rodDiameter()"
+            (input)="rodDiameter.set(+$any($event.target).value || null)"
+            step="0.1"
+            min="5"
+            max="20"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="rodLength">Rod Length (mm)</label>
+          <input
+            type="number"
+            id="rodLength"
+            [value]="rodLength()"
+            (input)="rodLength.set(+$any($event.target).value || null)"
+            step="1"
+            min="50"
+            max="200"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="rodPreparation">Rod Preparation</label>
+          <input
+            type="text"
+            id="rodPreparation"
+            [value]="rodPreparation()"
+            (input)="rodPreparation.set($any($event.target).value)"
+            placeholder="e.g., Cleaned and polished"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Water Quality Section -->
+    <div class="form-section">
+      <h3>Water Quality</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="waterType">Water Type *</label>
+          <select
+            id="waterType"
+            [value]="waterType()"
+            (change)="waterType.set($any($event.target).value)"
+          >
+            <option value="Distilled">Distilled</option>
+            <option value="Deionized">Deionized</option>
+            <option value="Synthetic sea water">Synthetic Sea Water</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="waterConductivity">Water Conductivity (µS/cm)</label>
+          <input
+            type="number"
+            id="waterConductivity"
+            [value]="waterConductivity()"
+            (input)="waterConductivity.set(+$any($event.target).value || null)"
+            step="0.1"
+            min="0"
+            max="10"
+          />
+          <span class="field-hint">Should be &lt; 5 µS/cm</span>
+        </div>
+
+        <div class="form-group">
+          <label for="waterPH">Water pH</label>
+          <input
+            type="number"
+            id="waterPH"
+            [value]="waterPH()"
+            (input)="waterPH.set(+$any($event.target).value || null)"
+            step="0.1"
+            min="6"
+            max="8"
+          />
+          <span class="field-hint">Should be 6.5-7.5</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sample Information Section -->
+    <div class="form-section">
+      <h3>Sample Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="sampleAppearance">Sample Appearance</label>
+          <input
+            type="text"
+            id="sampleAppearance"
+            [value]="sampleAppearance()"
+            (input)="sampleAppearance.set($any($event.target).value)"
+            placeholder="e.g., Clear amber liquid"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="emulsionStability">Emulsion Stability</label>
+          <select
+            id="emulsionStability"
+            [value]="emulsionStability()"
+            (change)="emulsionStability.set($any($event.target).value)"
+          >
+            <option value="Stable">Stable</option>
+            <option value="Partially separated">Partially Separated</option>
+            <option value="Separated">Separated</option>
+            <option value="Foam formation">Foam Formation</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Visual Assessment Results Section -->
+    <div class="form-section">
+      <h3>Visual Assessment Results</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="rustAssessment">Rust Assessment *</label>
+          <select
+            id="rustAssessment"
+            [value]="rustAssessment()"
+            (change)="rustAssessment.set($any($event.target).value)"
+            [class.invalid]="rustAssessment() === ''"
+          >
+            <option value="">-- Select Assessment --</option>
+            @for (option of getRustSeverityScale(); track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="rustDistribution">Rust Distribution</label>
+          <select
+            id="rustDistribution"
+            [value]="rustDistribution()"
+            (change)="rustDistribution.set($any($event.target).value)"
+          >
+            <option value="">-- Select Distribution --</option>
+            @for (option of getRustDistributionOptions(); track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="rustColor">Rust Color</label>
+          <input
+            type="text"
+            id="rustColor"
+            [value]="rustColor()"
+            (input)="rustColor.set($any($event.target).value)"
+            placeholder="e.g., Light brown, Dark red"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="rustDensity">Rust Density</label>
+          <input
+            type="text"
+            id="rustDensity"
+            [value]="rustDensity()"
+            (input)="rustDensity.set($any($event.target).value)"
+            placeholder="e.g., Light, Moderate, Heavy"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Quantitative Measurements Section -->
+    <div class="form-section">
+      <h3>Quantitative Measurements (Optional)</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="weightLossMg">Weight Loss (mg)</label>
+          <input
+            type="number"
+            id="weightLossMg"
+            [value]="weightLossMg()"
+            (input)="weightLossMg.set(+$any($event.target).value || null)"
+            step="0.01"
+            min="0"
+            max="100"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="surfaceAreaCm2">Surface Area (cm²)</label>
+          <input
+            type="number"
+            id="surfaceAreaCm2"
+            [value]="surfaceAreaCm2()"
+            (input)="surfaceAreaCm2.set(+$any($event.target).value || null)"
+            step="1"
+            min="10"
+            max="500"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Environmental Conditions Section -->
+    <div class="form-section">
+      <h3>Environmental Conditions (Optional)</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="roomTemperature">Room Temperature (°C)</label>
+          <input
+            type="number"
+            id="roomTemperature"
+            [value]="roomTemperature()"
+            (input)="roomTemperature.set(+$any($event.target).value || null)"
+            step="0.1"
+            min="20"
+            max="30"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="relativeHumidity">Relative Humidity (%)</label>
+          <input
+            type="number"
+            id="relativeHumidity"
+            [value]="relativeHumidity()"
+            (input)="relativeHumidity.set(+$any($event.target).value || null)"
+            step="1"
+            min="40"
+            max="80"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality Control Section -->
+    <div class="form-section">
+      <h3>Quality Control</h3>
+      <div class="form-row">
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [checked]="blankTest()"
+              (change)="blankTest.set($any($event.target).checked)"
+            />
+            Blank Test Performed
+          </label>
+        </div>
+
+        <div class="form-group checkbox-group">
+          <label>
+            <input
+              type="checkbox"
+              [checked]="duplicateTest()"
+              (change)="duplicateTest.set($any($event.target).checked)"
+            />
+            Duplicate Test Performed
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results and Calculations Section -->
+    @if (showCalculationDetails() && rustAssessment()) {
+      <div class="calculation-section">
+        <h3>Results & Assessment</h3>
+        
+        <div class="results-grid">
+          <div class="result-card primary" [ngClass]="{
+            'pass': rustRating() === 'Pass',
+            'fail': rustRating() === 'Fail'
+          }">
+            <div class="result-label">Test Result</div>
+            <div class="result-value">{{ rustRating() || 'Pending' }}</div>
+          </div>
+
+          @if (corrosionLevel() > 0) {
+            <div class="result-card">
+              <div class="result-label">Corrosion Rate</div>
+              <div class="result-value">{{ corrosionLevel() }} mg/cm²/hr</div>
+            </div>
+          }
+
+          <div class="result-card" [ngClass]="{
+            'excellent': rustProtectionLevel().includes('Excellent'),
+            'good': rustProtectionLevel().includes('good'),
+            'moderate': rustProtectionLevel().includes('Moderate'),
+            'poor': rustProtectionLevel().includes('Poor')
+          }">
+            <div class="result-label">Protection Level</div>
+            <div class="result-value protection">{{ rustProtectionLevel() }}</div>
+          </div>
+
+          <div class="result-card">
+            <div class="result-label">Recommendation</div>
+            <div class="result-value recommendation">{{ maintenanceRecommendation() }}</div>
+          </div>
+        </div>
+
+        <!-- Quality Control Checks -->
+        @if (showQualityControlChecks()) {
+          <div class="quality-control-warning">
+            <strong>⚠️ Quality Control Alert:</strong>
+            <p>{{ qualityControlMessage() }}</p>
+          </div>
+        }
+
+        <!-- Interpretation Guidelines -->
+        <div class="interpretation-guide">
+          <h4>ASTM D665 Rating System</h4>
+          <div class="guide-content">
+            <div class="guide-item pass">
+              <strong>Pass:</strong> No rust or only slight staining (acceptable)
+            </div>
+            <div class="guide-item fail">
+              <strong>Fail:</strong> Visible rust spots or corrosion present (unacceptable)
+            </div>
+          </div>
+          <p class="guide-note">
+            The test evaluates the ability of oil to prevent rust formation on steel surfaces in the presence of water.
+            Results indicate the effectiveness of rust inhibitors in the oil formulation.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Analyst Information Section -->
+    <div class="form-section">
+      <h3>Analyst Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="analystInitials">Analyst Initials *</label>
+          <input
+            type="text"
+            id="analystInitials"
+            [value]="analystInitials()"
+            (input)="analystInitials.set($any($event.target).value)"
+            maxlength="5"
+            [class.invalid]="analystInitials().trim() === '' || analystInitials().length > 5"
+          />
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes Section -->
+    <div class="form-section">
+      <h3>Notes & Comments</h3>
+      
+      <div class="form-group">
+        <label for="visualObservations">Visual Observations</label>
+        <textarea
+          id="visualObservations"
+          [value]="visualObservations()"
+          (input)="visualObservations.set($any($event.target).value)"
+          rows="2"
+          placeholder="e.g., Rod appearance, rust pattern, emulsion characteristics..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="testNotes">Test Notes</label>
+        <textarea
+          id="testNotes"
+          [value]="testNotes()"
+          (input)="testNotes.set($any($event.target).value)"
+          rows="2"
+          placeholder="e.g., Test conditions, equipment notes, deviations from procedure..."
+        ></textarea>
+      </div>
+
+      <div class="form-group">
+        <label for="mainComments">Additional Comments</label>
+        <textarea
+          id="mainComments"
+          [value]="mainComments()"
+          (input)="mainComments.set($any($event.target).value)"
+          rows="3"
+          placeholder="Any other relevant information..."
+        ></textarea>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button 
+        class="btn btn-secondary" 
+        (click)="clearForm()"
+        [disabled]="saving()"
+      >
+        Clear Form
+      </button>
+      
+      <button 
+        class="btn btn-primary" 
+        (click)="save(false)"
+        [disabled]="!isFormValid() || saving()"
+      >
+        {{ saving() ? 'Saving...' : 'Save Progress' }}
+      </button>
+      
+      <button 
+        class="btn btn-success" 
+        (click)="save(true)"
+        [disabled]="!isFormValid() || saving()"
+      >
+        {{ saving() ? 'Saving...' : 'Complete Test' }}
+      </button>
+    </div>
+  </div>
+</div>

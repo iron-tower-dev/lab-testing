@@ -1,3 +1,20 @@
+<!-- Loading Overlay -->
+@if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading test data...</p>
+  </div>
+}
+
+<!-- Save Message -->
+@if (saveMessage()) {
+  <div class="save-message" [class.success]="saveMessage()!.type === 'success'" 
+       [class.error]="saveMessage()!.type === 'error'">
+    <mat-icon>{{ saveMessage()!.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+    <span>{{ saveMessage()!.text }}</span>
+  </div>
+}
+
 <form [formGroup]="form" class="kf-form-content">
   <!-- Test Conditions Section -->
   <div class="test-conditions-section">
@@ -88,21 +105,21 @@
   </div>
 
   <!-- Calculation Results -->
-  @if (getAverageResult() > 0) {
+  @if (averageResult() > 0) {
     <div class="calculation-section">
       <h3>Calculation Results</h3>
       <div class="calc-display">
         <div class="calc-row">
           <mat-form-field class="third-width">
             <mat-label>Average Water Content</mat-label>
-            <input matInput type="number" [value]="getAverageResult()" 
+            <input matInput type="number" [value]="averageResult()" 
                    readonly class="calculated-field">
             <mat-hint>Average of all valid trials</mat-hint>
           </mat-form-field>
 
           <mat-form-field class="third-width">
             <mat-label>Result Variation</mat-label>
-            <input matInput type="number" [value]="getResultVariation()" 
+            <input matInput type="number" [value]="resultVariation()" 
                    readonly class="calculated-field"
                    [class.error-input]="!isVariationAcceptable()">
             <mat-hint>Difference between max and min</mat-hint>
@@ -126,13 +143,13 @@
     <h3>File Data</h3>
     <div class="form-row">
       <button mat-button type="button" (click)="toggleFileUpload()" 
-              [color]="showFileUpload ? 'primary' : 'basic'">
-        <mat-icon>{{ showFileUpload ? 'expand_less' : 'expand_more' }}</mat-icon>
-        {{ showFileUpload ? 'Hide' : 'Show' }} File Upload
+              [color]="showFileUpload() ? 'primary' : 'basic'">
+        <mat-icon>{{ showFileUpload() ? 'expand_less' : 'expand_more' }}</mat-icon>
+        {{ showFileUpload() ? 'Hide' : 'Show' }} File Upload
       </button>
     </div>
     
-    @if (showFileUpload) {
+    @if (showFileUpload()) {
       <div class="file-upload-area">
         <div class="form-row">
           <mat-form-field class="half-width">
@@ -174,6 +191,25 @@
                   placeholder="Any additional comments about this test..."></textarea>
       </mat-form-field>
     </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary" type="button" 
+            (click)="onSave()" 
+            [disabled]="!form.valid || saving() || loading()">
+      @if (saving()) {
+        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+      }
+      {{ saving() ? 'Saving...' : 'Save Results' }}
+    </button>
+    
+    <button mat-stroked-button type="button" 
+            (click)="onClear()" 
+            [disabled]="saving() || loading()">
+      <mat-icon>clear</mat-icon>
+      Clear Form
+    </button>
   </div>
 </form>
 

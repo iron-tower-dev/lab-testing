@@ -1,1 +1,367 @@
-<p>Grease Drop Point entry form</p>
+<!-- Loading Overlay -->
+@if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading test data...</p>
+  </div>
+}
+
+<!-- Save Message -->
+@if (saveMessage()) {
+  <div class="save-message" [class.success]="saveMessage()!.type === 'success'" 
+       [class.error]="saveMessage()!.type === 'error'">
+    <mat-icon>{{ saveMessage()!.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+    <span>{{ saveMessage()!.text }}</span>
+  </div>
+}
+
+<form [formGroup]="form" class="grease-drop-pt-form-content">
+  <!-- Temperature Measurements Section -->
+  <div class="measurements-section">
+    <h3>Temperature Measurements</h3>
+    <div class="form-row">
+      <mat-form-field class="half-width">
+        <mat-label>Dropping Point Temperature</mat-label>
+        <input matInput type="number" formControlName="droppingPointTemp"
+               step="1" min="50" max="350" placeholder="°C">
+        <mat-hint>Observed temperature when first drop falls</mat-hint>
+        @if (form.get('droppingPointTemp')?.hasError('required')) {
+          <mat-error>Dropping point temperature is required</mat-error>
+        }
+        @if (form.get('droppingPointTemp')?.hasError('min') || form.get('droppingPointTemp')?.hasError('max')) {
+          <mat-error>Temperature must be between 50-350°C</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Block Temperature</mat-label>
+        <input matInput type="number" formControlName="blockTemp"
+               step="1" min="50" max="400" placeholder="°C">
+        <mat-hint>Heating block temperature at drop point</mat-hint>
+        @if (form.get('blockTemp')?.hasError('required')) {
+          <mat-error>Block temperature is required</mat-error>
+        }
+        @if (form.get('blockTemp')?.hasError('min') || form.get('blockTemp')?.hasError('max')) {
+          <mat-error>Temperature must be between 50-400°C</mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <!-- Temperature Difference Indicator -->
+    @if (temperatureDifference() > 0) {
+      <div class="temp-diff-indicator" [class.warning]="!isTemperatureDifferenceAcceptable()">
+        <mat-icon>{{ isTemperatureDifferenceAcceptable() ? 'info' : 'warning' }}</mat-icon>
+        <span>
+          Temperature Difference: {{ temperatureDifference() }}°C
+          {{ isTemperatureDifferenceAcceptable() ? '(Normal)' : '(Check values - unusual difference)' }}
+        </span>
+      </div>
+    }
+  </div>
+
+  <!-- Sample Preparation Section -->
+  <div class="sample-section">
+    <h3>Sample Preparation</h3>
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Sample Amount</mat-label>
+        <input matInput type="number" formControlName="sampleAmount"
+               step="0.1" min="0.5" max="5" placeholder="grams">
+        <mat-hint>Sample weight in grams</mat-hint>
+        @if (form.get('sampleAmount')?.hasError('required')) {
+          <mat-error>Sample amount is required</mat-error>
+        }
+        @if (form.get('sampleAmount')?.hasError('min') || form.get('sampleAmount')?.hasError('max')) {
+          <mat-error>Amount must be between 0.5-5 grams</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Sample Appearance</mat-label>
+        <input matInput formControlName="sampleAppearance"
+               placeholder="Color, consistency, etc.">
+        <mat-hint>Visual description of grease sample</mat-hint>
+      </mat-form-field>
+
+      <div class="third-width checkbox-field">
+        <mat-checkbox formControlName="workedSample">
+          Sample was worked before testing
+        </mat-checkbox>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Apparatus Section -->
+  <div class="apparatus-section">
+    <h3>Test Apparatus</h3>
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Apparatus Type</mat-label>
+        <mat-select formControlName="apparatusType">
+          <mat-option value="ASTM D566">ASTM D566 (Standard)</mat-option>
+          <mat-option value="ASTM D2265">ASTM D2265 (Alternative)</mat-option>
+        </mat-select>
+        @if (form.get('apparatusType')?.hasError('required')) {
+          <mat-error>Apparatus type is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Cup Type</mat-label>
+        <input matInput formControlName="cupType"
+               placeholder="Standard metal cup">
+        <mat-hint>Type of test cup used</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Thermometer ID</mat-label>
+        <input matInput formControlName="thermometerId"
+               placeholder="Equipment ID">
+        <mat-hint>Thermometer identification</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Heating Conditions Section -->
+  <div class="heating-section">
+    <h3>Heating Conditions</h3>
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Heating Rate</mat-label>
+        <input matInput type="number" formControlName="heatingRate"
+               step="0.1" min="1" max="5" placeholder="°C/min">
+        <mat-hint>Standard: 2 ± 0.5°C/min</mat-hint>
+        @if (form.get('heatingRate')?.hasError('required')) {
+          <mat-error>Heating rate is required</mat-error>
+        }
+        @if (form.get('heatingRate')?.hasError('min') || form.get('heatingRate')?.hasError('max')) {
+          <mat-error>Rate must be between 1-5°C/min</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Initial Temperature</mat-label>
+        <input matInput type="number" formControlName="initialTemperature"
+               step="1" min="20" max="50" placeholder="°C">
+        <mat-hint>Starting temperature</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Ambient Temperature</mat-label>
+        <input matInput type="number" formControlName="ambientTemperature"
+               step="1" min="15" max="35" placeholder="°C">
+        <mat-hint>Lab temperature during test</mat-hint>
+      </mat-form-field>
+    </div>
+
+    @if (!isHeatingRateAcceptable()) {
+      <div class="qc-warning">
+        <mat-icon>warning</mat-icon>
+        <span>Heating rate outside ASTM D566 acceptable range (2 ± 0.5°C/min)</span>
+      </div>
+    }
+  </div>
+
+  <!-- Visual Observations Section -->
+  <div class="observations-section">
+    <h3>Visual Observations</h3>
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>First Softening Observation</mat-label>
+        <input matInput formControlName="firstSoftening"
+               placeholder="Temperature and appearance when sample first softens...">
+        <mat-hint>Note when grease begins to soften or show movement</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="half-width">
+        <mat-label>Drop Appearance</mat-label>
+        <input matInput formControlName="dropAppearance"
+               placeholder="Describe the appearance of the drop...">
+        <mat-hint>e.g., "Clear liquid", "Cloudy", "Contains particles"</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="half-width">
+        <mat-label>Drop Behavior</mat-label>
+        <input matInput formControlName="dropBehavior"
+               placeholder="Describe how the drop fell...">
+        <mat-hint>e.g., "Fell cleanly", "Dripped slowly", "Adhered to cup"</mat-hint>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Quality Control Section -->
+  <div class="qc-section">
+    <h3>Quality Control</h3>
+    <div class="form-row">
+      <mat-form-field class="third-width">
+        <mat-label>Barometric Pressure</mat-label>
+        <input matInput type="number" formControlName="barometricPressure"
+               step="1" min="700" max="800" placeholder="mmHg">
+        <mat-hint>Atmospheric pressure during test</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Draft Conditions</mat-label>
+        <mat-select formControlName="draftConditions">
+          <mat-option value="None">No draft</mat-option>
+          <mat-option value="Minimal">Minimal draft</mat-option>
+          <mat-option value="Significant">Significant draft</mat-option>
+        </mat-select>
+        <mat-hint>Air movement conditions</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field class="third-width">
+        <mat-label>Analyst Initials</mat-label>
+        <input matInput formControlName="analystInitials"
+               maxlength="5" placeholder="ABC">
+        @if (form.get('analystInitials')?.hasError('required')) {
+          <mat-error>Analyst initials are required</mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Calculation Display -->
+  @if (showCalculationDetails() && droppingPointResult()?.isValid) {
+    <div class="calculation-display">
+      <div class="calc-header">
+        <h3>Calculation Details</h3>
+        <button mat-icon-button type="button" (click)="toggleCalculationDetails()">
+          <mat-icon>expand_less</mat-icon>
+        </button>
+      </div>
+      <div class="calc-content">
+        <div class="calc-formula">
+          <strong>Formula (ASTM D566):</strong><br>
+          Corrected Dropping Point = Dropping Point Temp + (Block Temp - Dropping Point Temp) / 3
+        </div>
+        <div class="calc-steps">
+          <div class="calc-step">
+            <strong>Step 1:</strong> Calculate temperature difference<br>
+            <span class="calc-detail">
+              Temperature Difference = {{ form.get('blockTemp')?.value }} - {{ form.get('droppingPointTemp')?.value }} = {{ temperatureDifference() }}°C
+            </span>
+          </div>
+          <div class="calc-step">
+            <strong>Step 2:</strong> Apply correction factor<br>
+            <span class="calc-detail">
+              Correction = {{ temperatureDifference() }} / 3 = {{ droppingPointResult()!.metadata?.correction }}°C
+            </span>
+          </div>
+          <div class="calc-step">
+            <strong>Step 3:</strong> Calculate corrected dropping point<br>
+            <span class="calc-detail">
+              Corrected = {{ form.get('droppingPointTemp')?.value }} + {{ droppingPointResult()!.metadata?.correction }} = {{ droppingPointResult()!.result }}°C
+            </span>
+          </div>
+        </div>
+        <div class="calc-result">
+          <strong>Corrected Dropping Point:</strong> {{ droppingPointResult()!.result }}°C
+        </div>
+        @if (droppingPointResult()?.warnings && droppingPointResult()!.warnings!.length > 0) {
+          <div class="calc-warnings">
+            @for (warning of droppingPointResult()!.warnings; track warning) {
+              <div class="warning-item">
+                <mat-icon>warning</mat-icon>
+                <span>{{ warning }}</span>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (droppingPointResult()?.isValid) {
+    <div class="calculation-display collapsed">
+      <div class="calc-header">
+        <h3>Calculation Details</h3>
+        <button mat-icon-button type="button" (click)="toggleCalculationDetails()">
+          <mat-icon>expand_more</mat-icon>
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- Classification Section -->
+  @if (droppingPointResult()?.isValid) {
+    <div class="classification-section">
+      <h3>Dropping Point Classification</h3>
+      <div class="classification-info">
+        <div class="classification-card">
+          <div class="drop-pt-large">
+            <span class="label">Dropping Point</span>
+            <span class="value">{{ droppingPointResult()!.result }}°C</span>
+            <span class="classification">{{ dropPointClassification() }}</span>
+          </div>
+        </div>
+        <div class="classification-details">
+          <div class="detail-row">
+            <strong>Temperature Stability:</strong>
+            <span>{{ stabilityIndication() }}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Estimated Max Service Temp:</strong>
+            <span>~{{ serviceTemperature() }}°C</span>
+          </div>
+          <div class="detail-row">
+            <strong>Uncorrected Dropping Point:</strong>
+            <span>{{ form.get('droppingPointTemp')?.value }}°C</span>
+          </div>
+          <div class="detail-row">
+            <strong>Temperature Correction:</strong>
+            <span>+{{ droppingPointResult()!.metadata?.correction }}°C</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Notes Section -->
+  <div class="notes-section">
+    <h3>Test Notes</h3>
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Observation Notes</mat-label>
+        <textarea matInput formControlName="observationNotes" rows="2"
+                  placeholder="Record any unusual observations during the test..."></textarea>
+        <mat-hint>Note any deviations from standard procedure</mat-hint>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>General Test Notes</mat-label>
+        <textarea matInput formControlName="testNotes" rows="2"
+                  placeholder="Additional test information..."></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field class="full-width">
+        <mat-label>Additional Comments</mat-label>
+        <textarea matInput formControlName="mainComments" rows="2"
+                  placeholder="Any other comments about the test..."></textarea>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary" type="button" 
+            (click)="onSave()" 
+            [disabled]="!form.valid || saving() || loading()">
+      @if (saving()) {
+        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+      }
+      {{ saving() ? 'Saving...' : 'Save Results' }}
+    </button>
+    
+    <button mat-stroked-button type="button" 
+            (click)="onClear()" 
+            [disabled]="saving() || loading()">
+      <mat-icon>clear</mat-icon>
+      Clear Form
+    </button>
+  </div>
+</form>

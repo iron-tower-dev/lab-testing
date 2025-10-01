@@ -1,32 +1,44 @@
-import { Component, input, computed, inject, effect, signal } from '@angular/core';
+import { Component, input, computed, inject, effect, signal, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SampleWithTestInfo, TestReference } from '../../../enter-results.types';
 import { SampleService } from '../../../../shared/services/sample.service';
+import { StatusTransitionService } from '../../../../shared/services/status-transition.service';
+import { TestStatus } from '../../../../shared/types/status-workflow.types';
+import { StatusBadge } from '../../../components/status-badge/status-badge';
 import { SharedModule } from '../../../../shared-module';
+import { switchMap, catchError, of, EMPTY } from 'rxjs';
 
 @Component({
   selector: 'app-entry-form-header',
-  imports: [SharedModule],
+  imports: [SharedModule, StatusBadge],
   templateUrl: './entry-form-header.html',
   styleUrl: './entry-form-header.css'
 })
 export class EntryFormHeader {
   private readonly sampleService = inject(SampleService);
+  private readonly statusTransitionService = inject(StatusTransitionService);
+  private readonly destroyRef = inject(DestroyRef);
   
   // Input signals
   selectedSample = input<{ testReference: TestReference; sampleId: string; sampleDetails?: any } | null>(null);
   // Optional shared lab comments control passed from parent/forms
   labCommentsControl = input<any | null>(null);
+  // Status from parent (preferred to avoid duplicate fetches)
+  currentStatus = input<TestStatus | null>(null);
   
   // Internal state signals
   private readonly sampleInfo = signal<SampleWithTestInfo | null>(null);
   private readonly loading = signal(false);
   private readonly error = signal<string | null>(null);
+  private readonly statusError = signal<string | null>(null);
   
   // Computed properties for template
   readonly isLoading = computed(() => this.loading());
   readonly errorMessage = computed(() => this.error());
   readonly hasSampleInfo = computed(() => this.sampleInfo() !== null);
   readonly sampleData = computed(() => this.sampleInfo());
+  readonly hasStatusError = computed(() => this.statusError() !== null);
+  readonly statusErrorMessage = computed(() => this.statusError());
   
   constructor() {
     // Effect to load detailed sample information when selected sample changes
@@ -37,6 +49,7 @@ export class EntryFormHeader {
       } else {
         this.sampleInfo.set(null);
         this.error.set(null);
+        this.statusError.set(null);
       }
     });
   }
@@ -89,34 +102,39 @@ export class EntryFormHeader {
     this.loading.set(true);
     this.error.set(null);
     
-    this.sampleService.getSampleDetails(sampleId).subscribe({
-      next: (response) => {
-        if (response.success && response.data) {
-          const data = response.data;
-          const sampleInfo: SampleWithTestInfo = {
-            sampleId: data.sampleId || sampleId,
-            sampleNumber: data.sampleNumber || `Sample-${sampleId}`,
-            testName: testReference.name || 'Unknown Test',
-            eqTagNum: data.tagNumber || null,
-            component: data.compName || null,
-            location: data.locName || null,
-            lubeType: data.lubeType || null,
-            techData: data.techData || null,
-            qualityClass: data.qualityClass || null,
-            labComments: data.labComments || null,
-            testReference: testReference
-          };
-          this.sampleInfo.set(sampleInfo);
-        } else {
+    this.sampleService.getSampleDetails(sampleId)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        catchError((error) => {
+          console.error('Error loading sample details:', error);
           this.error.set('Failed to load sample details');
+          this.loading.set(false);
+          return EMPTY;
+        })
+      )
+      .subscribe({
+        next: (response) => {
+          if (response.success && response.data) {
+            const data = response.data;
+            const sampleInfo: SampleWithTestInfo = {
+              sampleId: data.sampleId || sampleId,
+              sampleNumber: data.sampleNumber || `Sample-${sampleId}`,
+              testName: testReference.name || 'Unknown Test',
+              eqTagNum: data.tagNumber || null,
+              component: data.compName || null,
+              location: data.locName || null,
+              lubeType: data.lubeType || null,
+              techData: data.techData || null,
+              qualityClass: data.qualityClass || null,
+              labComments: data.labComments || null,
+              testReference: testReference
+            };
+            this.sampleInfo.set(sampleInfo);
+          } else {
+            this.error.set('Failed to load sample details');
+          }
+          this.loading.set(false);
         }
-        this.loading.set(false);
-      },
-      error: (error) => {
-        console.error('Error loading sample details:', error);
-        this.error.set('Failed to load sample details');
-        this.loading.set(false);
-      }
-    });
+      });
   }
 }

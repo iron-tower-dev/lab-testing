@@ -1,1 +1,451 @@
-/* gr-pen60-entry-form styles */
+/* Grease Penetration Entry Form Styles */
+
+/* ========================================
+   Loading Overlay
+   ======================================== */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  gap: 16px;
+}
+
+.loading-overlay p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+/* ========================================
+   Save Message
+   ======================================== */
+.save-message {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 16px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  z-index: 1001;
+  animation: slideIn 0.3s ease-out;
+  font-weight: 500;
+}
+
+.save-message.success {
+  background: #4caf50;
+  color: white;
+}
+
+.save-message.error {
+  background: #f44336;
+  color: white;
+}
+
+.save-message mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   Form Layout
+   ======================================== */
+.grease-penetration-form-content {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: flex-start;
+}
+
+/* Field widths */
+.full-width {
+  flex: 1;
+  width: 100%;
+}
+
+.half-width {
+  flex: 1;
+  min-width: 0;
+}
+
+.third-width {
+  flex: 1;
+  min-width: 0;
+}
+
+.quarter-width {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ========================================
+   Section Styling
+   ======================================== */
+.setup-section,
+.readings-section,
+.equipment-section,
+.observations-section,
+.calculation-display,
+.classification-section,
+.comments-section {
+  background: #f9f9f9;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 24px;
+  border: 1px solid #e0e0e0;
+}
+
+.setup-section h3,
+.readings-section h3,
+.equipment-section h3,
+.observations-section h3,
+.classification-section h3,
+.comments-section h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  border-bottom: 2px solid #1976d2;
+  padding-bottom: 8px;
+}
+
+/* ========================================
+   Cone Readings
+   ======================================== */
+.cone-readings {
+  background: white;
+  padding: 16px;
+  border-radius: 6px;
+}
+
+.calculated-field {
+  font-weight: 600;
+  color: #1976d2;
+  background: #e3f2fd;
+}
+
+/* ========================================
+   Reading Validation
+   ======================================== */
+.reading-validation {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.validation-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border-radius: 6px;
+  background: white;
+  border: 2px solid #e0e0e0;
+}
+
+.validation-item.valid {
+  border-color: #4caf50;
+  background: #e8f5e9;
+}
+
+.validation-item.invalid {
+  border-color: #ff9800;
+  background: #fff3e0;
+}
+
+.validation-item mat-icon {
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.validation-item.valid mat-icon {
+  color: #4caf50;
+}
+
+.validation-item.invalid mat-icon {
+  color: #ff9800;
+}
+
+.validation-item span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ========================================
+   Worked Sample Checkbox
+   ======================================== */
+.worked-sample-checkbox {
+  margin-top: 8px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ========================================
+   Calculation Display
+   ======================================== */
+.calculation-display {
+  background: white;
+  border: 2px solid #1976d2;
+}
+
+.calculation-display.collapsed {
+  background: #e3f2fd;
+}
+
+.calc-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.calc-header h3 {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.calc-content {
+  padding-top: 16px;
+}
+
+.calc-formula {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.calc-steps {
+  margin: 16px 0;
+}
+
+.calc-step {
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  border-left: 4px solid #1976d2;
+}
+
+.calc-detail {
+  display: block;
+  margin-top: 8px;
+  padding: 8px;
+  background: white;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.calc-result {
+  background: #1976d2;
+  color: white;
+  padding: 16px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.calc-warnings {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.warning-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #fff3e0;
+  border: 2px solid #ff9800;
+  border-radius: 6px;
+}
+
+.warning-item mat-icon {
+  color: #ff9800;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.warning-item span {
+  font-size: 14px;
+  color: #e65100;
+}
+
+/* ========================================
+   Classification Section
+   ======================================== */
+.classification-section {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.classification-section h3 {
+  color: white;
+  border-bottom-color: rgba(255, 255, 255, 0.3);
+}
+
+.classification-info {
+  display: flex;
+  gap: 24px;
+  align-items: stretch;
+}
+
+.classification-card {
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 24px;
+  min-width: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.nlgi-grade-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.nlgi-grade-large .label {
+  font-size: 14px;
+  color: #666;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.nlgi-grade-large .grade-value {
+  font-size: 48px;
+  font-weight: 800;
+  color: #1976d2;
+  line-height: 1;
+}
+
+.classification-details {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-row strong {
+  color: #333;
+  font-weight: 600;
+}
+
+.detail-row span {
+  color: #666;
+  font-weight: 500;
+}
+
+/* ========================================
+   Form Actions
+   ======================================== */
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-start;
+  padding: 20px;
+  background: #f5f5f5;
+  border-top: 2px solid #e0e0e0;
+  margin-top: 24px;
+  border-radius: 0 0 8px 8px;
+}
+
+.form-actions button {
+  min-width: 140px;
+  height: 44px;
+  font-weight: 600;
+}
+
+.form-actions button mat-icon {
+  margin-right: 8px;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+@media (max-width: 768px) {
+  .form-row {
+    flex-direction: column;
+  }
+
+  .half-width,
+  .third-width,
+  .quarter-width {
+    width: 100%;
+  }
+
+  .grease-penetration-form-content {
+    padding: 12px;
+  }
+
+  .save-message {
+    left: 12px;
+    right: 12px;
+    top: 12px;
+  }
+
+  .classification-info {
+    flex-direction: column;
+  }
+
+  .nlgi-grade-large .grade-value {
+    font-size: 36px;
+  }
+}

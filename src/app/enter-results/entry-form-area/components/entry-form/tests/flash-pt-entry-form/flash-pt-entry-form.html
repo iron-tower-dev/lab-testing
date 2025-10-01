@@ -1,4 +1,19 @@
 <form [formGroup]="form" class="flash-point-form-content">
+  <!-- Loading indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading Flash Point data...</p>
+    </div>
+  }
+
+  <!-- Save message -->
+  @if (saveMessage()) {
+    <div class="save-message" [class.success]="saveMessage()?.includes('success')" [class.error]="saveMessage()?.includes('Failed')">
+      <mat-icon>{{ saveMessage()?.includes('success') ? 'check_circle' : 'error' }}</mat-icon>
+      <span>{{ saveMessage() }}</span>
+    </div>
+  }
   <!-- Test Conditions Section -->
   <div class="conditions-section">
     <h3>Test Conditions & Setup</h3>
@@ -105,24 +120,30 @@
   </div>
 
   <!-- Flash Point Calculation Display -->
-  @if (averageTemperature > 0) {
+  @if (flashPointResult() && flashPointResult()?.isValid) {
     <div class="calculation-display">
       <h3>Flash Point Calculation</h3>
       
-      @if (showCalculationDetails) {
+      @if (showCalculationDetails()) {
         <div class="calc-formula">
-          Flash Point (corrected) = Average Temperature + Pressure Correction<br>
-          Pressure Correction = 0.06 × (760 - Actual Pressure)<br>
+          <strong>Formula:</strong> Flash Point (corrected) = Average Temperature + Pressure Correction<br>
+          <small>Pressure Correction = 0.06 × (760 - Actual Pressure)</small>
         </div>
       }
       
       <div class="calc-values">
-        <p><strong>Average Temperature:</strong> {{ averageTemperature | number:'1.1-1' }}°C</p>
-        <p><strong>Pressure Correction:</strong> {{ pressureCorrection | number:'1.1-1' }}°C</p>
+        <p><strong>Average Temperature:</strong> {{ averageTemperature() | number:'1.1-1' }}°C</p>
+        <p><strong>Pressure Correction:</strong> {{ pressureCorrection() | number:'1.2-2' }}°C</p>
+        <p><strong>Number of Trials:</strong> {{ flashPointResult()?.metadata?.['numberOfTrials'] }}</p>
         <p class="calc-result">
           <strong>Corrected Flash Point:</strong> 
-          {{ calculationResult?.result | number:'1.0-0' }}°C
+          {{ flashPointResult()?.result | number:'1.0-0' }}°C
         </p>
+        @if (flashPointResult()?.metadata) {
+          <p class="calc-metadata">
+            <small>Atmospheric Pressure: {{ flashPointResult()?.metadata?.['atmosphericPressure'] }} mmHg</small>
+          </p>
+        }
       </div>
     </div>
   }
@@ -133,24 +154,10 @@
       <h3>Quality Control Checks</h3>
       
       <div class="qc-warnings">
-        @if (hasLargePressureDeviation()) {
+        @for (warning of getQualityControlWarnings(); track warning) {
           <div class="qc-warning">
             <mat-icon>warning</mat-icon>
-            <span>Large pressure deviation from standard (760 mmHg) detected. Verify pressure reading accuracy.</span>
-          </div>
-        }
-        
-        @if (hasHighTemperatureVariation()) {
-          <div class="qc-warning">
-            <mat-icon>warning</mat-icon>
-            <span>High temperature variation between trials (>5°C). Consider additional trial or sample preparation check.</span>
-          </div>
-        }
-        
-        @if (hasUnusualFlashPoint()) {
-          <div class="qc-warning">
-            <mat-icon>warning</mat-icon>
-            <span>Unusual flash point result (<30°C or >350°C). Verify sample type and test procedure.</span>
+            <span>{{ warning }}</span>
           </div>
         }
       </div>
@@ -179,13 +186,29 @@
       </mat-form-field>
     </div>
 
-    <div class="form-row">
-      <mat-form-field class="full-width">
-        <mat-label>Additional Comments</mat-label>
-        <textarea matInput formControlName="mainComments" 
-                  placeholder="Any additional observations or notes about the test"
-                  rows="2"></textarea>
-      </mat-form-field>
-    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary" 
+            type="button"
+            (click)="saveResults()" 
+            [disabled]="!form.valid || isSaving() || isLoading()">
+      @if (isSaving()) {
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Saving...</span>
+      } @else {
+        <mat-icon>save</mat-icon>
+        <span>Save Results</span>
+      }
+    </button>
+    
+    <button mat-raised-button 
+            type="button"
+            (click)="clearForm()" 
+            [disabled]="isSaving() || isLoading()">
+      <mat-icon>clear</mat-icon>
+      <span>Clear Form</span>
+    </button>
   </div>
 </form>

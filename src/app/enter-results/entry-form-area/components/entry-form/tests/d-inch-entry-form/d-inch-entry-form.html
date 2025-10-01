@@ -1,25 +1,392 @@
 <div class="d-inch-entry-form">
-  <!-- Sample Information -->
-  @if (sampleData()) {
-    <mat-card class="sample-info">
-      <mat-card-header>
-        <mat-card-title>{{ sampleData()!.testName }}</mat-card-title>
-        <mat-card-subtitle>
-          Sample: {{ sampleData()!.sampleNumber }}
-        </mat-card-subtitle>
-      </mat-card-header>
-    </mat-card>
+  <!-- Loading Overlay -->
+  @if (loading()) {
+    <div class="loading-overlay">
+      <div class="loading-spinner"></div>
+      <p>Loading D-inch test data...</p>
+    </div>
   }
 
-  <!-- Coming Soon Message -->
-  <mat-card class="coming-soon">
-    <mat-card-content>
-      <div class="message">
-        <mat-icon>build</mat-icon>
-        <h2>D-Inch Test Form</h2>
-        <p>This form is currently under development and will be available soon.</p>
-        <p>Contact the development team if this form is urgently needed.</p>
+  <!-- Save Message -->
+  @if (saveMessage()) {
+    <div class="save-message" [class.error]="saveMessage().includes('Error')">
+      {{ saveMessage() }}
+    </div>
+  }
+
+  <div class="form-container">
+    <h2>D-Inch Test Entry Form</h2>
+    <p class="form-subtitle">Four-Ball Wear Test - Measurement Entry</p>
+
+    <!-- Test Information Section -->
+    <div class="form-section">
+      <h3>Test Information</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="testStandard">Test Standard *</label>
+          <select
+            id="testStandard"
+            [value]="testStandard()"
+            (change)="testStandard.set($any($event.target).value)"
+            [class.invalid]="testStandard() === ''"
+          >
+            <option value="">-- Select Standard --</option>
+            @for (option of testStandardOptions; track option) {
+              <option [value]="option">{{ option }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="equipmentId">Equipment ID *</label>
+          <input
+            type="text"
+            id="equipmentId"
+            [value]="equipmentId()"
+            (input)="equipmentId.set($any($event.target).value)"
+            [class.invalid]="equipmentId().trim() === ''"
+            placeholder="Enter equipment identifier"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="testTemperature">Test Temperature (°C) *</label>
+          <input
+            type="number"
+            id="testTemperature"
+            [value]="testTemperature()"
+            (input)="testTemperature.set(+$any($event.target).value)"
+            step="0.1"
+            min="15"
+            max="35"
+            [class.invalid]="testTemperature() < 15 || testTemperature() > 35"
+          />
+          <span class="field-hint">Typical: 20-30°C</span>
+        </div>
+
+        <div class="form-group">
+          <label for="analystInitials">Analyst Initials *</label>
+          <input
+            type="text"
+            id="analystInitials"
+            [value]="analystInitials()"
+            (input)="analystInitials.set($any($event.target).value)"
+            maxlength="5"
+            [class.invalid]="analystInitials().trim() === '' || analystInitials().length > 5"
+          />
+        </div>
       </div>
-    </mat-card-content>
-  </mat-card>
+    </div>
+
+    <!-- Trial Measurements Section -->
+    <div class="form-section">
+      <h3>Trial Measurements</h3>
+      
+      <div class="trials-controls">
+        <button class="btn btn-small" (click)="toggleAllTrials()">
+          Toggle All
+        </button>
+        <button 
+          class="btn btn-small btn-warning" 
+          (click)="clearSelectedTrials()"
+          [disabled]="selectedTrials().length === 0"
+        >
+          Clear Selected ({{ selectedTrials().length }})
+        </button>
+      </div>
+
+      <div class="trials-table">
+        <div class="table-header">
+          <div class="col-select">Select</div>
+          <div class="col-trial">Trial #</div>
+          <div class="col-measurement">Measurement</div>
+          <div class="col-result">Result</div>
+          <div class="col-notes">Notes</div>
+        </div>
+
+        <!-- Trial 1 -->
+        <div class="table-row">
+          <div class="col-select">
+            <input
+              type="checkbox"
+              [checked]="trial1Selected()"
+              (change)="trial1Selected.set($any($event.target).checked)"
+              [disabled]="trial1Measurement() === null"
+            />
+          </div>
+          <div class="col-trial">Trial 1</div>
+          <div class="col-measurement">
+            <input
+              type="number"
+              [value]="trial1Measurement()"
+              (input)="trial1Measurement.set($any($event.target).value === '' ? null : +$any($event.target).value)"
+              (blur)="calculateTrialResult(1)"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+          <div class="col-result">
+            <input
+              type="number"
+              [value]="trial1Result()"
+              readonly
+              placeholder="--"
+            />
+          </div>
+          <div class="col-notes">
+            <input
+              type="text"
+              [value]="trial1Notes()"
+              (input)="trial1Notes.set($any($event.target).value)"
+              placeholder="Optional notes"
+            />
+          </div>
+        </div>
+
+        <!-- Trial 2 -->
+        <div class="table-row">
+          <div class="col-select">
+            <input
+              type="checkbox"
+              [checked]="trial2Selected()"
+              (change)="trial2Selected.set($any($event.target).checked)"
+              [disabled]="trial2Measurement() === null"
+            />
+          </div>
+          <div class="col-trial">Trial 2</div>
+          <div class="col-measurement">
+            <input
+              type="number"
+              [value]="trial2Measurement()"
+              (input)="trial2Measurement.set($any($event.target).value === '' ? null : +$any($event.target).value)"
+              (blur)="calculateTrialResult(2)"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+          <div class="col-result">
+            <input
+              type="number"
+              [value]="trial2Result()"
+              readonly
+              placeholder="--"
+            />
+          </div>
+          <div class="col-notes">
+            <input
+              type="text"
+              [value]="trial2Notes()"
+              (input)="trial2Notes.set($any($event.target).value)"
+              placeholder="Optional notes"
+            />
+          </div>
+        </div>
+
+        <!-- Trial 3 -->
+        <div class="table-row">
+          <div class="col-select">
+            <input
+              type="checkbox"
+              [checked]="trial3Selected()"
+              (change)="trial3Selected.set($any($event.target).checked)"
+              [disabled]="trial3Measurement() === null"
+            />
+          </div>
+          <div class="col-trial">Trial 3</div>
+          <div class="col-measurement">
+            <input
+              type="number"
+              [value]="trial3Measurement()"
+              (input)="trial3Measurement.set($any($event.target).value === '' ? null : +$any($event.target).value)"
+              (blur)="calculateTrialResult(3)"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+          <div class="col-result">
+            <input
+              type="number"
+              [value]="trial3Result()"
+              readonly
+              placeholder="--"
+            />
+          </div>
+          <div class="col-notes">
+            <input
+              type="text"
+              [value]="trial3Notes()"
+              (input)="trial3Notes.set($any($event.target).value)"
+              placeholder="Optional notes"
+            />
+          </div>
+        </div>
+
+        <!-- Trial 4 -->
+        <div class="table-row">
+          <div class="col-select">
+            <input
+              type="checkbox"
+              [checked]="trial4Selected()"
+              (change)="trial4Selected.set($any($event.target).checked)"
+              [disabled]="trial4Measurement() === null"
+            />
+          </div>
+          <div class="col-trial">Trial 4</div>
+          <div class="col-measurement">
+            <input
+              type="number"
+              [value]="trial4Measurement()"
+              (input)="trial4Measurement.set($any($event.target).value === '' ? null : +$any($event.target).value)"
+              (blur)="calculateTrialResult(4)"
+              step="0.01"
+              placeholder="0.00"
+            />
+          </div>
+          <div class="col-result">
+            <input
+              type="number"
+              [value]="trial4Result()"
+              readonly
+              placeholder="--"
+            />
+          </div>
+          <div class="col-notes">
+            <input
+              type="text"
+              [value]="trial4Notes()"
+              (input)="trial4Notes.set($any($event.target).value)"
+              placeholder="Optional notes"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results Summary Section -->
+    @if (showCalculationDetails() && validTrials().length > 0) {
+      <div class="calculation-section">
+        <h3>Results & Statistical Analysis</h3>
+        
+        <div class="results-grid">
+          <div class="result-card primary">
+            <div class="result-label">Valid Trials</div>
+            <div class="result-value">{{ validTrials().length }}</div>
+          </div>
+
+          @if (averageResult() !== null) {
+            <div class="result-card">
+              <div class="result-label">Average Result</div>
+              <div class="result-value">{{ averageResult() }}</div>
+            </div>
+          }
+
+          @if (resultVariation() !== null) {
+            <div class="result-card" [ngClass]="{ 
+              'good': isVariationAcceptable(),
+              'warning': !isVariationAcceptable()
+            }">
+              <div class="result-label">Variation (Range)</div>
+              <div class="result-value">{{ resultVariation() }}</div>
+            </div>
+          }
+
+          @if (standardDeviation() !== null) {
+            <div class="result-card">
+              <div class="result-label">Std Deviation</div>
+              <div class="result-value">{{ standardDeviation() }}</div>
+            </div>
+          }
+
+          @if (coefficientOfVariation() !== null) {
+            <div class="result-card">
+              <div class="result-label">CV %</div>
+              <div class="result-value">{{ coefficientOfVariation() }}%</div>
+            </div>
+          }
+        </div>
+
+        <!-- Quality Control Checks -->
+        @if (showQualityControlChecks()) {
+          <div class="quality-control-warning">
+            <strong>⚠️ Quality Control Alert:</strong>
+            <p>{{ qualityControlMessage() }}</p>
+          </div>
+        }
+
+        <!-- Statistical Interpretation -->
+        <div class="interpretation-guide">
+          <h4>Result Interpretation</h4>
+          <div class="guide-content">
+            <div class="guide-item">
+              <strong>Variation Range:</strong> Acceptable variation is ≤ 5 units between trials
+            </div>
+            <div class="guide-item">
+              <strong>Standard Deviation:</strong> Lower values indicate more consistent measurements
+            </div>
+            <div class="guide-item">
+              <strong>Coefficient of Variation:</strong> Normalized measure of dispersion (lower is better)
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Comments Section -->
+    <div class="form-section">
+      <h3>Comments & Notes</h3>
+      
+      <div class="form-group">
+        <label for="labComments">Lab Comments</label>
+        <textarea
+          id="labComments"
+          [value]="labComments()"
+          (input)="labComments.set($any($event.target).value)"
+          rows="2"
+          placeholder="Lab-specific comments, observations, or issues..."
+          maxlength="500"
+        ></textarea>
+        <span class="char-count">{{ labComments().length }}/500</span>
+      </div>
+
+      <div class="form-group">
+        <label for="overallNotes">Overall Notes</label>
+        <textarea
+          id="overallNotes"
+          [value]="overallNotes()"
+          (input)="overallNotes.set($any($event.target).value)"
+          rows="3"
+          placeholder="Any additional notes about the test..."
+          maxlength="1000"
+        ></textarea>
+        <span class="char-count">{{ overallNotes().length }}/1000</span>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button 
+        class="btn btn-secondary" 
+        (click)="clearForm()"
+        [disabled]="saving()"
+      >
+        Clear Form
+      </button>
+      
+      <button 
+        class="btn btn-primary" 
+        (click)="save(false)"
+        [disabled]="!isFormValid() || saving()"
+      >
+        {{ saving() ? 'Saving...' : 'Save Progress' }}
+      </button>
+      
+      <button 
+        class="btn btn-success" 
+        (click)="save(true)"
+        [disabled]="!isFormValid() || saving()"
+      >
+        {{ saving() ? 'Saving...' : 'Complete Test' }}
+      </button>
+    </div>
+  </div>
 </div>

@@ -119,7 +119,7 @@ export const testScheduleTestTable = sqliteTable('test_schedule_test_table', {
 });
 
 export const testStandTable = sqliteTable('test_stand_table', {
-  id: int().notNull(),
+  id: int().primaryKey({ autoIncrement: true }),
   name: text(),
 });
 
@@ -191,4 +191,106 @@ export const testFormDataTable = sqliteTable('test_form_data_table', {
     table.testId, 
     table.version
   ),
+}));
+
+export const lubeSamplingPointTable = sqliteTable('lube_sampling_point_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  tagNumber: text(),
+  component: text(),
+  location: text(),
+  lubeClassItemNumber: text(),
+  lubeQuantityRequired: real(),
+  lubeUnitsOfMeasure: text(),
+  testCategory: text(),
+  qualityClass: text(),
+  pricingPackageId: int(),
+  testPricesId: int(),
+  lastSampleDate: int({ mode: 'timestamp' }),
+  changeTaskNumber: text(),
+  changeIntervalType: text(),
+  changeIntervalNumber: int(),
+  lastChangeDate: int({ mode: 'timestamp' }),
+  inProgram: int({ mode: 'boolean' }),
+  testScheduled: int({ mode: 'boolean' }),
+  applId: int(),
+  materialInfo: text(),
+});
+
+// ============================================================================
+// PHASE 1: CRITICAL TABLES - Authorization & Sample Management
+// ============================================================================
+
+// User qualifications for test authorization
+export const lubeTechQualificationTable = sqliteTable('lube_tech_qualification_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  employeeId: text().notNull(),
+  testStandId: int().notNull(),
+  qualificationLevel: text().notNull(), // 'TRAIN', 'Q', 'QAG', 'MicrE'
+  certifiedDate: int({ mode: 'timestamp' }).notNull(),
+  certifiedBy: text(),
+  expirationDate: int({ mode: 'timestamp' }),
+  active: int({ mode: 'boolean' }).default(true),
+  notes: text(),
+}, (table) => ({
+  testStandIdFk: foreignKey({
+    columns: [table.testStandId],
+    foreignColumns: [testStandTable.id],
+    name: 'lube_tech_qual_teststand_fk'
+  }),
+  uniqueEmpTeststand: uniqueIndex('unique_emp_teststand_idx').on(
+    table.employeeId,
+    table.testStandId
+  ),
+  testStandIdIdx: index('lube_tech_qual_teststand_idx').on(table.testStandId),
+  employeeIdIdx: index('lube_tech_qual_employee_idx').on(table.employeeId),
+  activeIdx: index('lube_tech_qual_active_idx').on(table.active),
+}));
+
+// Master sample table - contains all sample information
+export const usedLubeSamplesTable = sqliteTable('used_lube_samples_table', {
+  id: int().primaryKey({ autoIncrement: true }),
+  tagNumber: text(),
+  component: text(),
+  location: text(),
+  lubeType: text(),
+  newUsedFlag: int(), // 0 = new, 1 = used
+  sampleDate: int({ mode: 'timestamp' }),
+  status: int(), // Sample status code
+  returnedDate: int({ mode: 'timestamp' }),
+  priority: int(),
+  assignedDate: int({ mode: 'timestamp' }),
+  assignedTo: text(),
+  receivedDate: int({ mode: 'timestamp' }),
+  oilAdded: real(),
+  comments: text(),
+}, (table) => ({
+  tagIdx: index('used_lube_samples_tag_idx').on(table.tagNumber),
+  statusIdx: index('used_lube_samples_status_idx').on(table.status),
+  componentIdx: index('used_lube_samples_component_idx').on(table.component),
+  locationIdx: index('used_lube_samples_location_idx').on(table.location),
+  assignedToIdx: index('used_lube_samples_assigned_idx').on(table.assignedTo),
+}));
+
+// Component lookup table - equipment component codes
+export const componentTable = sqliteTable('component_table', {
+  code: text().primaryKey(),
+  name: text().notNull(),
+  description: text(),
+  active: int({ mode: 'boolean' }).default(true),
+  sortOrder: int(),
+}, (table) => ({
+  activeIdx: index('component_active_idx').on(table.active),
+  sortOrderIdx: index('component_sort_idx').on(table.sortOrder),
+}));
+
+// Location lookup table - equipment location codes
+export const locationTable = sqliteTable('location_table', {
+  code: text().primaryKey(),
+  name: text().notNull(),
+  description: text(),
+  active: int({ mode: 'boolean' }).default(true),
+  sortOrder: int(),
+}, (table) => ({
+  activeIdx: index('location_active_idx').on(table.active),
+  sortOrderIdx: index('location_sort_idx').on(table.sortOrder),
 }));
