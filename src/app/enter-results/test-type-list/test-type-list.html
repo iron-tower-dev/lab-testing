@@ -1,9 +1,44 @@
 <div class="wrapper">
     <mat-list class="selection-list">
         @for (option of testReferenceOptions(); track option.reference.id) {
-        <mat-list-item (click)="setSelectedTestReference(option.reference)">
-            {{ option.label }}
+        <mat-list-item 
+            (click)="canSelectTest(option.reference) && setSelectedTestReference(option.reference)"
+            [class.unauthorized]="!canSelectTest(option.reference)"
+            [class.disabled]="!canSelectTest(option.reference)">
+            
+            <div class="test-item-content">
+                <span class="test-name">{{ option.label }}</span>
+                
+                @if (option.reference.testStandId) {
+                    @if (getQualificationBadge(option.reference); as badge) {
+                        <span class="qual-badge" 
+                              [class.badge-success]="badge.color === 'success'"
+                              [class.badge-primary]="badge.color === 'primary'"
+                              [class.badge-info]="badge.color === 'info'"
+                              [class.badge-warning]="badge.color === 'warning'"
+                              [class.badge-danger]="badge.color === 'danger'">
+                            {{ badge.label }}
+                            @if (badge.isExpired) {
+                                <span class="expired-indicator">⚠️ Expired</span>
+                            }
+                        </span>
+                    } @else {
+                        <span class="qual-badge badge-danger">Not Qualified</span>
+                    }
+                }
+                
+                @if (!canSelectTest(option.reference)) {
+                    <mat-icon class="lock-icon">lock</mat-icon>
+                }
+            </div>
         </mat-list-item>
         }
     </mat-list>
+    
+    @if (!qualificationsLoaded()) {
+        <div class="loading-qualifications">
+            <mat-spinner diameter="24"></mat-spinner>
+            <span>Loading qualifications...</span>
+        </div>
+    }
 </div>

@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Validators } from '@angular/forms';
-import { BaseTestFormComponent } from '../../../../../../shared/components/base-test-form/base-test-form.component';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { TestReadingsService } from '../../../../../../core/services/test-readings.service';
+import { GreaseCalculationService } from '../../../../../../shared/services/grease-calculation.service';
+import { TestReadingRecord } from '../../../../../../core/models/test-reading.model';
 import { SharedModule } from '../../../../../../shared-module';
 
 @Component({
@@ -12,21 +14,33 @@ import { SharedModule } from '../../../../../../shared-module';
     SharedModule
   ]
 })
-export class GrDropPtEntryForm extends BaseTestFormComponent implements OnInit {
-  averageDropPoint = 0;
-  temperatureRange = 0;
-  showCalculationDetails = true;
+export class GrDropPtEntryForm implements OnInit {
+  private fb = inject(FormBuilder);
+  private testReadingsService = inject(TestReadingsService);
+  private greaseCalc = inject(GreaseCalculationService);
+
+  // State signals
+  loading = signal(false);
+  saving = signal(false);
+  saveMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  showCalculationDetails = signal(true);
+
+  // Form and sample data
+  form!: FormGroup;
+  sampleId = signal<string>('');
+  testTypeId = signal<string>('');
+  existingData = signal<TestReadingRecord | null>(null);
   
-  override ngOnInit(): void {
-    super.ngOnInit();
+  ngOnInit(): void {
+    this.initializeForm();
+    this.loadExistingData();
   }
 
-  protected override initializeForm(): void {
+  private initializeForm(): void {
     this.form = this.fb.group({
-      // Drop point measurements
-      trial1Temperature: ['', [Validators.required, Validators.min(50), Validators.max(350)]],
-      trial2Temperature: ['', [Validators.required, Validators.min(50), Validators.max(350)]],
-      trial3Temperature: ['', [Validators.min(50), Validators.max(350)]],
+      // Drop point measurements (observed dropping point temperature)
+      droppingPointTemp: ['', [Validators.required, Validators.min(50), Validators.max(350)]],
+      blockTemp: ['', [Validators.required, Validators.min(50), Validators.max(400)]],
       
       // Sample preparation
       sampleAmount: ['', [Validators.required, Validators.min(0.5), Validators.max(5)]],
@@ -62,154 +76,85 @@ export class GrDropPtEntryForm extends BaseTestFormComponent implements OnInit {
     });
   }
 
-  protected override setupCalculationWatchers(): void {
-    this.form.valueChanges.subscribe(() => {
-      this.calculateAverageDropPoint();
-      this.calculateTemperatureRange();
-      this.performCalculation();
-    });
-  }
-
-  private calculateAverageDropPoint(): void {
-    const validTemperatures = this.getValidTemperatures();
+  // Computed signals for calculations
+  droppingPointResult = computed(() => {
+    if (!this.form) return null;
     
-    if (validTemperatures.length >= 2) {
-      const sum = validTemperatures.reduce((acc, temp) => acc + temp, 0);
-      this.averageDropPoint = Math.round((sum / validTemperatures.length) * 10) / 10;
-    } else {
-      this.averageDropPoint = 0;
-    }
-  }
-
-  private calculateTemperatureRange(): void {
-    const validTemperatures = this.getValidTemperatures();
+    const droppingPointTemp = parseFloat(this.form.get('droppingPointTemp')?.value);
+    const blockTemp = parseFloat(this.form.get('blockTemp')?.value);
     
-    if (validTemperatures.length >= 2) {
-      const max = Math.max(...validTemperatures);
-      const min = Math.min(...validTemperatures);
-      this.temperatureRange = Math.round((max - min) * 10) / 10;
-    } else {
-      this.temperatureRange = 0;
-    }
-  }
-
-  private getValidTemperatures(): number[] {
-    const temperatures = [
-      this.form.get('trial1Temperature')?.value,
-      this.form.get('trial2Temperature')?.value,
-      this.form.get('trial3Temperature')?.value
-    ].filter(temp => temp !== null && temp !== undefined && temp !== '');
+    if (isNaN(droppingPointTemp) || isNaN(blockTemp)) return null;
     
-    return temperatures.map(temp => parseFloat(temp)).filter(temp => !isNaN(temp));
-  }
+    return this.greaseCalc.calculateDroppingPoint(droppingPointTemp, blockTemp);
+  });
 
-  protected override extractCalculationValues(): Record<string, number> {
-    const validTemperatures = this.getValidTemperatures();
+  temperatureDifference = computed(() => {
+    if (!this.form) return 0;
     
-    return {
-      averageTemperature: validTemperatures.length > 0 ? 
-        validTemperatures.reduce((sum, temp) => sum + temp, 0) / validTemperatures.length : 0,
-      temperatureRange: this.temperatureRange,
-      heatingRate: this.form.get('heatingRate')?.value || 2
-    };
-  }
+    const droppingPointTemp = parseFloat(this.form.get('droppingPointTemp')?.value);
+    const blockTemp = parseFloat(this.form.get('blockTemp')?.value);
+    
+    if (isNaN(droppingPointTemp) || isNaN(blockTemp)) return 0;
+    
+    return Math.round((blockTemp - droppingPointTemp) * 10) / 10;
+  });
 
-  // Quality control methods
-  isTemperatureRangeAcceptable(): boolean {
-    return this.temperatureRange <= 4.0; // ASTM D566 repeatability requirement
-  }
+  isTemperatureDifferenceAcceptable = computed(() => {
+    const diff = this.temperatureDifference();
+    return diff >= 5 && diff <= 50; // Reasonable difference range
+  });
 
-  isHeatingRateAcceptable(): boolean {
-    const rate = this.form.get('heatingRate')?.value;
-    return rate && rate >= 1.5 && rate <= 2.5; // ASTM D566 requirement
-  }
+  isHeatingRateAcceptable = computed(() => {
+    const rate = parseFloat(this.form?.get('heatingRate')?.value);
+    return !isNaN(rate) && rate >= 1.5 && rate <= 2.5; // ASTM D566 requirement
+  });
 
-  isDropPointReasonable(): boolean {
-    return this.averageDropPoint >= 60 && this.averageDropPoint <= 320; // Typical range for greases
-  }
+  isDropPointReasonable = computed(() => {
+    const result = this.droppingPointResult();
+    if (!result?.isValid) return true;
+    return result.result >= 60 && result.result <= 320; // Typical range for greases
+  });
 
-  showQualityControlChecks(): boolean {
-    return !this.isTemperatureRangeAcceptable() || 
-           !this.isHeatingRateAcceptable() || 
-           !this.isDropPointReasonable();
-  }
-
-  getQualityControlMessage(): string {
-    if (!this.isTemperatureRangeAcceptable()) {
-      return `Temperature range too high (${this.temperatureRange}°C) - repeat test`;
-    }
-    if (!this.isHeatingRateAcceptable()) {
-      return 'Heating rate outside acceptable range (2 ± 0.5°C/min)';
-    }
-    if (!this.isDropPointReasonable()) {
-      return 'Drop point outside typical grease range - verify sample type';
-    }
-    return '';
-  }
-
-  // Grease classification methods
-  getDropPointClassification(): string {
-    if (this.averageDropPoint >= 260) return 'Very High Drop Point';
-    if (this.averageDropPoint >= 220) return 'High Drop Point';
-    if (this.averageDropPoint >= 180) return 'Medium High Drop Point';
-    if (this.averageDropPoint >= 150) return 'Medium Drop Point';
-    if (this.averageDropPoint >= 120) return 'Medium Low Drop Point';
+  dropPointClassification = computed(() => {
+    const result = this.droppingPointResult();
+    if (!result?.isValid) return null;
+    
+    const dropPoint = result.result;
+    if (dropPoint >= 260) return 'Very High Drop Point';
+    if (dropPoint >= 220) return 'High Drop Point';
+    if (dropPoint >= 180) return 'Medium High Drop Point';
+    if (dropPoint >= 150) return 'Medium Drop Point';
+    if (dropPoint >= 120) return 'Medium Low Drop Point';
     return 'Low Drop Point';
-  }
+  });
 
-  getTemperatureService(): string {
+  serviceTemperature = computed(() => {
+    const result = this.droppingPointResult();
+    if (!result?.isValid) return null;
+    
     // Conservative service temperature estimate (typically 50-100°C below drop point)
-    const serviceTemp = Math.round(this.averageDropPoint - 75);
-    return `Approximately ${serviceTemp}°C maximum service temperature`;
-  }
+    return Math.round(result.result - 75);
+  });
 
-  getConsistencyIndication(): string {
-    // Drop point can indicate grease consistency at elevated temperatures
-    if (this.averageDropPoint >= 250) return 'Excellent high-temperature stability';
-    if (this.averageDropPoint >= 200) return 'Good high-temperature stability';
-    if (this.averageDropPoint >= 150) return 'Moderate high-temperature stability';
+  stabilityIndication = computed(() => {
+    const result = this.droppingPointResult();
+    if (!result?.isValid) return null;
+    
+    const dropPoint = result.result;
+    if (dropPoint >= 250) return 'Excellent high-temperature stability';
+    if (dropPoint >= 200) return 'Good high-temperature stability';
+    if (dropPoint >= 150) return 'Moderate high-temperature stability';
     return 'Limited high-temperature stability';
-  }
+  });
 
-  // Test validity checks
-  hasValidDropObservation(): boolean {
-    const dropAppearance = this.form.get('dropAppearance')?.value;
-    const dropBehavior = this.form.get('dropBehavior')?.value;
-    return dropAppearance || dropBehavior;
-  }
 
-  isPrecisionAcceptable(): boolean {
-    const validTemps = this.getValidTemperatures();
-    if (validTemps.length < 2) return false;
+  private async loadExistingData(): Promise<void> {
+    // TODO: Get sampleId and testTypeId from parent component or service
+    const sampleId = this.sampleId();
+    const testTypeId = this.testTypeId();
     
-    const standardDev = this.calculateStandardDeviation(validTemps);
-    return standardDev <= 2.0; // Acceptable precision
-  }
-
-  private calculateStandardDeviation(values: number[]): number {
-    if (values.length < 2) return 0;
-    
-    const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-    const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / (values.length - 1);
-    return Math.sqrt(variance);
-  }
-
-  protected override loadExistingData(): void {
-    super.loadExistingData();
-    
-    if (this.existingReading) {
-      this.form.patchValue({
-        trial1Temperature: this.existingReading.value1,
-        trial2Temperature: this.existingReading.value2,
-        trial3Temperature: this.existingReading.value3,
-        sampleAmount: this.existingReading.trialCalc,
-        apparatusType: this.existingReading.id1 || 'ASTM D566',
-        heatingRate: this.existingReading.id2 || '2',
-        analystInitials: this.existingReading.id3,
-        observationNotes: this.extractFromComments('observation'),
-        testNotes: this.extractFromComments('notes')
-      });
-    } else {
+    if (!sampleId || !testTypeId) {
+      // Set default values
       this.form.patchValue({
         analystInitials: localStorage.getItem('analystInitials') || '',
         apparatusType: 'ASTM D566',
@@ -217,38 +162,82 @@ export class GrDropPtEntryForm extends BaseTestFormComponent implements OnInit {
         heatingRate: '2',
         draftConditions: 'None'
       });
+      return;
+    }
+
+    this.loading.set(true);
+    
+    try {
+      const existingReading = await this.testReadingsService.getTestReading(sampleId, testTypeId);
+      
+      if (existingReading) {
+        this.existingData.set(existingReading);
+        this.form.patchValue({
+          droppingPointTemp: existingReading.value1,
+          blockTemp: existingReading.value2,
+          sampleAmount: existingReading.value3,
+          apparatusType: existingReading.id1 || 'ASTM D566',
+          heatingRate: existingReading.id2 || '2',
+          analystInitials: existingReading.id3,
+          observationNotes: this.extractFromComments('observation', existingReading.mainComments || ''),
+          testNotes: this.extractFromComments('notes', existingReading.mainComments || '')
+        });
+      } else {
+        // Set default values
+        this.form.patchValue({
+          analystInitials: localStorage.getItem('analystInitials') || '',
+          apparatusType: 'ASTM D566',
+          cupType: 'Standard metal cup',
+          heatingRate: '2',
+          draftConditions: 'None'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading existing Grease Dropping Point test data:', error);
+      this.showSaveMessage('Error loading existing data', 'error');
+    } finally {
+      this.loading.set(false);
     }
   }
 
-  protected override createTestReading(isComplete: boolean = false) {
-    const baseReading = super.createTestReading(isComplete);
+  private createTestReading(): TestReadingRecord {
+    const result = this.droppingPointResult();
     
     return {
-      ...baseReading,
-      value1: this.form.get('trial1Temperature')?.value,
-      value2: this.form.get('trial2Temperature')?.value,
-      value3: this.form.get('trial3Temperature')?.value,
-      trialCalc: this.form.get('sampleAmount')?.value,
+      sampleId: this.sampleId(),
+      testTypeId: this.testTypeId(),
+      value1: this.form.get('droppingPointTemp')?.value || null,
+      value2: this.form.get('blockTemp')?.value || null,
+      value3: this.form.get('sampleAmount')?.value || null,
+      trialCalc: result?.result || null,
       id1: this.form.get('apparatusType')?.value,
       id2: this.form.get('heatingRate')?.value,
       id3: this.form.get('analystInitials')?.value,
-      mainComments: this.combineComments()
+      mainComments: this.combineComments(),
+      trialComplete: true,
+      status: 'E', // Entry status
+      entryId: this.form.get('analystInitials')?.value || ''
     };
   }
 
-  private extractFromComments(section: string): string {
-    if (!this.existingReading?.mainComments) return '';
+  private extractFromComments(section: string, comments: string): string {
+    if (!comments) return '';
     
     const regex = new RegExp(`${section}:(.+?)(?:\\||$)`, 'i');
-    const match = this.existingReading.mainComments.match(regex);
+    const match = comments.match(regex);
     return match ? match[1].trim() : '';
   }
 
   private combineComments(): string {
     const parts = [];
     
-    if (this.averageDropPoint > 0) parts.push(`avgDropPoint:${this.averageDropPoint}C`);
-    if (this.temperatureRange > 0) parts.push(`range:${this.temperatureRange}C`);
+    const result = this.droppingPointResult();
+    if (result?.isValid) {
+      parts.push(`correctedDropPoint:${result.result}C`);
+      if (result.metadata?.temperatureDifference) {
+        parts.push(`tempDiff:${result.metadata.temperatureDifference}C`);
+      }
+    }
     
     const cupType = this.form.get('cupType')?.value;
     if (cupType) parts.push(`cup:${cupType}`);
@@ -283,13 +272,66 @@ export class GrDropPtEntryForm extends BaseTestFormComponent implements OnInit {
     return parts.join(' | ');
   }
 
-  override onSave(complete: boolean = false): void {
-    // Save analyst initials for future use
-    const initials = this.form.get('analystInitials')?.value;
-    if (initials) {
-      localStorage.setItem('analystInitials', initials);
+  async onSave(): Promise<void> {
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      this.showSaveMessage('Please correct form errors before saving', 'error');
+      return;
     }
 
-    super.onSave(complete);
+    const result = this.droppingPointResult();
+    if (!result?.isValid) {
+      this.showSaveMessage('Please enter valid dropping point and block temperatures', 'error');
+      return;
+    }
+
+    this.saving.set(true);
+    
+    try {
+      const testReading = this.createTestReading();
+      await this.testReadingsService.saveTestReading(testReading);
+      
+      // Save analyst initials for future use
+      const initials = this.form.get('analystInitials')?.value;
+      if (initials) {
+        localStorage.setItem('analystInitials', initials);
+      }
+      
+      this.showSaveMessage('Grease dropping point test results saved successfully', 'success');
+      
+    } catch (error) {
+      console.error('Error saving grease dropping point test results:', error);
+      this.showSaveMessage('Error saving test results. Please try again.', 'error');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  onClear(): void {
+    if (confirm('Are you sure you want to clear all entered data? This cannot be undone.')) {
+      this.form.reset({
+        apparatusType: 'ASTM D566',
+        cupType: 'Standard metal cup',
+        heatingRate: '2',
+        draftConditions: 'None',
+        analystInitials: localStorage.getItem('analystInitials') || ''
+      });
+      this.showSaveMessage('Form cleared', 'success');
+    }
+  }
+
+  toggleCalculationDetails(): void {
+    this.showCalculationDetails.update(show => !show);
+  }
+
+  private showSaveMessage(text: string, type: 'success' | 'error'): void {
+    this.saveMessage.set({ text, type });
+    
+    // Auto-hide success messages after 3 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        this.saveMessage.set(null);
+      }, 3000);
+    }
   }
 }

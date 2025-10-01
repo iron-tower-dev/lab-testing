@@ -1,4 +1,21 @@
-<div class="tan-form-content">
+<form [formGroup]="form" class="tan-form-content">
+  <!-- Loading indicator -->
+  @if (isLoading()) {
+    <div class="loading-overlay">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading TAN data...</p>
+    </div>
+  }
+
+  <!-- Save message -->
+  @if (saveMessage()) {
+    <div class="save-message" [class.success]="saveMessage()?.includes('success')" [class.error]="saveMessage()?.includes('Failed')">
+      <mat-icon>{{ saveMessage()?.includes('success') ? 'check_circle' : 'error' }}</mat-icon>
+      <span>{{ saveMessage() }}</span>
+    </div>
+  }
+
+  <div class="tan-form-content">
   <!-- Sample Preparation Section -->
   <div class="sample-section">
     <h3>Sample Preparation</h3>
@@ -61,7 +78,7 @@
 
       <mat-form-field class="third-width">
         <mat-label>Net Buret Volume</mat-label>
-        <input matInput type="number" [value]="netBuretVolume" 
+        <input matInput type="number" [value]="netBuretVolume()" 
                readonly class="calculated-field" placeholder="mL">
         <mat-hint>Automatically calculated: Final - Initial</mat-hint>
       </mat-form-field>
@@ -147,20 +164,25 @@
   </div>
 
   <!-- Calculation Display -->
-  @if (showCalculationDetails && netBuretVolume !== null) {
+  @if (showCalculationDetails() && tanResult()) {
     <div class="calculation-display">
       <h3>Calculation Details</h3>
       <div class="calc-formula">
-        <strong>Formula:</strong> TAN = (Net Buret Volume × KOH Normality × 56.1) / Sample Weight
+        <strong>Formula:</strong> TAN = (Net Buret Volume × 56.1 × KOH Normality) / Sample Weight
       </div>
-      @if (form.valid && netBuretVolume > 0) {
+      @if (tanResult()?.isValid) {
         <div class="calc-values">
-          <p><strong>Net Volume:</strong> {{ netBuretVolume }} mL</p>
-          <p><strong>KOH Normality:</strong> {{ form.get('kohNormality')?.value }} N</p>
-          <p><strong>Sample Weight:</strong> {{ form.get('sampleWeight')?.value }} g</p>
+          <p><strong>Net Volume:</strong> {{ netBuretVolume() | number:'1.2-2' }} mL</p>
+          <p><strong>KOH Normality:</strong> {{ form.get('kohNormality')?.value | number:'1.4-4' }} N</p>
+          <p><strong>Sample Weight:</strong> {{ form.get('sampleWeight')?.value | number:'1.2-2' }} g</p>
           <p class="calc-result">
-            <strong>TAN Result:</strong> {{ calculationResult?.result | number:'1.2-2' }} mg KOH/g
+            <strong>TAN Result:</strong> {{ tanResult()?.result | number:'1.2-2' }} mg KOH/g
           </p>
+          @if (tanResult()?.metadata) {
+            <p class="calc-metadata">
+              <small>KOH Molecular Weight: {{ tanResult()?.metadata['kohMolecularWeight'] }} g/mol</small>
+            </p>
+          }
         </div>
       }
     </div>
@@ -172,21 +194,15 @@
       <h3>Quality Control Checks</h3>
       <div class="qc-warnings">
         @if (hasNegativeVolume()) {
-          <div class="qc-warning">
+          <div class="qc-warning error">
             <mat-icon>error</mat-icon>
             <span>Negative titration volume - check buret readings</span>
           </div>
         }
-        @if (hasUnusualTitrationVolume() && !hasNegativeVolume()) {
+        @for (warning of getQualityControlWarnings(); track warning) {
           <div class="qc-warning">
             <mat-icon>warning</mat-icon>
-            <span>{{ getQualityControlMessage() }}</span>
-          </div>
-        }
-        @if (hasHighTanValue()) {
-          <div class="qc-warning">
-            <mat-icon>warning</mat-icon>
-            <span>High TAN value - verify sample type and calculations</span>
+            <span>{{ warning }}</span>
           </div>
         }
       </div>
@@ -205,13 +221,31 @@
       </mat-form-field>
     </div>
 
-    <div class="form-row">
-      <mat-form-field class="full-width">
-        <mat-label>Additional Comments</mat-label>
-        <textarea matInput formControlName="mainComments" rows="2"
-                  placeholder="Any additional observations or notes about the test"></textarea>
-      </mat-form-field>
-    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary" 
+            type="button"
+            (click)="saveResults()" 
+            [disabled]="!form.valid || isSaving() || isLoading()">
+      @if (isSaving()) {
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>Saving...</span>
+      } @else {
+        <mat-icon>save</mat-icon>
+        <span>Save Results</span>
+      }
+    </button>
+    
+    <button mat-raised-button 
+            type="button"
+            (click)="clearForm()" 
+            [disabled]="isSaving() || isLoading()">
+      <mat-icon>clear</mat-icon>
+      <span>Clear Form</span>
+    </button>
   </div>
 </div>
+</form>
 

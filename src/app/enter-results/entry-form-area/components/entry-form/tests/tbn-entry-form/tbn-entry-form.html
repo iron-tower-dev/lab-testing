@@ -1,3 +1,15 @@
+@if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading...</p>
+  </div>
+}
+@if (saveMessage()) {
+  <div class="save-message" [class.success]="saveMessage()!.type === 'success'" [class.error]="saveMessage()!.type === 'error'">
+    <mat-icon>{{ saveMessage()!.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+    <span>{{ saveMessage()!.text }}</span>
+  </div>
+}
 <div class="tbn-form-content" [formGroup]="form">
   <!-- Trial Results Section -->
   <div class="trials-section">
@@ -69,7 +81,7 @@
         <mat-label>Average Volume (mL)</mat-label>
         <input 
           matInput 
-          [value]="averageResult" 
+          [value]="averageResult()"
           readonly
           class="calculated-field">
         <mat-hint>Calculated from valid trials</mat-hint>
@@ -79,10 +91,10 @@
         <mat-label>Variation (mL)</mat-label>
         <input 
           matInput 
-          [value]="getResultVariation()" 
+          [value]="resultVariation()" 
           readonly
           class="calculated-field"
-          [class.variation-high]="!isVariationAcceptable()">
+          [class.variation-high]="!isVariationAcceptable()"
         <mat-hint>Max - Min (should be ≤ 0.2)</mat-hint>
       </mat-form-field>
 
@@ -90,7 +102,7 @@
         <mat-label>TBN Result</mat-label>
         <input 
           matInput 
-          [value]="getTbnResult()" 
+          [value]="tbnResult()"
           readonly
           class="calculated-field result-field">
         <mat-hint>mg KOH/g</mat-hint>
@@ -222,31 +234,53 @@
   </div>
 
   <!-- Quality Control Alerts -->
-  <div class="qc-section" *ngIf="showQualityControlChecks()">
-    <mat-card class="warning-card">
-      <mat-card-header>
-        <mat-card-title>Quality Control Alert</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="warning-message">
-          <mat-icon color="warn">warning</mat-icon>
-          {{ getQualityControlMessage() }}
-        </p>
-      </mat-card-content>
-    </mat-card>
-  </div>
+  @if (showQualityControlChecks()) {
+    <div class="qc-section">
+      <mat-card class="warning-card">
+        <mat-card-header>
+          <mat-card-title>Quality Control Alert</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="warning-message">
+            <mat-icon color="warn">warning</mat-icon>
+            {{ qualityControlMessage() }}
+          </p>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
 
   <!-- Calculation Details -->
-  <div class="calculation-display" *ngIf="showCalculationDetails">
-    <h3>Calculation Details</h3>
-    <div class="calc-formula">
-      <strong>Formula:</strong> TBN = (Average Volume × Normality × 56.1) / Sample Weight
+  @if (showCalculationDetails()) {
+    <div class="calculation-display">
+      <h3>Calculation Details</h3>
+      <div class="calc-formula">
+        <strong>Formula:</strong> TBN = (Average Volume × Normality × 56.1) / Sample Weight
+      </div>
+      @if (form.valid && tbnResult() > 0) {
+        <div class="calc-values">
+          <p><strong>Average Volume:</strong> {{ averageResult() }} mL</p>
+          <p><strong>Titrant Normality:</strong> {{ form.get('titrantNormality')?.value }} N</p>
+          <p><strong>Sample Weight:</strong> {{ form.get('sampleWeight')?.value }} g</p>
+          <p class="calc-result"><strong>TBN Result:</strong> {{ tbnResult() }} mg KOH/g</p>
+        </div>
+      }
     </div>
-    <div class="calc-values" *ngIf="form.valid && getTbnResult() > 0">
-      <p><strong>Average Volume:</strong> {{ averageResult }} mL</p>
-      <p><strong>Titrant Normality:</strong> {{ form.get('titrantNormality')?.value }} N</p>
-      <p><strong>Sample Weight:</strong> {{ form.get('sampleWeight')?.value }} g</p>
-      <p class="calc-result"><strong>TBN Result:</strong> {{ getTbnResult() }} mg KOH/g</p>
-    </div>
+  }
+
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary" type="button" 
+            (click)="onSave()" [disabled]="!form.valid || saving() || loading()">
+      @if (saving()) {
+        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+      }
+      {{ saving() ? 'Saving...' : 'Save Results' }}
+    </button>
+    <button mat-stroked-button type="button" 
+            (click)="onClear()" [disabled]="saving() || loading()">
+      <mat-icon>clear</mat-icon>
+      Clear
+    </button>
   </div>
 </div>

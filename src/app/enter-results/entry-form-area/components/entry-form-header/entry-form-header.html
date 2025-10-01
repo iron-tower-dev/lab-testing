@@ -4,7 +4,14 @@
       <div mat-card-avatar class="header-avatar">
         <mat-icon>assignment</mat-icon>
       </div>
-      <mat-card-title>{{ sampleData()?.testName }}</mat-card-title>
+      <mat-card-title>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+          <span>{{ sampleData()?.testName }}</span>
+          @if (currentStatus()) {
+            <app-status-badge [status]="currentStatus()!" />
+          }
+        </div>
+      </mat-card-title>
       <mat-card-subtitle>Sample: {{ sampleData()?.sampleNumber }}</mat-card-subtitle>
     </mat-card-header>
     

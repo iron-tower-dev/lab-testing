@@ -64,5 +64,16 @@ serve({
   console.log(`  POST   /api/test-form-data     - Save form data`);
   console.log(`  PUT    /api/test-form-data/:id - Update form data`);
   console.log(`  DELETE /api/test-form-data/:id - Delete form data`);
+  console.log(`
+🔧 M&TE Equipment:
+  GET    /api/equipment          - Get all equipment (with filtering)`);
+  console.log(`  GET    /api/equipment/:id      - Get specific equipment`);
+  console.log(`  GET    /api/equipment/test/:testId - Get equipment for test`);
+  console.log(`  GET    /api/equipment/type/:type - Get equipment by type`);
+  console.log(`  POST   /api/equipment          - Create new equipment`);
+  console.log(`  PUT    /api/equipment/:id      - Update equipment`);
+  console.log(`  DELETE /api/equipment/:id      - Delete equipment (soft)`);
+  console.log(`  GET    /api/equipment/:id/calibration - Get calibration history`);
+  console.log(`  POST   /api/equipment/:id/calibration - Add calibration record`);
   console.log(`\n💡 Try: curl http://localhost:${port}/api/status`);
 });

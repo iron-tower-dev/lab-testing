@@ -43,6 +43,75 @@
   text-align: center;
 }
 
+/* Loading overlay */
+.loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  border-radius: 0.5rem;
+}
+
+.loading-overlay mat-spinner {
+  margin-bottom: 1rem;
+}
+
+.loading-overlay p {
+  font-size: 0.875rem;
+  color: #666;
+  margin: 0;
+}
+
+/* Save message */
+.save-message {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-size: 0.875rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+.save-message.success {
+  background-color: #e8f5e9;
+  border: 1px solid #4caf50;
+  color: #2e7d32;
+}
+
+.save-message.success mat-icon {
+  color: #4caf50;
+}
+
+.save-message.error {
+  background-color: #ffebee;
+  border: 1px solid #f44336;
+  color: #c62828;
+}
+
+.save-message.error mat-icon {
+  color: #f44336;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-1rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .tan-form-content .sample-section,
 .tan-form-content .conditions-section,
 .tan-form-content .observations-section {
@@ -192,9 +261,70 @@
   color: #e65100;
 }
 
+.tan-form-content .qc-section .qc-warnings .qc-warning.error {
+  border-color: #f44336;
+}
+
+.tan-form-content .qc-section .qc-warnings .qc-warning.error mat-icon {
+  color: #f44336;
+}
+
+.tan-form-content .qc-section .qc-warnings .qc-warning.error span {
+  color: #c62828;
+}
+
 .tan-form-content mat-form-field .mat-mdc-form-field-hint-wrapper .mat-mdc-form-field-hint {
   font-size: 0.75rem;
   color: #666;
+}
+
+/* Form actions */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 2px solid #e0e0e0;
+  justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+}
+
+.form-actions button {
+  min-width: 150px;
+  font-weight: 500;
+}
+
+.form-actions button mat-spinner {
+  display: inline-block;
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.form-actions button mat-icon {
+  margin-right: 0.5rem;
+  vertical-align: middle;
+}
+
+.form-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Calculation metadata */
+.calc-metadata {
+  font-size: 0.75rem;
+  color: #666;
+  margin-top: 0.5rem;
+  font-style: italic;
 }
 
 .tan-form-content mat-form-field.mat-focused .mat-mdc-form-field-outline-thick .mat-mdc-form-field-outline-start,

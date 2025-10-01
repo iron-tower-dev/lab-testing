@@ -301,4 +301,137 @@ testReadings.delete('/:sampleId/:testId/:trialNumber', async (c) => {
   }
 });
 
+// POST /api/test-readings/bulk - Bulk create/update test readings (for multi-trial tests)
+testReadings.post('/bulk', async (c) => {
+  try {
+    const body = await c.req.json();
+    
+    // Validate required fields
+    if (!body.sampleId || !body.testId || !Array.isArray(body.trials)) {
+      return c.json({
+        success: false,
+        error: 'sampleId, testId, and trials array are required'
+      }, 400);
+    }
+    
+    const { sampleId, testId, trials, entryId, status: testStatus } = body;
+    const now = new Date();
+    const results = [];
+    
+    // Process each trial
+    for (const trial of trials) {
+      if (!trial.trialNumber) {
+        continue; // Skip trials without a number
+      }
+      
+      // Check if trial already exists
+      const existing = await db.select()
+        .from(schema.testReadingsTable)
+        .where(
+          and(
+            eq(schema.testReadingsTable.sampleId, sampleId),
+            eq(schema.testReadingsTable.testId, testId),
+            eq(schema.testReadingsTable.trialNumber, trial.trialNumber)
+          )
+        )
+        .get();
+      
+      const trialData = {
+        sampleId,
+        testId,
+        trialNumber: trial.trialNumber,
+        value1: trial.value1 || null, // stopwatchTime
+        value2: trial.value2 || null, // unused for viscosity
+        value3: trial.value3 || null, // calculatedResult
+        trialCalc: trial.trialCalc || null,
+        id1: trial.id1 || null, // unused for viscosity
+        id2: trial.id2 || null, // tube equipment ID
+        id3: trial.id3 || null, // unused for viscosity
+        trialComplete: trial.trialComplete !== undefined ? trial.trialComplete : (trial.selected || false),
+        status: testStatus || null,
+        schedType: trial.schedType || null,
+        entryId: entryId || null,
+        validateId: trial.validateId || null,
+        entryDate: now,
+        valiDate: trial.valiDate ? new Date(trial.valiDate) : null,
+        mainComments: trial.mainComments || null
+      };
+      
+      if (existing) {
+        // Update existing trial
+        const updated = await db.update(schema.testReadingsTable)
+          .set(trialData)
+          .where(
+            and(
+              eq(schema.testReadingsTable.sampleId, sampleId),
+              eq(schema.testReadingsTable.testId, testId),
+              eq(schema.testReadingsTable.trialNumber, trial.trialNumber)
+            )
+          )
+          .returning()
+          .get();
+        results.push(updated);
+      } else {
+        // Create new trial
+        const created = await db.insert(schema.testReadingsTable)
+          .values(trialData)
+          .returning()
+          .get();
+        results.push(created);
+      }
+    }
+    
+    return c.json({
+      success: true,
+      data: results,
+      count: results.length,
+      message: `Successfully saved ${results.length} trial(s)`
+    }, 201);
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Failed to bulk save test readings',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
+// GET /api/test-readings/sample/:sampleId/test/:testId - Get all trials for a sample/test combination
+testReadings.get('/sample/:sampleId/test/:testId', async (c) => {
+  try {
+    const sampleId = parseInt(c.req.param('sampleId'));
+    const testId = parseInt(c.req.param('testId'));
+    
+    if (isNaN(sampleId) || isNaN(testId)) {
+      return c.json({
+        success: false,
+        error: 'Invalid parameter format'
+      }, 400);
+    }
+    
+    const readings = await db.select()
+      .from(schema.testReadingsTable)
+      .where(
+        and(
+          eq(schema.testReadingsTable.sampleId, sampleId),
+          eq(schema.testReadingsTable.testId, testId)
+        )
+      )
+      .orderBy(asc(schema.testReadingsTable.trialNumber))
+      .all();
+    
+    return c.json({
+      success: true,
+      data: readings,
+      count: readings.length
+    });
+  } catch (error) {
+    return c.json({
+      success: false,
+      error: 'Failed to fetch test readings',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    }, 500);
+  }
+});
+
 export default testReadings;

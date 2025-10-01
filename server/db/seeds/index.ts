@@ -21,6 +21,7 @@ import {
   seedParticleSubType,
   seedTestReadings 
 } from './transactional.seed';
+import { seedComponents, seedLocations, seedSampleQualifications } from './phase1.seed';
 
 /**
  * Main seeding function that runs all seed functions in the correct order
@@ -43,6 +44,14 @@ export async function seedDatabase(databasePath?: string) {
     await seedTestStand(db);
     await seedParticleSubTypeCategoryDefinition(db);
     await seedParticleTypeDefinition(db);
+    
+    // Seed Phase 1 critical lookup tables
+    console.log('\n🔐 Seeding Phase 1 critical tables...');
+    await seedComponents(db);
+    await seedLocations(db);
+    if (process.env.NODE_ENV !== 'production') {
+      await seedSampleQualifications(db);
+    }
     
     // Seed tables that depend on reference tables
     console.log('\n🔗 Seeding dependent reference tables...');
@@ -95,6 +104,9 @@ export async function seedSpecificTables(tables: string[], databasePath?: string
     'particle_type': seedParticleType,
     'particle_sub_type': seedParticleSubType,
     'test_readings': seedTestReadings,
+    'component': seedComponents,
+    'location': seedLocations,
+    'lube_tech_qualification': seedSampleQualifications,
   };
   
   try {
@@ -130,5 +142,8 @@ export {
   seedTestScheduleTest,
   seedParticleType,
   seedParticleSubType,
-  seedTestReadings
+  seedTestReadings,
+  seedComponents,
+  seedLocations,
+  seedSampleQualifications
 };

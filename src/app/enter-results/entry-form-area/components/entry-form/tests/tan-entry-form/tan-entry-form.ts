@@ -1,356 +1,264 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, input, signal, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { SharedModule } from '../../../../../../shared-module';
+import { SampleWithTestInfo } from '../../../../../enter-results.types';
+import { TANCalculationService } from '../../../../../../shared/services/tan-calculation.service';
+import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
+import { CalculationResult } from '../../../../../../shared/services/calculation.service';
 
+/**
+ * TAN (Total Acid Number) Entry Form Component
+ * 
+ * Modernized with Angular signals, TANCalculationService, and data persistence.
+ * Follows the Vis40 pattern for consistency.
+ */
 @Component({
-  selector: 'app-tan-entry-form',
-  template: `
-    <form [formGroup]="form" class="tan-form-content">
-      <!-- Sample Preparation Section -->
-      <div class="sample-section">
-        <h3>Sample Preparation</h3>
-        <div class="form-row">
-          <mat-form-field class="half-width">
-            <mat-label>Sample Weight</mat-label>
-            <input matInput type="number" formControlName="sampleWeight"
-                   step="0.01" min="0.01" max="10.00" placeholder="Weight (g)">
-            <mat-hint>Weight should be between 0.01g and 10.00g</mat-hint>
-            @if (form.get('sampleWeight')?.hasError('required')) {
-              <mat-error>Sample weight is required</mat-error>
-            }
-            @if (form.get('sampleWeight')?.hasError('min') || form.get('sampleWeight')?.hasError('max')) {
-              <mat-error>Weight must be between 0.01-10.00g</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="half-width">
-            <mat-label>Test Method</mat-label>
-            <mat-select formControlName="testMethod">
-              <mat-option value="ASTM-D664">ASTM D664 - Potentiometric</mat-option>
-              <mat-option value="ASTM-D974">ASTM D974 - Color Indicator</mat-option>
-              <mat-option value="IP-139">IP 139 - Color Indicator</mat-option>
-              <mat-option value="ISO-6618">ISO 6618 - Potentiometric</mat-option>
-            </mat-select>
-            <mat-hint>Standard test method</mat-hint>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <!-- Titration Section -->
-      <div class="titration-section">
-        <h3>Titration Data</h3>
-        <div class="form-row">
-          <mat-form-field class="third-width">
-            <mat-label>Initial Buret Reading</mat-label>
-            <input matInput type="number" formControlName="initialBuret"
-                   step="0.01" min="0" max="50" placeholder="Initial reading (mL)">
-            <mat-hint>Starting buret reading (typically 0)</mat-hint>
-            @if (form.get('initialBuret')?.hasError('required')) {
-              <mat-error>Initial buret reading is required</mat-error>
-            }
-            @if (form.get('initialBuret')?.hasError('min') || form.get('initialBuret')?.hasError('max')) {
-              <mat-error>Reading must be between 0-50 mL</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="third-width">
-            <mat-label>Final Buret Reading</mat-label>
-            <input matInput type="number" formControlName="finalBuret"
-                   step="0.01" min="0" max="50" placeholder="Final reading (mL)">
-            <mat-hint>Buret reading after titration</mat-hint>
-            @if (form.get('finalBuret')?.hasError('required')) {
-              <mat-error>Final buret reading is required</mat-error>
-            }
-            @if (form.get('finalBuret')?.hasError('min') || form.get('finalBuret')?.hasError('max')) {
-              <mat-error>Reading must be between 0-50 mL</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="third-width">
-            <mat-label>Net Buret Volume</mat-label>
-            <input matInput type="number" [value]="netBuretVolume" 
-                   readonly class="calculated-field" placeholder="mL">
-            <mat-hint>Automatically calculated: Final - Initial</mat-hint>
-          </mat-form-field>
-        </div>
-
-        <div class="form-row">
-          <mat-form-field class="third-width">
-            <mat-label>KOH Normality</mat-label>
-            <input matInput type="number" formControlName="kohNormality"
-                   step="0.0001" min="0.0001" max="1.0000" placeholder="0.1000 N">
-            <mat-hint>Typically around 0.1000 N</mat-hint>
-            @if (form.get('kohNormality')?.hasError('required')) {
-              <mat-error>KOH normality is required</mat-error>
-            }
-            @if (form.get('kohNormality')?.hasError('min') || form.get('kohNormality')?.hasError('max')) {
-              <mat-error>Normality must be between 0.0001-1.0000 N</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="third-width">
-            <mat-label>Solvent System</mat-label>
-            <mat-select formControlName="solvent">
-              <mat-option value="Isopropanol/Toluene">Isopropanol/Toluene (1:1)</mat-option>
-              <mat-option value="Isopropanol/Water">Isopropanol/Water</mat-option>
-              <mat-option value="Toluene/Methanol">Toluene/Methanol</mat-option>
-              <mat-option value="Other">Other</mat-option>
-            </mat-select>
-            <mat-hint>Solvent mixture used</mat-hint>
-          </mat-form-field>
-
-          <mat-form-field class="third-width">
-            <mat-label>Indicator</mat-label>
-            <mat-select formControlName="indicator">
-              <mat-option value="P-Naphtholbenzein">P-Naphtholbenzein</mat-option>
-              <mat-option value="Alkali Blue">Alkali Blue</mat-option>
-              <mat-option value="Potentiometric">Potentiometric (no indicator)</mat-option>
-              <mat-option value="Other">Other</mat-option>
-            </mat-select>
-            <mat-hint>Color indicator used</mat-hint>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <!-- Test Conditions Section -->
-      <div class="conditions-section">
-        <h3>Test Conditions</h3>
-        <div class="form-row">
-          <mat-form-field class="half-width">
-            <mat-label>Temperature</mat-label>
-            <input matInput type="number" formControlName="temperature"
-                   step="0.1" min="15" max="35" placeholder="22 °C">
-            <mat-hint>Room temperature during test</mat-hint>
-            @if (form.get('temperature')?.hasError('min') || form.get('temperature')?.hasError('max')) {
-              <mat-error>Temperature must be between 15-35°C</mat-error>
-            }
-          </mat-form-field>
-
-          <mat-form-field class="half-width">
-            <mat-label>Analyst Initials</mat-label>
-            <input matInput formControlName="analystInitials"
-                   maxlength="5" placeholder="ABC">
-            @if (form.get('analystInitials')?.hasError('required')) {
-              <mat-error>Analyst initials are required</mat-error>
-            }
-            @if (form.get('analystInitials')?.hasError('maxlength')) {
-              <mat-error>Maximum 5 characters</mat-error>
-            }
-          </mat-form-field>
-        </div>
-      </div>
-
-      <!-- Color Indication Section -->
-      <div class="color-section">
-        <h3>Color Indication</h3>
-        <div class="form-row">
-          <mat-form-field class="full-width">
-            <mat-label>Color Observed</mat-label>
-            <input matInput formControlName="colorObserved"
-                   placeholder="Describe the color change observed at endpoint">
-            <mat-hint>e.g., "Light pink to dark green", "Colorless to light pink"</mat-hint>
-          </mat-form-field>
-        </div>
-      </div>
-
-      <!-- Calculation Display -->
-      @if (showCalculationDetails && netBuretVolume !== null) {
-        <div class="calculation-display">
-          <h3>Calculation Details</h3>
-          <div class="calc-formula">
-            <strong>Formula:</strong> TAN = (Net Buret Volume × KOH Normality × 56.1) / Sample Weight
-          </div>
-          @if (form.valid && netBuretVolume > 0) {
-            <div class="calc-values">
-              <p><strong>Net Volume:</strong> {{ netBuretVolume }} mL</p>
-              <p><strong>KOH Normality:</strong> {{ form.get('kohNormality')?.value }} N</p>
-              <p><strong>Sample Weight:</strong> {{ form.get('sampleWeight')?.value }} g</p>
-              <p class="calc-result">
-                <strong>TAN Result:</strong> {{ calculationResult?.result | number:'1.2-2' }} mg KOH/g
-              </p>
-            </div>
-          }
-        </div>
-      }
-
-      <!-- Quality Control Section -->
-      @if (showQualityControlChecks()) {
-        <div class="qc-section">
-          <h3>Quality Control Checks</h3>
-          <div class="qc-warnings">
-            @if (hasNegativeVolume()) {
-              <div class="qc-warning">
-                <mat-icon>error</mat-icon>
-                <span>Negative titration volume - check buret readings</span>
-              </div>
-            }
-            @if (hasUnusualTitrationVolume() && !hasNegativeVolume()) {
-              <div class="qc-warning">
-                <mat-icon>warning</mat-icon>
-                <span>{{ getQualityControlMessage() }}</span>
-              </div>
-            }
-            @if (hasHighTanValue()) {
-              <div class="qc-warning">
-                <mat-icon>warning</mat-icon>
-                <span>High TAN value - verify sample type and calculations</span>
-              </div>
-            }
-          </div>
-        </div>
-      }
-
-      <!-- Test Notes Section -->
-      <div class="observations-section">
-        <h3>Test Observations</h3>
-        <div class="form-row">
-          <mat-form-field class="full-width">
-            <mat-label>Test Notes</mat-label>
-            <textarea matInput formControlName="testNotes" rows="2"
-                      placeholder="Equipment used, deviations, environmental conditions"></textarea>
-            <mat-hint>Note any difficulties, equipment issues, or unusual behavior</mat-hint>
-          </mat-form-field>
-        </div>
-      </div>
-    </form>
-  `,
-  styleUrl: './tan-entry-form.css',
   standalone: true,
-  imports: [
-    SharedModule
-  ]
+  selector: 'app-tan-entry-form',
+  templateUrl: './tan-entry-form.html',
+  styleUrls: ['./tan-entry-form.css'],
+  imports: [SharedModule]
 })
 export class TanEntryForm implements OnInit {
+  private fb = inject(FormBuilder);
+  private tanCalc = inject(TANCalculationService);
+  private testReadingsService = inject(TestReadingsService);
+  
+  // Inputs
+  sampleData = input<SampleWithTestInfo | null>(null);
+  errorMessage = input<string | null>(null);
+  
+  // Form
   form!: FormGroup;
-  netBuretVolume = 0;
-  showCalculationDetails = true;
-  calculationResult?: { result: number; isValid: boolean };
-
-  constructor(private fb: FormBuilder) {}
-
+  
+  // State signals
+  isLoading = signal(false);
+  isSaving = signal(false);
+  saveMessage = signal<string | null>(null);
+  
+  // Computed signals
+  netBuretVolume = computed(() => {
+    const initial = this.form?.get('initialBuret')?.value || 0;
+    const final = this.form?.get('finalBuret')?.value || 0;
+    return this.tanCalc.calculateNetVolume(final, initial);
+  });
+  
+  tanResult = computed(() => {
+    const initial = this.form?.get('initialBuret')?.value || 0;
+    const final = this.form?.get('finalBuret')?.value || 0;
+    const normality = this.form?.get('kohNormality')?.value || 0;
+    const weight = this.form?.get('sampleWeight')?.value || 0;
+    
+    if (!initial && initial !== 0 || !final || !normality || !weight) {
+      return null;
+    }
+    
+    return this.tanCalc.calculateTAN(final, initial, normality, weight);
+  });
+  
+  // UI state
+  showCalculationDetails = signal(true);
+  
   ngOnInit(): void {
     this.initializeForm();
-    this.setupCalculationWatchers();
+    this.loadExistingData();
   }
-
+  
   private initializeForm(): void {
     this.form = this.fb.group({
-      sampleWeight: ['', [Validators.required, Validators.min(0.01), Validators.max(10.00)]],
-      initialBuret: ['', [Validators.required, Validators.min(0), Validators.max(50)]],
+      sampleWeight: ['', [Validators.required, Validators.min(0.01), Validators.max(20.00)]],
+      initialBuret: [0, [Validators.required, Validators.min(0), Validators.max(50)]],
       finalBuret: ['', [Validators.required, Validators.min(0), Validators.max(50)]],
-      kohNormality: ['', [Validators.required, Validators.min(0.0001), Validators.max(1.0000)]],
-      temperature: ['', [Validators.min(15), Validators.max(35)]],
+      kohNormality: [0.1000, [Validators.required, Validators.min(0.0001), Validators.max(1.0000)]],
+      temperature: [22, [Validators.min(15), Validators.max(35)]],
       analystInitials: ['', [Validators.required, Validators.maxLength(5)]],
       colorObserved: [''],
       testMethod: ['ASTM-D664'],
       solvent: ['Isopropanol/Toluene'],
       indicator: ['P-Naphtholbenzein'],
-      testNotes: [''],
-      mainComments: ['']
+      testNotes: ['']
     });
-  }
-
-  private setupCalculationWatchers(): void {
-    // Watch for changes in buret readings to calculate net volume
-    this.form.valueChanges.subscribe(() => {
-      this.calculateNetBuretVolume();
-      this.performCalculation();
-    });
-  }
-
-  private calculateNetBuretVolume(): void {
-    const initialBuret = this.form.get('initialBuret')?.value || 0;
-    const finalBuret = this.form.get('finalBuret')?.value || 0;
     
-    this.netBuretVolume = Math.round((finalBuret - initialBuret) * 100) / 100;
-  }
-
-  private performCalculation(): void {
-    const values = this.extractCalculationValues();
-    if (values['sampleWeight'] > 0 && values['finalBuret'] >= 0 && values['kohNormality'] > 0) {
-      const tan = (values['finalBuret'] * values['kohNormality'] * 56.1) / values['sampleWeight'];
-      this.calculationResult = {
-        result: Math.round(tan * 100) / 100,
-        isValid: true
-      };
-    } else {
-      this.calculationResult = undefined;
+    // Load analyst initials from localStorage
+    const savedInitials = localStorage.getItem('analystInitials');
+    if (savedInitials) {
+      this.form.patchValue({ analystInitials: savedInitials });
     }
   }
-
-  private extractCalculationValues(): Record<string, number> {
-    return {
-      sampleWeight: this.form.get('sampleWeight')?.value || 0,
-      finalBuret: this.netBuretVolume,
-      kohNormality: this.form.get('kohNormality')?.value || 0
+  
+  /**
+   * Load existing data from database if available
+   */
+  private loadExistingData(): void {
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      return;
+    }
+    
+    this.isLoading.set(true);
+    
+    this.testReadingsService
+      .loadTrials(sampleInfo.sampleId, sampleInfo.testReference.id)
+      .subscribe({
+        next: (trials) => {
+          if (trials.length > 0) {
+            // TAN test typically has one trial with all data
+            const trial = trials[0];
+            this.form.patchValue({
+              initialBuret: trial.value1 || 0,
+              finalBuret: trial.value2 || 0,
+              sampleWeight: parseFloat(trial.id2 || '0') || 0,
+              kohNormality: parseFloat(trial.id3 || '0.1') || 0.1,
+              testMethod: trial.id1 || 'ASTM-D664',
+              temperature: trial.trialCalc || 22,
+              colorObserved: this.extractFromComments(trial.mainComments, 'color'),
+              testNotes: this.extractFromComments(trial.mainComments, 'notes'),
+              solvent: this.extractFromComments(trial.mainComments, 'solvent') || 'Isopropanol/Toluene',
+              indicator: this.extractFromComments(trial.mainComments, 'indicator') || 'P-Naphtholbenzein',
+              analystInitials: trial.entryId || ''
+            });
+          }
+          this.isLoading.set(false);
+        },
+        error: (error) => {
+          console.error('Failed to load existing TAN data:', error);
+          this.isLoading.set(false);
+        }
+      });
+  }
+  
+  /**
+   * Extract specific field from comments string
+   */
+  private extractFromComments(comments: string | null, field: string): string {
+    if (!comments) return '';
+    const regex = new RegExp(`${field}:([^|]+)`, 'i');
+    const match = comments.match(regex);
+    return match ? match[1].trim() : '';
+  }
+  
+  /**
+   * Save TAN results to database
+   */
+  saveResults(): void {
+    if (!this.form.valid) {
+      this.saveMessage.set('Please fill in all required fields');
+      setTimeout(() => this.saveMessage.set(null), 3000);
+      return;
+    }
+    
+    const result = this.tanResult();
+    if (!result || !result.isValid) {
+      this.saveMessage.set('Invalid calculation - please check your inputs');
+      setTimeout(() => this.saveMessage.set(null), 3000);
+      return;
+    }
+    
+    const sampleInfo = this.sampleData();
+    if (!sampleInfo?.sampleId || !sampleInfo?.testReference?.id) {
+      this.saveMessage.set('No sample selected');
+      setTimeout(() => this.saveMessage.set(null), 3000);
+      return;
+    }
+    
+    this.isSaving.set(true);
+    
+    // Create comments string
+    const comments = this.buildCommentsString();
+    
+    // Create trial record
+    const trial = {
+      sampleId: sampleInfo.sampleId,
+      testId: sampleInfo.testReference.id,
+      trialNumber: 1,
+      value1: this.form.get('initialBuret')?.value, // Initial buret
+      value2: this.form.get('finalBuret')?.value, // Final buret
+      value3: result.result, // TAN result
+      id1: this.form.get('testMethod')?.value, // Test method
+      id2: this.form.get('sampleWeight')?.value?.toString(), // Sample weight
+      id3: this.form.get('kohNormality')?.value?.toString(), // KOH normality
+      trialCalc: this.form.get('temperature')?.value, // Temperature
+      trialComplete: true,
+      status: 'E',
+      entryId: this.form.get('analystInitials')?.value,
+      entryDate: Date.now(),
+      mainComments: comments
     };
+    
+    this.testReadingsService.bulkSaveTrials([trial]).subscribe({
+      next: () => {
+        this.isSaving.set(false);
+        this.saveMessage.set('TAN results saved successfully');
+        
+        // Save analyst initials for future use
+        const initials = this.form.get('analystInitials')?.value;
+        if (initials) {
+          localStorage.setItem('analystInitials', initials);
+        }
+        
+        setTimeout(() => this.saveMessage.set(null), 3000);
+      },
+      error: (error) => {
+        console.error('Failed to save TAN results:', error);
+        this.isSaving.set(false);
+        this.saveMessage.set('Failed to save results. Please try again.');
+        setTimeout(() => this.saveMessage.set(null), 5000);
+      }
+    });
   }
-
-
-  // Custom validation method for TAN-specific rules
-  validateTanData(): string | null {
-    const sampleWeight = this.form.get('sampleWeight')?.value;
-    const netVolume = this.netBuretVolume;
-    const kohNormality = this.form.get('kohNormality')?.value;
-
-    if (!sampleWeight || sampleWeight <= 0) {
-      return 'Sample weight must be greater than 0';
-    }
-
-    if (netVolume < 0) {
-      return 'Final buret reading must be greater than initial reading';
-    }
-
-    if (netVolume > 40) {
-      return 'Net buret volume seems unusually high. Please verify readings.';
-    }
-
-    if (!kohNormality || kohNormality <= 0) {
-      return 'KOH normality must be greater than 0';
-    }
-
-    const calculatedTan = (netVolume * kohNormality * 56.1) / sampleWeight;
-    if (calculatedTan > 10) {
-      return 'Calculated TAN value seems unusually high. Please verify data.';
-    }
-
-    return null;
+  
+  /**
+   * Build comments string from form fields
+   */
+  private buildCommentsString(): string {
+    const parts: string[] = [];
+    
+    const color = this.form.get('colorObserved')?.value;
+    if (color) parts.push(`color:${color}`);
+    
+    const notes = this.form.get('testNotes')?.value;
+    if (notes) parts.push(`notes:${notes}`);
+    
+    const solvent = this.form.get('solvent')?.value;
+    if (solvent) parts.push(`solvent:${solvent}`);
+    
+    const indicator = this.form.get('indicator')?.value;
+    if (indicator) parts.push(`indicator:${indicator}`);
+    
+    return parts.join('|');
   }
-
+  
+  /**
+   * Clear all form data
+   */
+  clearForm(): void {
+    if (confirm('Are you sure you want to clear all data?')) {
+      this.form.reset({
+        initialBuret: 0,
+        kohNormality: 0.1000,
+        temperature: 22,
+        testMethod: 'ASTM-D664',
+        solvent: 'Isopropanol/Toluene',
+        indicator: 'P-Naphtholbenzein',
+        analystInitials: localStorage.getItem('analystInitials') || ''
+      });
+      this.saveMessage.set(null);
+    }
+  }
+  
   // Quality control methods
   showQualityControlChecks(): boolean {
-    return this.hasUnusualTitrationVolume() || 
-           this.hasHighTanValue() || 
-           this.hasNegativeVolume();
+    const result = this.tanResult();
+    return !!(result && result.warnings && result.warnings.length > 0);
   }
-
+  
   hasNegativeVolume(): boolean {
-    return this.netBuretVolume < 0;
+    return this.netBuretVolume() < 0;
   }
-
-  hasUnusualTitrationVolume(): boolean {
-    return this.netBuretVolume > 30 || (this.netBuretVolume > 0 && this.netBuretVolume < 0.1);
+  
+  getQualityControlWarnings(): string[] {
+    const result = this.tanResult();
+    return result?.warnings || [];
   }
-
-  hasHighTanValue(): boolean {
-    const result = this.calculationResult?.result;
-    return !!(result && result > 5);
-  }
-
-  getQualityControlMessage(): string {
-    if (this.hasNegativeVolume()) {
-      return 'Negative titration volume - check buret readings';
-    }
-    if (this.hasUnusualTitrationVolume()) {
-      return this.netBuretVolume > 30 ? 
-        'Very high titration volume - verify sample weight and procedure' :
-        'Very low titration volume - may indicate measurement error';
-    }
-    if (this.hasHighTanValue()) {
-      return 'High TAN value - verify sample type and calculations';
-    }
-    return '';
-  }
-
 }
 

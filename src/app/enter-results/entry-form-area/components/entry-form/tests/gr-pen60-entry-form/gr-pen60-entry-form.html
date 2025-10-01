@@ -1,3 +1,20 @@
+<!-- Loading Overlay -->
+@if (loading()) {
+  <div class="loading-overlay">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading test data...</p>
+  </div>
+}
+
+<!-- Save Message -->
+@if (saveMessage()) {
+  <div class="save-message" [class.success]="saveMessage()!.type === 'success'" 
+       [class.error]="saveMessage()!.type === 'error'">
+    <mat-icon>{{ saveMessage()!.type === 'success' ? 'check_circle' : 'error' }}</mat-icon>
+    <span>{{ saveMessage()!.text }}</span>
+  </div>
+}
+
 <form [formGroup]="form" class="grease-penetration-form-content">
   <!-- Test Setup Section -->
   <div class="setup-section">
@@ -92,19 +109,19 @@
 
         <mat-form-field class="quarter-width">
           <mat-label>Average Reading</mat-label>
-          <input matInput type="number" [value]="averageReading" 
+          <input matInput type="number" [value]="averageReading()" 
                  readonly class="calculated-field" placeholder="mm/10">
           <mat-hint>Automatic average</mat-hint>
         </mat-form-field>
       </div>
 
       <!-- Reading validation indicators -->
-      @if (showReadingValidation()) {
+      @if (averageReading() > 0) {
         <div class="reading-validation">
           <div class="validation-item" [class.valid]="isVariationAcceptable()" [class.invalid]="!isVariationAcceptable()">
             <mat-icon>{{ isVariationAcceptable() ? 'check_circle' : 'error' }}</mat-icon>
             <span>
-              Reading variation: {{ getReadingVariation() }} mm/10 
+              Reading variation: {{ readingVariation() }} mm/10 
               ({{ isVariationAcceptable() ? 'Acceptable' : 'High - Check readings' }})
             </span>
           </div>
@@ -161,46 +178,77 @@
   </div>
 
   <!-- Calculation Display -->
-  @if (showCalculationDetails && averageReading > 0) {
+  @if (showCalculationDetails() && averageReading() > 0) {
     <div class="calculation-display">
-      <h3>Calculation Details</h3>
-      <div class="calc-formula">
-        <strong>Formula:</strong> Penetration = (Average × 3.75) + 24<br>
-        <strong>Where:</strong> Average is the arithmetic mean of three cone readings
+      <div class="calc-header">
+        <h3>Calculation Details</h3>
+        <button mat-icon-button type="button" (click)="toggleCalculationDetails()">
+          <mat-icon>expand_less</mat-icon>
+        </button>
       </div>
-      <div class="calc-steps">
-        <div class="calc-step">
-          <strong>Step 1:</strong> Calculate average of cone readings<br>
-          <span class="calc-detail">
-            Average = ({{ form.get('cone1')?.value }} + {{ form.get('cone2')?.value }} + {{ form.get('cone3')?.value }}) ÷ 3 = {{ averageReading }}
-          </span>
+      <div class="calc-content">
+        <div class="calc-formula">
+          <strong>Formula:</strong> Worked Penetration = Average of cone readings<br>
+          <strong>Per ASTM D217:</strong> Average of three penetration measurements
         </div>
-        <div class="calc-step">
-          <strong>Step 2:</strong> Apply penetration formula<br>
-          <span class="calc-detail">
-            Penetration = ({{ averageReading }} × 3.75) + 24 = {{ calculationResult?.result }}
-          </span>
+        <div class="calc-steps">
+          <div class="calc-step">
+            <strong>Step 1:</strong> Calculate average of cone readings<br>
+            <span class="calc-detail">
+              Average = ({{ form.get('cone1')?.value }} + {{ form.get('cone2')?.value }} + {{ form.get('cone3')?.value }}) ÷ 3 = {{ averageReading() }}
+            </span>
+          </div>
         </div>
+        <div class="calc-result">
+          <strong>Final Penetration Value:</strong> {{ penetrationResult()?.result }} mm/10
+        </div>
+        @if (penetrationResult()?.warnings && penetrationResult()!.warnings!.length > 0) {
+          <div class="calc-warnings">
+            @for (warning of penetrationResult()!.warnings; track warning) {
+              <div class="warning-item">
+                <mat-icon>warning</mat-icon>
+                <span>{{ warning }}</span>
+              </div>
+            }
+          </div>
+        }
       </div>
-      <div class="calc-result">
-        <strong>Final Penetration Value:</strong> {{ calculationResult?.result }} mm/10
+    </div>
+  } @else if (averageReading() > 0) {
+    <div class="calculation-display collapsed">
+      <div class="calc-header">
+        <h3>Calculation Details</h3>
+        <button mat-icon-button type="button" (click)="toggleCalculationDetails()">
+          <mat-icon>expand_more</mat-icon>
+        </button>
       </div>
     </div>
   }
 
   <!-- Classification Section -->
-  @if (calculationResult?.result) {
+  @if (penetrationResult()?.result) {
     <div class="classification-section">
-      <h3>Grease Classification</h3>
+      <h3>NLGI Grease Classification</h3>
       <div class="classification-info">
-        <div class="nlgi-grade">
-          <strong>NLGI Grade:</strong> {{ getNLGIGrade() }}
+        <div class="classification-card">
+          <div class="nlgi-grade-large">
+            <span class="label">NLGI Grade</span>
+            <span class="grade-value">{{ nlgiGrade() || 'Non-standard' }}</span>
+          </div>
         </div>
-        <div class="penetration-range">
-          <strong>Typical Range:</strong> {{ getPenetrationRange() }}
-        </div>
-        <div class="consistency-description">
-          <strong>Consistency:</strong> {{ getConsistencyDescription() }}
+        <div class="classification-details">
+          <div class="detail-row">
+            <strong>Penetration Value:</strong>
+            <span>{{ penetrationResult()!.result }} mm/10</span>
+          </div>
+          <div class="detail-row">
+            <strong>Typical Range:</strong>
+            <span>{{ getPenetrationRange() }}</span>
+          </div>
+          <div class="detail-row">
+            <strong>Consistency:</strong>
+            <span>{{ consistencyDescription() }}</span>
+          </div>
         </div>
       </div>
     </div>
@@ -216,5 +264,24 @@
                   placeholder="Any additional observations or notes about the test..."></textarea>
       </mat-form-field>
     </div>
+  </div>
+
+  <!-- Form Actions -->
+  <div class="form-actions">
+    <button mat-raised-button color="primary" type="button" 
+            (click)="onSave()" 
+            [disabled]="!form.valid || saving() || loading()">
+      @if (saving()) {
+        <mat-spinner diameter="20" style="display: inline-block; margin-right: 8px;"></mat-spinner>
+      }
+      {{ saving() ? 'Saving...' : 'Save Results' }}
+    </button>
+    
+    <button mat-stroked-button type="button" 
+            (click)="onClear()" 
+            [disabled]="saving() || loading()">
+      <mat-icon>clear</mat-icon>
+      Clear Form
+    </button>
   </div>
 </form>

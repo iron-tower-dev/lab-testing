@@ -1,6 +1,8 @@
-import { Component, OnInit } from '@angular/core';
-import { Validators } from '@angular/forms';
-import { BaseTestFormComponent } from '../../../../../../shared/components/base-test-form/base-test-form.component';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { TestReadingsService } from '../../../../../../core/services/test-readings.service';
+import { GreaseCalculationService } from '../../../../../../shared/services/grease-calculation.service';
+import { TestReadingRecord } from '../../../../../../core/models/test-reading.model';
 import { SharedModule } from '../../../../../../shared-module';
 
 @Component({
@@ -12,15 +14,29 @@ import { SharedModule } from '../../../../../../shared-module';
     SharedModule
   ]
 })
-export class GrPen60EntryForm extends BaseTestFormComponent implements OnInit {
-  averageReading = 0;
-  showCalculationDetails = true;
+export class GrPen60EntryForm implements OnInit {
+  private fb = inject(FormBuilder);
+  private testReadingsService = inject(TestReadingsService);
+  private greaseCalc = inject(GreaseCalculationService);
 
-  override ngOnInit(): void {
-    super.ngOnInit();
+  // State signals
+  loading = signal(false);
+  saving = signal(false);
+  saveMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  showCalculationDetails = signal(true);
+
+  // Form and sample data
+  form!: FormGroup;
+  sampleId = signal<string>('');
+  testTypeId = signal<string>('');
+  existingData = signal<TestReadingRecord | null>(null);
+
+  ngOnInit(): void {
+    this.initializeForm();
+    this.loadExistingData();
   }
 
-  protected override initializeForm(): void {
+  private initializeForm(): void {
     this.form = this.fb.group({
       testTemperature: ['25', Validators.required],
       penetrationTime: ['5', [Validators.required, Validators.min(5), Validators.max(10)]],
@@ -37,50 +53,71 @@ export class GrPen60EntryForm extends BaseTestFormComponent implements OnInit {
     });
   }
 
-  protected override setupCalculationWatchers(): void {
-    this.form.valueChanges.subscribe(() => {
-      this.calculateAverage();
-      this.performCalculation();
-    });
-  }
-
-  private calculateAverage(): void {
-    const cone1 = this.form.get('cone1')?.value;
-    const cone2 = this.form.get('cone2')?.value;
-    const cone3 = this.form.get('cone3')?.value;
-
-    if (cone1 && cone2 && cone3) {
-      this.averageReading = Math.round((cone1 + cone2 + cone3) / 3);
-    } else {
-      this.averageReading = 0;
-    }
-  }
-
-  protected override extractCalculationValues(): Record<string, number> {
-    return {
-      cone1: this.form.get('cone1')?.value || 0,
-      cone2: this.form.get('cone2')?.value || 0,
-      cone3: this.form.get('cone3')?.value || 0
-    };
-  }
-
-  protected override loadExistingData(): void {
-    super.loadExistingData();
+  // Computed signals for calculations
+  validReadings = computed(() => {
+    if (!this.form) return [];
+    const readings = [
+      this.form.get('cone1')?.value,
+      this.form.get('cone2')?.value,
+      this.form.get('cone3')?.value
+    ].filter(val => val !== null && val !== undefined && val !== '');
     
-    if (this.existingReading) {
-      this.form.patchValue({
-        cone1: this.existingReading.value1,
-        cone2: this.existingReading.value2,
-        cone3: this.existingReading.value3,
-        testTemperature: this.existingReading.id1 || '25',
-        penetrationTime: this.existingReading.id2 || '5',
-        analystInitials: this.existingReading.id3,
-        workedSample: this.extractFromComments('worked') === 'true',
-        penetrometerId: this.extractFromComments('equip'),
-        sampleAppearance: this.extractFromComments('appearance'),
-        testNotes: this.extractFromComments('notes')
-      });
-    } else {
+    return readings.map(val => parseFloat(val)).filter(val => !isNaN(val));
+  });
+
+  averageReading = computed(() => {
+    const readings = this.validReadings();
+    if (readings.length !== 3) return 0;
+    
+    return Math.round(readings.reduce((sum, val) => sum + val, 0) / readings.length);
+  });
+
+  penetrationResult = computed(() => {
+    const readings = this.validReadings();
+    if (readings.length !== 3) return null;
+    
+    return this.greaseCalc.calculatePenetration(readings);
+  });
+
+  nlgiGrade = computed(() => {
+    const result = this.penetrationResult();
+    if (!result?.isValid) return null;
+    
+    return this.greaseCalc.getNLGIGrade(result.result);
+  });
+
+  consistencyDescription = computed(() => {
+    const grade = this.nlgiGrade();
+    if (!grade) return null;
+    
+    const descriptions = this.greaseCalc.getConsistencyDescriptions();
+    return descriptions[grade] || 'Unknown';
+  });
+
+  readingVariation = computed(() => {
+    const readings = this.validReadings();
+    if (readings.length < 2) return 0;
+    
+    const max = Math.max(...readings);
+    const min = Math.min(...readings);
+    return Math.round(max - min);
+  });
+
+  isVariationAcceptable = computed(() => {
+    return this.readingVariation() <= 10; // 10 units acceptable
+  });
+
+  isRangeReasonable = computed(() => {
+    const avg = this.averageReading();
+    return avg >= 85 && avg <= 475;
+  });
+
+  private async loadExistingData(): Promise<void> {
+    // TODO: Get sampleId and testTypeId from parent component or service
+    const sampleId = this.sampleId();
+    const testTypeId = this.testTypeId();
+    
+    if (!sampleId || !testTypeId) {
       // Set default values
       this.form.patchValue({
         testTemperature: '25',
@@ -88,29 +125,71 @@ export class GrPen60EntryForm extends BaseTestFormComponent implements OnInit {
         workedSample: true,
         analystInitials: localStorage.getItem('analystInitials') || ''
       });
+      return;
+    }
+
+    this.loading.set(true);
+    
+    try {
+      const existingReading = await this.testReadingsService.getTestReading(sampleId, testTypeId);
+      
+      if (existingReading) {
+        this.existingData.set(existingReading);
+        this.form.patchValue({
+          cone1: existingReading.value1,
+          cone2: existingReading.value2,
+          cone3: existingReading.value3,
+          testTemperature: existingReading.id1 || '25',
+          penetrationTime: existingReading.id2 || '5',
+          analystInitials: existingReading.id3,
+          workedSample: this.extractFromComments('worked', existingReading.mainComments || '') === 'true',
+          penetrometerId: this.extractFromComments('equip', existingReading.mainComments || ''),
+          lastCalibrationDate: this.extractFromComments('calibDate', existingReading.mainComments || ''),
+          sampleAppearance: this.extractFromComments('appearance', existingReading.mainComments || ''),
+          testNotes: this.extractFromComments('notes', existingReading.mainComments || '')
+        });
+      } else {
+        // Set default values
+        this.form.patchValue({
+          testTemperature: '25',
+          penetrationTime: '5',
+          workedSample: true,
+          analystInitials: localStorage.getItem('analystInitials') || ''
+        });
+      }
+    } catch (error) {
+      console.error('Error loading existing Grease Penetration test data:', error);
+      this.showSaveMessage('Error loading existing data', 'error');
+    } finally {
+      this.loading.set(false);
     }
   }
 
-  protected override createTestReading(isComplete: boolean = false) {
-    const baseReading = super.createTestReading(isComplete);
+  private createTestReading(): TestReadingRecord {
+    const result = this.penetrationResult();
     
     return {
-      ...baseReading,
-      value1: this.form.get('cone1')?.value,
-      value2: this.form.get('cone2')?.value,
-      value3: this.form.get('cone3')?.value,
+      sampleId: this.sampleId(),
+      testTypeId: this.testTypeId(),
+      value1: this.form.get('cone1')?.value || null,
+      value2: this.form.get('cone2')?.value || null,
+      value3: this.form.get('cone3')?.value || null,
+      trialCalc: result?.result || null,
       id1: this.form.get('testTemperature')?.value,
       id2: this.form.get('penetrationTime')?.value,
       id3: this.form.get('analystInitials')?.value,
-      mainComments: this.combineComments()
+      mainComments: this.combineComments(),
+      trialComplete: true,
+      status: 'E', // Entry status
+      entryId: this.form.get('analystInitials')?.value || ''
     };
   }
 
-  private extractFromComments(section: string): string {
-    if (!this.existingReading?.mainComments) return '';
+  private extractFromComments(section: string, comments: string): string {
+    if (!comments) return '';
     
     const regex = new RegExp(`${section}:(.+?)(?:\\||$)`, 'i');
-    const match = this.existingReading.mainComments.match(regex);
+    const match = comments.match(regex);
     return match ? match[1].trim() : '';
   }
 
@@ -123,6 +202,9 @@ export class GrPen60EntryForm extends BaseTestFormComponent implements OnInit {
     
     const equipId = this.form.get('penetrometerId')?.value;
     if (equipId) parts.push(`equip:${equipId}`);
+
+    const calibDate = this.form.get('lastCalibrationDate')?.value;
+    if (calibDate) parts.push(`calibDate:${calibDate}`);
     
     const appearance = this.form.get('sampleAppearance')?.value;
     if (appearance) parts.push(`appearance:${appearance}`);
@@ -136,63 +218,11 @@ export class GrPen60EntryForm extends BaseTestFormComponent implements OnInit {
     return parts.join(' | ');
   }
 
-  // Validation methods
-  showReadingValidation(): boolean {
-    return this.averageReading > 0 && this.hasAllReadings();
-  }
-
-  hasAllReadings(): boolean {
-    const cone1 = this.form.get('cone1')?.value;
-    const cone2 = this.form.get('cone2')?.value;
-    const cone3 = this.form.get('cone3')?.value;
-    return cone1 && cone2 && cone3;
-  }
-
-  isVariationAcceptable(): boolean {
-    if (!this.hasAllReadings()) return true;
-    
-    const variation = this.getReadingVariation();
-    return variation <= 10; // Typical acceptable variation
-  }
-
-  getReadingVariation(): number {
-    if (!this.hasAllReadings()) return 0;
-    
-    const cone1 = this.form.get('cone1')?.value;
-    const cone2 = this.form.get('cone2')?.value;
-    const cone3 = this.form.get('cone3')?.value;
-    
-    const readings = [cone1, cone2, cone3];
-    const max = Math.max(...readings);
-    const min = Math.min(...readings);
-    
-    return max - min;
-  }
-
-  isRangeReasonable(): boolean {
-    return this.averageReading >= 85 && this.averageReading <= 475;
-  }
-
-  // NLGI Classification methods
-  getNLGIGrade(): string {
-    const result = this.calculationResult?.result;
-    if (!result) return 'N/A';
-    
-    if (result >= 445 && result <= 475) return '000';
-    if (result >= 400 && result < 445) return '00';
-    if (result >= 355 && result < 400) return '0';
-    if (result >= 310 && result < 355) return '1';
-    if (result >= 265 && result < 310) return '2';
-    if (result >= 220 && result < 265) return '3';
-    if (result >= 175 && result < 220) return '4';
-    if (result >= 130 && result < 175) return '5';
-    if (result >= 85 && result < 130) return '6';
-    
-    return 'Non-standard';
-  }
-
+  // Helper methods for template
   getPenetrationRange(): string {
-    const grade = this.getNLGIGrade();
+    const grade = this.nlgiGrade();
+    if (!grade) return 'N/A';
+    
     const ranges: Record<string, string> = {
       '000': '445-475 mm/10',
       '00': '400-430 mm/10',
@@ -208,30 +238,64 @@ export class GrPen60EntryForm extends BaseTestFormComponent implements OnInit {
     return ranges[grade] || 'N/A';
   }
 
-  getConsistencyDescription(): string {
-    const grade = this.getNLGIGrade();
-    const descriptions: Record<string, string> = {
-      '000': 'Very fluid',
-      '00': 'Fluid',
-      '0': 'Semi-fluid',
-      '1': 'Very soft',
-      '2': 'Soft (most common)',
-      '3': 'Medium',
-      '4': 'Hard',
-      '5': 'Very hard',
-      '6': 'Block grease'
-    };
-    
-    return descriptions[grade] || 'Unknown';
-  }
-
-  override onSave(complete: boolean = false): void {
-    // Save analyst initials for future use
-    const initials = this.form.get('analystInitials')?.value;
-    if (initials) {
-      localStorage.setItem('analystInitials', initials);
+  async onSave(): Promise<void> {
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      this.showSaveMessage('Please correct form errors before saving', 'error');
+      return;
     }
 
-    super.onSave(complete);
+    if (this.validReadings().length !== 3) {
+      this.showSaveMessage('All three cone readings are required', 'error');
+      return;
+    }
+
+    this.saving.set(true);
+    
+    try {
+      const testReading = this.createTestReading();
+      await this.testReadingsService.saveTestReading(testReading);
+      
+      // Save analyst initials for future use
+      const initials = this.form.get('analystInitials')?.value;
+      if (initials) {
+        localStorage.setItem('analystInitials', initials);
+      }
+      
+      this.showSaveMessage('Grease penetration test results saved successfully', 'success');
+      
+    } catch (error) {
+      console.error('Error saving grease penetration test results:', error);
+      this.showSaveMessage('Error saving test results. Please try again.', 'error');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  onClear(): void {
+    if (confirm('Are you sure you want to clear all entered data? This cannot be undone.')) {
+      this.form.reset({
+        testTemperature: '25',
+        penetrationTime: '5',
+        workedSample: true,
+        analystInitials: localStorage.getItem('analystInitials') || ''
+      });
+      this.showSaveMessage('Form cleared', 'success');
+    }
+  }
+
+  toggleCalculationDetails(): void {
+    this.showCalculationDetails.update(show => !show);
+  }
+
+  private showSaveMessage(text: string, type: 'success' | 'error'): void {
+    this.saveMessage.set({ text, type });
+    
+    // Auto-hide success messages after 3 seconds
+    if (type === 'success') {
+      setTimeout(() => {
+        this.saveMessage.set(null);
+      }, 3000);
+    }
   }
 }

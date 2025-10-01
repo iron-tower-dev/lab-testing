@@ -7,8 +7,100 @@
 
 .mat-mdc-list-item {
   border-bottom: 1px solid #eee;
+  height: auto;
+  padding: 12px 16px;
 }
 
 .mat-mdc-list-item:hover {
   cursor: pointer;
+  background-color: #f5f5f5;
+}
+
+.mat-mdc-list-item.disabled,
+.mat-mdc-list-item.unauthorized {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background-color: #fafafa;
+}
+
+.mat-mdc-list-item.unauthorized:hover {
+  background-color: #fafafa;
+}
+
+/* Test item content layout */
+.test-item-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.test-name {
+  flex: 1;
+  text-align: left;
+  font-size: 14px;
+}
+
+/* Qualification badges */
+.qual-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.badge-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.badge-primary {
+  background-color: #2196f3;
+  color: white;
+}
+
+.badge-info {
+  background-color: #00bcd4;
+  color: white;
+}
+
+.badge-warning {
+  background-color: #ff9800;
+  color: white;
+}
+
+.badge-danger {
+  background-color: #f44336;
+  color: white;
+}
+
+.expired-indicator {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* Lock icon for unauthorized tests */
+.lock-icon {
+  color: #999;
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}
+
+/* Loading indicator */
+.loading-qualifications {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  color: #666;
+  font-size: 14px;
+  font-style: italic;
 }

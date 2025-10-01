@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
-import { Validators } from '@angular/forms';
-import { BaseTestFormComponent } from '../../../../../../shared/components/base-test-form/base-test-form.component';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { FormBuilder, Validators, FormGroup } from '@angular/forms';
+import { TestReadingsService } from '../../../../../../core/services/test-readings.service';
+import { TestReadingRecord } from '../../../../../../core/models/test-reading.model';
 import { SharedModule } from '../../../../../../shared-module';
 
 @Component({
@@ -12,15 +13,26 @@ import { SharedModule } from '../../../../../../shared-module';
     SharedModule
   ]
 })
-export class TbnEntryForm extends BaseTestFormComponent implements OnInit {
-  averageResult = 0;
-  showCalculationDetails = true;
+export class TbnEntryForm implements OnInit {
+  private fb = inject(FormBuilder);
+  private testReadingsService = inject(TestReadingsService);
+
+  loading = signal(false);
+  saving = signal(false);
+  saveMessage = signal<{ text: string; type: 'success' | 'error' } | null>(null);
+  showCalculationDetails = signal(true);
+
+  form!: FormGroup;
+  sampleId = signal<string>('');
+  testTypeId = signal<string>('');
+  existingData = signal<TestReadingRecord | null>(null);
   
-  override ngOnInit(): void {
-    super.ngOnInit();
+  ngOnInit(): void {
+    this.initializeForm();
+    this.loadExistingData();
   }
 
-  protected override initializeForm(): void {
+  private initializeForm(): void {
     this.form = this.fb.group({
       // Trial results
       trial1Result: ['', [Validators.required, Validators.min(0), Validators.max(50)]],
@@ -48,131 +60,130 @@ export class TbnEntryForm extends BaseTestFormComponent implements OnInit {
     });
   }
 
-  protected override setupCalculationWatchers(): void {
-    this.form.valueChanges.subscribe(() => {
-      this.calculateAverage();
-      this.performCalculation();
-    });
-  }
-
-  private calculateAverage(): void {
-    const validResults = this.getValidResults();
-    if (validResults.length >= 2) {
-      this.averageResult = Math.round((validResults.reduce((sum, val) => sum + val, 0) / validResults.length) * 100) / 100;
-    } else {
-      this.averageResult = 0;
-    }
-  }
-
-  private getValidResults(): number[] {
+  validResults = computed(() => {
+    if (!this.form) return [];
     const results = [
       this.form.get('trial1Result')?.value,
       this.form.get('trial2Result')?.value,
       this.form.get('trial3Result')?.value,
       this.form.get('trial4Result')?.value
     ].filter(val => val !== null && val !== undefined && val !== '');
-    
     return results.map(val => parseFloat(val)).filter(val => !isNaN(val));
-  }
+  });
 
-  protected override extractCalculationValues(): Record<string, number> {
-    const sampleWeight = this.form.get('sampleWeight')?.value || 0;
-    const titrantNormality = this.form.get('titrantNormality')?.value || 0;
-    
-    return {
-      averageVolume: this.averageResult,
-      sampleWeight: sampleWeight,
-      normality: titrantNormality
-    };
-  }
+  averageResult = computed(() => {
+    const results = this.validResults();
+    if (results.length < 2) return 0;
+    return Math.round((results.reduce((sum, val) => sum + val, 0) / results.length) * 100) / 100;
+  });
 
-  getTbnResult(): number {
-    const sampleWeight = this.form.get('sampleWeight')?.value;
-    const titrantNormality = this.form.get('titrantNormality')?.value;
+  tbnResult = computed(() => {
+    const avg = this.averageResult();
+    const sampleWeight = parseFloat(this.form?.get('sampleWeight')?.value);
+    const titrantNormality = parseFloat(this.form?.get('titrantNormality')?.value);
     
-    if (this.averageResult > 0 && sampleWeight > 0 && titrantNormality > 0) {
-      // TBN calculation: (Volume × Normality × 56.1) / Sample Weight
-      const tbn = (this.averageResult * titrantNormality * 56.1) / sampleWeight;
+    if (avg > 0 && sampleWeight > 0 && titrantNormality > 0) {
+      const tbn = (avg * titrantNormality * 56.1) / sampleWeight;
       return Math.round(tbn * 100) / 100;
     }
     return 0;
-  }
+  });
 
-  getResultVariation(): number {
-    const validResults = this.getValidResults();
-    if (validResults.length < 2) return 0;
-    
-    const max = Math.max(...validResults);
-    const min = Math.min(...validResults);
+  resultVariation = computed(() => {
+    const results = this.validResults();
+    if (results.length < 2) return 0;
+    const max = Math.max(...results);
+    const min = Math.min(...results);
     return Math.round((max - min) * 100) / 100;
-  }
+  });
 
-  isVariationAcceptable(): boolean {
-    return this.getResultVariation() <= 0.2; // 0.2 mL acceptable variation
-  }
+  isVariationAcceptable = computed(() => {
+    return this.resultVariation() <= 0.2;
+  });
 
-  showQualityControlChecks(): boolean {
-    return !this.isVariationAcceptable() || this.getTbnResult() > 15 || this.averageResult > 25;
-  }
+  showQualityControlChecks = computed(() => {
+    return !this.isVariationAcceptable() || this.tbnResult() > 15 || this.averageResult() > 25;
+  });
 
-  getQualityControlMessage(): string {
+  qualityControlMessage = computed(() => {
     if (!this.isVariationAcceptable()) {
       return 'High variation between trials - review titration technique';
     }
-    if (this.getTbnResult() > 15) {
+    if (this.tbnResult() > 15) {
       return 'High TBN value - verify sample type and calculations';
     }
-    if (this.averageResult > 25) {
+    if (this.averageResult() > 25) {
       return 'High titrant volume - check normality and sample weight';
     }
     return '';
-  }
+  });
 
-  protected override loadExistingData(): void {
-    super.loadExistingData();
+  private async loadExistingData(): Promise<void> {
+    const sampleId = this.sampleId();
+    const testTypeId = this.testTypeId();
     
-    if (this.existingReading) {
-      this.form.patchValue({
-        trial1Result: this.existingReading.value1,
-        trial2Result: this.existingReading.value2,
-        trial3Result: this.existingReading.value3,
-        trial4Result: this.existingReading.trialCalc,
-        sampleWeight: this.existingReading.id1,
-        titrantNormality: this.existingReading.id2 || '0.1000',
-        analystInitials: this.existingReading.id3,
-        testNotes: this.extractFromComments('notes')
-      });
-    } else {
+    if (!sampleId || !testTypeId) {
       this.form.patchValue({
         analystInitials: localStorage.getItem('analystInitials') || '',
         titrantNormality: '0.1000',
         testTemperature: '25'
       });
+      return;
+    }
+
+    this.loading.set(true);
+    try {
+      const existingReading = await this.testReadingsService.getTestReading(sampleId, testTypeId);
+      if (existingReading) {
+        this.existingData.set(existingReading);
+        this.form.patchValue({
+          trial1Result: existingReading.value1,
+          trial2Result: existingReading.value2,
+          trial3Result: existingReading.value3,
+          trial4Result: existingReading.trialCalc,
+          sampleWeight: existingReading.id1,
+          titrantNormality: existingReading.id2 || '0.1000',
+          analystInitials: existingReading.id3,
+          testNotes: this.extractFromComments('notes', existingReading.mainComments || '')
+        });
+      } else {
+        this.form.patchValue({
+          analystInitials: localStorage.getItem('analystInitials') || '',
+          titrantNormality: '0.1000',
+          testTemperature: '25'
+        });
+      }
+    } catch (error) {
+      console.error('Error loading TBN data:', error);
+      this.showSaveMessage('Error loading data', 'error');
+    } finally {
+      this.loading.set(false);
     }
   }
 
-  protected override createTestReading(isComplete: boolean = false) {
-    const baseReading = super.createTestReading(isComplete);
-    const tbnResult = this.getTbnResult();
-    
+  private createTestReading(): TestReadingRecord {
+    const tbn = this.tbnResult();
     return {
-      ...baseReading,
-      value1: this.form.get('trial1Result')?.value,
-      value2: this.form.get('trial2Result')?.value,
-      value3: this.form.get('trial3Result')?.value,
-      trialCalc: this.form.get('trial4Result')?.value || (tbnResult > 0 ? tbnResult : null),
+      sampleId: this.sampleId(),
+      testTypeId: this.testTypeId(),
+      value1: this.form.get('trial1Result')?.value || null,
+      value2: this.form.get('trial2Result')?.value || null,
+      value3: this.form.get('trial3Result')?.value || null,
+      trialCalc: this.form.get('trial4Result')?.value || (tbn > 0 ? tbn : null),
       id1: this.form.get('sampleWeight')?.value,
       id2: this.form.get('titrantNormality')?.value,
       id3: this.form.get('analystInitials')?.value,
-      mainComments: this.combineComments()
+      mainComments: this.combineComments(),
+      trialComplete: true,
+      status: 'E',
+      entryId: this.form.get('analystInitials')?.value || ''
     };
   }
 
-  private extractFromComments(section: string): string {
-    if (!this.existingReading?.mainComments) return '';
-    
+  private extractFromComments(section: string, comments: string): string {
+    if (!comments) return '';
     const regex = new RegExp(`${section}:(.+?)(?:\\||$)`, 'i');
-    const match = this.existingReading.mainComments.match(regex);
+    const match = comments.match(regex);
     return match ? match[1].trim() : '';
   }
 
@@ -200,13 +211,51 @@ export class TbnEntryForm extends BaseTestFormComponent implements OnInit {
     return parts.join(' | ');
   }
 
-  override onSave(complete: boolean = false): void {
-    // Save analyst initials for future use
-    const initials = this.form.get('analystInitials')?.value;
-    if (initials) {
-      localStorage.setItem('analystInitials', initials);
+  async onSave(): Promise<void> {
+    if (!this.form.valid) {
+      this.form.markAllAsTouched();
+      this.showSaveMessage('Please correct form errors', 'error');
+      return;
     }
 
-    super.onSave(complete);
+    this.saving.set(true);
+    try {
+      const testReading = this.createTestReading();
+      await this.testReadingsService.saveTestReading(testReading);
+      const initials = this.form.get('analystInitials')?.value;
+      if (initials) localStorage.setItem('analystInitials', initials);
+      this.showSaveMessage('TBN results saved successfully', 'success');
+    } catch (error) {
+      console.error('Error saving TBN results:', error);
+      this.showSaveMessage('Error saving results', 'error');
+    } finally {
+      this.saving.set(false);
+    }
+  }
+
+  onClear(): void {
+    if (confirm('Clear all data?')) {
+      this.form.reset({
+        titrantNormality: '0.1000',
+        testTemperature: '25',
+        analystInitials: localStorage.getItem('analystInitials') || ''
+      });
+      this.showSaveMessage('Form cleared', 'success');
+    }
+  }
+
+  getFieldError(field: string): string {
+    const control = this.form.get(field);
+    if (control?.hasError('required')) return 'Required';
+    if (control?.hasError('min')) return 'Value too low';
+    if (control?.hasError('max')) return 'Value too high';
+    return '';
+  }
+
+  private showSaveMessage(text: string, type: 'success' | 'error'): void {
+    this.saveMessage.set({ text, type });
+    if (type === 'success') {
+      setTimeout(() => this.saveMessage.set(null), 3000);
+    }
   }
 }

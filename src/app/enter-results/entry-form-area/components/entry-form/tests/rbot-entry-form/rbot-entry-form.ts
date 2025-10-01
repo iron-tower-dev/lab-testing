@@ -1,134 +1,110 @@
-import { Component, OnInit } from '@angular/core';
-import { Validators } from '@angular/forms';
-import { BaseTestFormComponent } from '../../../../../../shared/components/base-test-form/base-test-form.component';
+import { Component, OnInit, signal, computed, effect, inject } from '@angular/core';
 import { SharedModule } from '../../../../../../shared-module';
+import { TestReadingsService } from '../../../../../../shared/services/test-readings.service';
+import { TestReading } from '../../../../../../shared/models/test-reading.model';
+import { TestSampleInfo } from '../../../../../../../types';
 
 @Component({
   selector: 'app-rbot-entry-form',
   standalone: true,
   templateUrl: './rbot-entry-form.html',
   styleUrl: './rbot-entry-form.css',
-  imports: [
-    SharedModule
-  ]
+  imports: [SharedModule]
 })
-export class RbotEntryForm extends BaseTestFormComponent implements OnInit {
-  oxidationLife = 0;
-  remainingLife = 0;
-  showCalculationDetails = true;
-  
-  override ngOnInit(): void {
-    super.ngOnInit();
-  }
+export class RbotEntryForm implements OnInit {
+  // Injected services
+  private testReadingsService = inject(TestReadingsService);
 
-  protected override initializeForm(): void {
-    this.form = this.fb.group({
-      // Test parameters
-      testTemperature: ['150', [Validators.required, Validators.min(149), Validators.max(151)]],
-      oxygenPressure: ['620', [Validators.required, Validators.min(610), Validators.max(630)]],
-      sampleVolume: ['50', [Validators.required, Validators.min(45), Validators.max(55)]],
-      
-      // Catalyst information
-      catalystType: ['Soluble copper', Validators.required],
-      catalystAmount: ['', [Validators.required, Validators.min(0.1), Validators.max(2.0)]],
-      
-      // Time measurements
-      initialTime: ['', Validators.required],
-      endTime: ['', Validators.required],
-      totalMinutes: ['', [Validators.required, Validators.min(1), Validators.max(2000)]],
-      
-      // Pressure readings
-      initialPressure: ['', [Validators.required, Validators.min(600), Validators.max(650)]],
-      finalPressure: ['', [Validators.required, Validators.min(400), Validators.max(650)]],
-      pressureDrop: ['', [Validators.required, Validators.min(10), Validators.max(250)]],
-      
-      // Environmental conditions
-      roomTemperature: ['', [Validators.min(20), Validators.max(30)]],
-      barometricPressure: ['', [Validators.min(700), Validators.max(800)]],
-      
-      // Equipment information
-      bombId: ['', Validators.required],
-      lastCalibrationDate: [''],
-      
-      // Quality control
-      temperatureStability: ['', [Validators.min(-1), Validators.max(1)]],
-      leakCheck: [false],
-      
-      // Analyst information
-      analystInitials: ['', [Validators.required, Validators.maxLength(5)]],
-      
-      // Comments
-      observationNotes: [''],
-      testNotes: [''],
-      mainComments: ['']
-    });
-  }
+  // Input signals for test sample info
+  testSampleInfo = signal<TestSampleInfo | null>(null);
 
-  protected override setupCalculationWatchers(): void {
-    this.form.valueChanges.subscribe(() => {
-      this.calculateOxidationLife();
-      this.calculateRemainingLife();
-      this.performCalculation();
-    });
-  }
+  // Form input signals - Test parameters
+  testTemperature = signal<number>(150);
+  oxygenPressure = signal<number>(620);
+  sampleVolume = signal<number>(50);
 
-  private calculateOxidationLife(): void {
-    const totalMinutes = this.form.get('totalMinutes')?.value;
-    if (totalMinutes && totalMinutes > 0) {
-      this.oxidationLife = totalMinutes;
-    } else {
-      this.oxidationLife = 0;
-    }
-  }
+  // Catalyst information
+  catalystType = signal<string>('Soluble copper');
+  catalystAmount = signal<number | null>(null);
 
-  private calculateRemainingLife(): void {
-    // Estimate remaining useful life based on RBOT results
-    // This is a simplified calculation - actual formulas vary by application
-    const rbotResult = this.oxidationLife;
+  // Time measurements
+  initialTime = signal<string>('');
+  endTime = signal<string>('');
+  totalMinutes = signal<number | null>(null);
+
+  // Pressure readings
+  initialPressure = signal<number | null>(null);
+  finalPressure = signal<number | null>(null);
+  pressureDrop = signal<number | null>(null);
+
+  // Environmental conditions
+  roomTemperature = signal<number | null>(null);
+  barometricPressure = signal<number | null>(null);
+
+  // Equipment information
+  bombId = signal<string>('');
+  lastCalibrationDate = signal<string>('');
+
+  // Quality control
+  temperatureStability = signal<number | null>(null);
+  leakCheck = signal<boolean>(false);
+
+  // Analyst information
+  analystInitials = signal<string>('');
+
+  // Comments
+  observationNotes = signal<string>('');
+  testNotes = signal<string>('');
+  mainComments = signal<string>('');
+
+  // UI state
+  loading = signal<boolean>(false);
+  saving = signal<boolean>(false);
+  saveMessage = signal<string>('');
+  showCalculationDetails = signal<boolean>(true);
+
+  // Computed signals for calculations
+  oxidationLife = computed(() => {
+    const minutes = this.totalMinutes();
+    return minutes && minutes > 0 ? minutes : 0;
+  });
+
+  remainingLife = computed(() => {
+    const rbotResult = this.oxidationLife();
     const newOilRbot = 1000; // Typical new oil RBOT time in minutes
     
     if (rbotResult > 0 && newOilRbot > 0) {
-      this.remainingLife = Math.round((rbotResult / newOilRbot) * 100);
-    } else {
-      this.remainingLife = 0;
+      return Math.round((rbotResult / newOilRbot) * 100);
     }
-  }
+    return 0;
+  });
 
-  protected override extractCalculationValues(): Record<string, number> {
-    return {
-      totalMinutes: this.form.get('totalMinutes')?.value || 0,
-      pressureDrop: this.form.get('pressureDrop')?.value || 0,
-      temperature: this.form.get('testTemperature')?.value || 150
-    };
-  }
+  // Quality control computed signals
+  isTemperatureControlAcceptable = computed(() => {
+    const testTemp = this.testTemperature();
+    const stability = this.temperatureStability();
+    return Math.abs(testTemp - 150) <= 0.5 && (!stability || Math.abs(stability) <= 0.5);
+  });
 
-  // Quality control methods
-  isTestValid(): boolean {
+  isPressureControlAcceptable = computed(() => {
+    const oxygen = this.oxygenPressure();
+    return Math.abs(oxygen - 620) <= 10;
+  });
+
+  isLeakCheckPassed = computed(() => this.leakCheck());
+
+  isTestValid = computed(() => {
     return this.isTemperatureControlAcceptable() && 
            this.isPressureControlAcceptable() && 
            this.isLeakCheckPassed();
-  }
+  });
 
-  isTemperatureControlAcceptable(): boolean {
-    const testTemp = this.form.get('testTemperature')?.value;
-    const stability = this.form.get('temperatureStability')?.value;
-    return testTemp && Math.abs(testTemp - 150) <= 0.5 && (!stability || Math.abs(stability) <= 0.5);
-  }
+  showQualityControlChecks = computed(() => {
+    const life = this.oxidationLife();
+    return !this.isTestValid() || life < 100 || life > 2000;
+  });
 
-  isPressureControlAcceptable(): boolean {
-    const oxygenPressure = this.form.get('oxygenPressure')?.value;
-    return oxygenPressure && Math.abs(oxygenPressure - 620) <= 10;
-  }
-
-  isLeakCheckPassed(): boolean {
-    return this.form.get('leakCheck')?.value === true;
-  }
-
-  showQualityControlChecks(): boolean {
-    return !this.isTestValid() || this.oxidationLife < 100 || this.oxidationLife > 2000;
-  }
-
-  getQualityControlMessage(): string {
+  qualityControlMessage = computed(() => {
     if (!this.isTemperatureControlAcceptable()) {
       return 'Temperature control outside acceptable range (150 ± 0.5°C)';
     }
@@ -138,35 +114,129 @@ export class RbotEntryForm extends BaseTestFormComponent implements OnInit {
     if (!this.isLeakCheckPassed()) {
       return 'Leak check failed - verify bomb seal integrity';
     }
-    if (this.oxidationLife < 100) {
+    const life = this.oxidationLife();
+    if (life < 100) {
       return 'Very low RBOT result - oil severely degraded';
     }
-    if (this.oxidationLife > 2000) {
+    if (life > 2000) {
       return 'Unusually high RBOT result - verify test conditions';
     }
     return '';
-  }
+  });
 
   // Oil condition assessment
-  getOilCondition(): string {
-    if (this.oxidationLife >= 1000) return 'Excellent';
-    if (this.oxidationLife >= 700) return 'Good';
-    if (this.oxidationLife >= 400) return 'Fair';
-    if (this.oxidationLife >= 200) return 'Poor';
+  oilCondition = computed(() => {
+    const life = this.oxidationLife();
+    if (life >= 1000) return 'Excellent';
+    if (life >= 700) return 'Good';
+    if (life >= 400) return 'Fair';
+    if (life >= 200) return 'Poor';
     return 'Critical';
-  }
+  });
 
-  getRecommendation(): string {
-    if (this.remainingLife >= 80) return 'Continue in service';
-    if (this.remainingLife >= 50) return 'Monitor closely';
-    if (this.remainingLife >= 25) return 'Plan oil change';
+  recommendation = computed(() => {
+    const remaining = this.remainingLife();
+    if (remaining >= 80) return 'Continue in service';
+    if (remaining >= 50) return 'Monitor closely';
+    if (remaining >= 25) return 'Plan oil change';
     return 'Change oil immediately';
+  });
+
+  // Form validation
+  isFormValid = computed(() => {
+    return this.testTemperature() >= 149 && this.testTemperature() <= 151 &&
+           this.oxygenPressure() >= 610 && this.oxygenPressure() <= 630 &&
+           this.sampleVolume() >= 45 && this.sampleVolume() <= 55 &&
+           this.catalystType().trim() !== '' &&
+           this.catalystAmount() !== null && this.catalystAmount()! >= 0.1 && this.catalystAmount()! <= 2.0 &&
+           this.initialTime() !== '' &&
+           this.endTime() !== '' &&
+           this.totalMinutes() !== null && this.totalMinutes()! >= 1 && this.totalMinutes()! <= 2000 &&
+           this.initialPressure() !== null && this.initialPressure()! >= 600 && this.initialPressure()! <= 650 &&
+           this.finalPressure() !== null && this.finalPressure()! >= 400 && this.finalPressure()! <= 650 &&
+           this.pressureDrop() !== null && this.pressureDrop()! >= 10 && this.pressureDrop()! <= 250 &&
+           this.bombId().trim() !== '' &&
+           this.analystInitials().trim() !== '' && this.analystInitials().length <= 5;
+  });
+
+  constructor() {
+    // Effect to auto-calculate total minutes when times change
+    effect(() => {
+      const initial = this.initialTime();
+      const end = this.endTime();
+      if (initial && end) {
+        this.calculateTotalMinutesFromTimes();
+      }
+    });
+
+    // Effect to auto-calculate pressure drop when pressures change
+    effect(() => {
+      const initial = this.initialPressure();
+      const final = this.finalPressure();
+      if (initial !== null && final !== null) {
+        this.calculatePressureDropFromReadings();
+      }
+    });
   }
 
-  // Time calculation helpers
-  calculateTotalMinutes(): void {
-    const initial = this.form.get('initialTime')?.value;
-    const end = this.form.get('endTime')?.value;
+  ngOnInit(): void {
+    this.loadData();
+  }
+
+  private async loadData(): Promise<void> {
+    this.loading.set(true);
+    try {
+      const info = this.testSampleInfo();
+      if (!info) {
+        this.setDefaultValues();
+        return;
+      }
+
+      const existingReading = await this.testReadingsService
+        .getTestReading(info.sampleId, info.testId)
+        .toPromise();
+
+      if (existingReading) {
+        this.loadFromExistingReading(existingReading);
+      } else {
+        this.setDefaultValues();
+      }
+    } catch (error) {
+      console.error('Error loading RBOT data:', error);
+      this.setDefaultValues();
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  private setDefaultValues(): void {
+    const savedInitials = localStorage.getItem('analystInitials') || '';
+    this.analystInitials.set(savedInitials);
+    this.testTemperature.set(150);
+    this.oxygenPressure.set(620);
+    this.sampleVolume.set(50);
+    this.catalystType.set('Soluble copper');
+  }
+
+  private loadFromExistingReading(reading: TestReading): void {
+    this.totalMinutes.set(reading.value1 || null);
+    this.pressureDrop.set(reading.value2 || null);
+    this.testTemperature.set(reading.value3 || 150);
+    this.oxygenPressure.set(reading.trialCalc || 620);
+    this.bombId.set(reading.id1 || '');
+    this.catalystAmount.set(reading.id2 ? parseFloat(reading.id2) : null);
+    this.analystInitials.set(reading.id3 || '');
+    
+    if (reading.mainComments) {
+      this.observationNotes.set(this.extractFromComments(reading.mainComments, 'observation'));
+      this.testNotes.set(this.extractFromComments(reading.mainComments, 'notes'));
+    }
+  }
+
+  // Time calculation helper
+  calculateTotalMinutesFromTimes(): void {
+    const initial = this.initialTime();
+    const end = this.endTime();
     
     if (initial && end) {
       const startTime = new Date(`1970-01-01T${initial}:00`);
@@ -178,107 +248,131 @@ export class RbotEntryForm extends BaseTestFormComponent implements OnInit {
         diffMs += 24 * 60 * 60 * 1000;
       }
       
-      const totalMinutes = Math.round(diffMs / (1000 * 60));
-      this.form.patchValue({ totalMinutes: totalMinutes });
+      const totalMins = Math.round(diffMs / (1000 * 60));
+      this.totalMinutes.set(totalMins);
     }
   }
 
-  calculatePressureDrop(): void {
-    const initial = this.form.get('initialPressure')?.value;
-    const final = this.form.get('finalPressure')?.value;
+  calculatePressureDropFromReadings(): void {
+    const initial = this.initialPressure();
+    const final = this.finalPressure();
     
-    if (initial && final) {
+    if (initial !== null && final !== null) {
       const drop = Math.round((initial - final) * 10) / 10;
-      this.form.patchValue({ pressureDrop: drop });
+      this.pressureDrop.set(drop);
     }
   }
 
-  protected override loadExistingData(): void {
-    super.loadExistingData();
-    
-    if (this.existingReading) {
-      this.form.patchValue({
-        totalMinutes: this.existingReading.value1,
-        pressureDrop: this.existingReading.value2,
-        testTemperature: this.existingReading.value3 || '150',
-        oxygenPressure: this.existingReading.trialCalc || '620',
-        bombId: this.existingReading.id1,
-        catalystAmount: this.existingReading.id2,
-        analystInitials: this.existingReading.id3,
-        observationNotes: this.extractFromComments('observation'),
-        testNotes: this.extractFromComments('notes')
-      });
-    } else {
-      this.form.patchValue({
-        analystInitials: localStorage.getItem('analystInitials') || '',
-        testTemperature: '150',
-        oxygenPressure: '620',
-        sampleVolume: '50',
-        catalystType: 'Soluble copper'
-      });
+  async save(complete: boolean = false): Promise<void> {
+    if (!this.isFormValid()) {
+      this.saveMessage.set('Please fill in all required fields correctly');
+      setTimeout(() => this.saveMessage.set(''), 3000);
+      return;
+    }
+
+    const info = this.testSampleInfo();
+    if (!info) return;
+
+    this.saving.set(true);
+    this.saveMessage.set('');
+
+    try {
+      // Save analyst initials for future use
+      const initials = this.analystInitials();
+      if (initials) {
+        localStorage.setItem('analystInitials', initials);
+      }
+
+      const testReading: Partial<TestReading> = {
+        sampleId: info.sampleId,
+        testId: info.testId,
+        value1: this.totalMinutes(),
+        value2: this.pressureDrop(),
+        value3: this.testTemperature(),
+        trialCalc: this.oxygenPressure(),
+        id1: this.bombId(),
+        id2: this.catalystAmount()?.toString() || '',
+        id3: this.analystInitials(),
+        mainComments: this.combineComments(),
+        complete: complete
+      };
+
+      await this.testReadingsService.saveTestReading(testReading).toPromise();
+      
+      this.saveMessage.set(complete ? 'Test completed and saved!' : 'Progress saved successfully!');
+      setTimeout(() => this.saveMessage.set(''), 3000);
+    } catch (error) {
+      console.error('Error saving RBOT data:', error);
+      this.saveMessage.set('Error saving data. Please try again.');
+      setTimeout(() => this.saveMessage.set(''), 5000);
+    } finally {
+      this.saving.set(false);
     }
   }
 
-  protected override createTestReading(isComplete: boolean = false) {
-    const baseReading = super.createTestReading(isComplete);
+  clearForm(): void {
+    // Reset all form fields
+    this.testTemperature.set(150);
+    this.oxygenPressure.set(620);
+    this.sampleVolume.set(50);
+    this.catalystType.set('Soluble copper');
+    this.catalystAmount.set(null);
+    this.initialTime.set('');
+    this.endTime.set('');
+    this.totalMinutes.set(null);
+    this.initialPressure.set(null);
+    this.finalPressure.set(null);
+    this.pressureDrop.set(null);
+    this.roomTemperature.set(null);
+    this.barometricPressure.set(null);
+    this.bombId.set('');
+    this.lastCalibrationDate.set('');
+    this.temperatureStability.set(null);
+    this.leakCheck.set(false);
+    this.observationNotes.set('');
+    this.testNotes.set('');
+    this.mainComments.set('');
+    // Keep analyst initials
     
-    return {
-      ...baseReading,
-      value1: this.form.get('totalMinutes')?.value,
-      value2: this.form.get('pressureDrop')?.value,
-      value3: this.form.get('testTemperature')?.value,
-      trialCalc: this.form.get('oxygenPressure')?.value,
-      id1: this.form.get('bombId')?.value,
-      id2: this.form.get('catalystAmount')?.value,
-      id3: this.form.get('analystInitials')?.value,
-      mainComments: this.combineComments()
-    };
+    this.saveMessage.set('Form cleared');
+    setTimeout(() => this.saveMessage.set(''), 2000);
   }
 
-  private extractFromComments(section: string): string {
-    if (!this.existingReading?.mainComments) return '';
+  private extractFromComments(comments: string, section: string): string {
+    if (!comments) return '';
     
     const regex = new RegExp(`${section}:(.+?)(?:\\||$)`, 'i');
-    const match = this.existingReading.mainComments.match(regex);
+    const match = comments.match(regex);
     return match ? match[1].trim() : '';
   }
 
   private combineComments(): string {
     const parts = [];
     
-    const catalyst = this.form.get('catalystType')?.value;
+    const catalyst = this.catalystType();
     if (catalyst) parts.push(`catalyst:${catalyst}`);
     
-    const volume = this.form.get('sampleVolume')?.value;
+    const volume = this.sampleVolume();
     if (volume) parts.push(`volume:${volume}mL`);
     
-    const roomTemp = this.form.get('roomTemperature')?.value;
+    const roomTemp = this.roomTemperature();
     if (roomTemp) parts.push(`roomTemp:${roomTemp}`);
     
-    const baroPressure = this.form.get('barometricPressure')?.value;
+    const baroPressure = this.barometricPressure();
     if (baroPressure) parts.push(`baroPressure:${baroPressure}`);
     
-    if (this.remainingLife > 0) parts.push(`remainingLife:${this.remainingLife}%`);
+    const remaining = this.remainingLife();
+    if (remaining > 0) parts.push(`remainingLife:${remaining}%`);
     
-    const observation = this.form.get('observationNotes')?.value;
+    const observation = this.observationNotes();
     if (observation) parts.push(`observation:${observation}`);
     
-    const notes = this.form.get('testNotes')?.value;
+    const notes = this.testNotes();
     if (notes) parts.push(`notes:${notes}`);
     
-    const main = this.form.get('mainComments')?.value;
+    const main = this.mainComments();
     if (main) parts.push(`comments:${main}`);
     
     return parts.join(' | ');
-  }
-
-  override onSave(complete: boolean = false): void {
-    // Save analyst initials for future use
-    const initials = this.form.get('analystInitials')?.value;
-    if (initials) {
-      localStorage.setItem('analystInitials', initials);
-    }
-
-    super.onSave(complete);
   }
 }

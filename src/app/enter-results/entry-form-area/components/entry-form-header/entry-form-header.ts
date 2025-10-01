@@ -1,16 +1,20 @@
 import { Component, input, computed, inject, effect, signal } from '@angular/core';
 import { SampleWithTestInfo, TestReference } from '../../../enter-results.types';
 import { SampleService } from '../../../../shared/services/sample.service';
+import { StatusTransitionService } from '../../../../shared/services/status-transition.service';
+import { TestStatus } from '../../../../shared/types/status-workflow.types';
+import { StatusBadge } from '../../../components/status-badge/status-badge';
 import { SharedModule } from '../../../../shared-module';
 
 @Component({
   selector: 'app-entry-form-header',
-  imports: [SharedModule],
+  imports: [SharedModule, StatusBadge],
   templateUrl: './entry-form-header.html',
   styleUrl: './entry-form-header.css'
 })
 export class EntryFormHeader {
   private readonly sampleService = inject(SampleService);
+  private readonly statusTransitionService = inject(StatusTransitionService);
   
   // Input signals
   selectedSample = input<{ testReference: TestReference; sampleId: string; sampleDetails?: any } | null>(null);
@@ -21,6 +25,7 @@ export class EntryFormHeader {
   private readonly sampleInfo = signal<SampleWithTestInfo | null>(null);
   private readonly loading = signal(false);
   private readonly error = signal<string | null>(null);
+  readonly currentStatus = signal<TestStatus | null>(null);
   
   // Computed properties for template
   readonly isLoading = computed(() => this.loading());
@@ -34,9 +39,16 @@ export class EntryFormHeader {
       const sample = this.selectedSample();
       if (sample) {
         this.loadSampleDetails(sample);
+        // Load current status for the test
+        const sampleIdMatch = sample.sampleId.match(/-(\d+)$/);
+        if (sampleIdMatch) {
+          const numericSampleId = parseInt(sampleIdMatch[1], 10);
+          this.loadCurrentStatus(numericSampleId, sample.testReference.id);
+        }
       } else {
         this.sampleInfo.set(null);
         this.error.set(null);
+        this.currentStatus.set(null);
       }
     });
   }
@@ -116,6 +128,21 @@ export class EntryFormHeader {
         console.error('Error loading sample details:', error);
         this.error.set('Failed to load sample details');
         this.loading.set(false);
+      }
+    });
+  }
+  
+  private loadCurrentStatus(sampleId: number, testId: number) {
+    this.statusTransitionService.getCurrentStatus(sampleId, testId).subscribe({
+      next: (response) => {
+        if (response.success && response.status) {
+          this.currentStatus.set(response.status);
+        }
+      },
+      error: (error) => {
+        console.error('Error loading current status:', error);
+        // Set a default status if not found
+        this.currentStatus.set(TestStatus.AWAITING);
       }
     });
   }
